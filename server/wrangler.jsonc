@@ -1,0 +1,22 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "openfactura",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "openfactura",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "vars": {
+    "APP_URL": "http://localhost:8788",
+    // Peticiones por minuto permitidas a cada clave de API.
+    "LIMITE_CLAVE_POR_MINUTO": "120"
+  },
+  "observability": { "enabled": true }
+}

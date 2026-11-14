@@ -1,0 +1,92 @@
+---
+title: Authentication and keys
+description: of_test_ and of_live_ API keys, permissions, the dashboard session, and how each secret is stored.
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+The whole API (`/api/v1/*`) and the MCP server (`/mcp`) require authentication. There are two ways:
+
+| Who         | How                                     | MH environment                      |
+| ----------- | --------------------------------------- | ----------------------------------- |
+| Integration | `Authorization: Bearer of_test_…`       | `00` test                           |
+| Integration | `Authorization: Bearer of_live_…`       | `01` production                     |
+| Dashboard   | Session cookie (`/api/auth/*`)          | The environment saved on the issuer |
+
+The remote MCP server only accepts API keys, never the dashboard cookie.
+
+```bash
+curl https://app.openfactura.co/api/v1/yo -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+```
+
+<Aside>
+In Open Factura Cloud, the API and the dashboard live at `https://app.openfactura.co`. The remote MCP
+server uses the short address `https://openfactura.co/mcp` (it also answers at
+`https://app.openfactura.co/mcp`). For compatibility, `https://openfactura.co/api/v1/*` still works
+as an alias of the API with API keys; use `app.openfactura.co` in new integrations.
+</Aside>
+
+`GET /yo` tells you who you are: actor (`usuario` or `clave`), organization, permissions, and active
+environment. Use it to check a key.
+
+## Create a key
+
+In the dashboard: **API keys → New key**. Choose a name, a mode (test or production), permissions,
+and optionally an expiry in days. The full key is shown **only once**; the server stores only its
+SHA-256 and from then on shows just its prefix.
+
+Keys can also be managed through the API (`GET|POST /claves`, `DELETE /claves/:id`), but only from a
+dashboard session with the `claves:manage` permission: an API key can never create other keys.
+
+Revoking a key takes effect immediately. A revoked or expired key gets `401 no_autenticado`.
+
+## Permissions
+
+| Permission        | Allows                                                    |
+| ----------------- | --------------------------------------------------------- |
+| `dte:read`        | Read documents, events, their JSON, and their PDF         |
+| `dte:emit`        | Validate and issue documents, returns, and event 17       |
+| `dte:invalidate`  | Invalidate documents and transmit contingencies           |
+| `clientes:read`   | Read customers                                            |
+| `clientes:write`  | Create, edit, and delete customers                        |
+| `productos:read`  | Read products                                             |
+| `productos:write` | Create, edit, and delete products                         |
+| `emisor:read`     | View the issuer and its establishments                    |
+| `emisor:write`    | Edit the issuer, establishments, and credentials          |
+| `claves:manage`   | Create and revoke API keys                                |
+| `auditoria:read`  | View the audit log                                        |
+| `registros:read`  | View the logs of requests made with API keys              |
+
+An API key can **never** carry `emisor:write`, `claves:manage`, or `auditoria:read`: those are done
+in the dashboard.
+
+Dashboard roles: **Owner** and **Administrator** have every permission; **Biller** (`member`) has
+`dte:read`, `dte:emit`, `clientes:*`, `productos:*`, and `emisor:read`.
+
+If a permission is missing, the response is `403 sin_permiso` with the missing permission in
+`details.permiso`.
+
+### Suggested permissions
+
+- **Read only:** `dte:read`, `clientes:read`, `productos:read`, `emisor:read`.
+- **Invoicing:** the above plus `dte:emit`, `clientes:write`, `productos:write`.
+- **Invalidating:** add `dte:invalidate` only if you really need it.
+
+## Dashboard session
+
+The dashboard uses Better Auth at `/api/auth/*` (sign-up, sign-in, organizations, and invitations).
+A user with no organization gets `409 sin_organizacion`; a user who belongs to several and has none
+active gets `409 sin_organizacion_activa` with the list in `details.organizaciones`.
+
+Cookie-authenticated requests that modify data must come from the dashboard's own origin; otherwise,
+`403 origen_no_permitido`.
+
+## MH credentials
+
+The MH API password and the certificate's private key are stored encrypted with AES-256-GCM and are
+**never** returned: `GET /emisor` only reports whether they are loaded. They are not recorded in the
+audit log or in any other log.
+
+<Aside type="caution">
+Don't keep keys in repositories or in browser code. Use environment variables or a secrets manager.
+</Aside>

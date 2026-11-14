@@ -1,0 +1,123 @@
+{
+  "identificacion": {
+    "version": 2,
+    "ambiente": "00",
+    "tipoDte": "01",
+    "numeroControl": "DTE-01-M001P001-000000000000001",
+    "codigoGeneracion": "2C609A03-1555-41B6-96B0-33B8C3607542",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2026-11-12",
+    "horEmi": "01:10:48",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "06142907861023",
+    "nrc": "1234567",
+    "nombre": "EMPRESA DEMO, S.A. DE C.V.",
+    "codActividad": "62010",
+    "descActividad": "Programación informática",
+    "nombreComercial": "Open Factura Demo",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "distrito": "14",
+      "complemento": "Calle El Rosal #567, Col. Escalón"
+    },
+    "telefono": "22223333",
+    "correo": "facturacion@ejemplo.com.sv",
+    "codEstable": "M001",
+    "codPuntoVenta": "P001"
+  },
+  "receptor": {
+    "tipoDocumento": "13",
+    "numDocumento": "012345678",
+    "nrc": null,
+    "nombre": "Juan Pérez",
+    "codActividad": null,
+    "descActividad": null,
+    "direccion": null,
+    "telefono": null,
+    "correo": "juan@ejemplo.com"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 2,
+      "codigo": "CAFE-340",
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Café de especialidad 340 g",
+      "precioUni": 9.5,
+      "montoDescu": 0,
+      "ventaNoSuj": 0,
+      "ventaExenta": 0,
+      "ventaGravada": 19,
+      "tributos": null,
+      "psv": 0,
+      "noGravado": 0,
+      "ivaItem": 2.18584071
+    },
+    {
+      "numItem": 2,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 1,
+      "codigo": null,
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Taza de cerámica",
+      "precioUni": 12,
+      "montoDescu": 2,
+      "ventaNoSuj": 0,
+      "ventaExenta": 0,
+      "ventaGravada": 10,
+      "tributos": null,
+      "psv": 0,
+      "noGravado": 0,
+      "ivaItem": 1.15044248
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0,
+    "totalExenta": 0,
+    "totalGravada": 29,
+    "subTotalVentas": 29,
+    "descuNoSuj": 0,
+    "descuExenta": 0,
+    "descuGravada": 0,
+    "porcentajeDescuento": 0,
+    "totalDescu": 2,
+    "tributos": null,
+    "subTotal": 29,
+    "ivaRete": 0,
+    "montoTotalOperacion": 29,
+    "totalNoGravado": 0,
+    "totalPagar": 29,
+    "totalLetras": "VEINTINUEVE 00/100 DÓLARES",
+    "totalIva": 3.34,
+    "saldoFavor": 0,
+    "condicionOperacion": 1,
+    "pagos": [
+      {
+        "codigo": "01",
+        "montoPago": 29,
+        "referencia": null,
+        "plazo": null,
+        "periodo": null
+      }
+    ],
+    "numPagoElectronico": null,
+    "observaciones": null
+  },
+  "apendice": null,
+  "firmaElectronica": "eyJhbGciOiJSUzUxMiJ9.eyJpZGVudGlmaWNhY2lvbiI6eyJ2ZXJzaW9uIjoyLCJhbWJpZW50ZSI6IjAwIiwidGlwb0R0ZSI6IjAxIiwibnVtZXJvQ29udHJvbCI6IkRURS0wMS1NMDAxUDAwMS0wMDAwMDAwMDAwMDAwMDEiLCJjb2RpZ29HZW5lcmFjaW9uIjoiMkM2MDlBMDMtMTU1NS00MUI2LTk2QjAtMzNCOEMzNjA3NTQyIiwidGlwb01vZGVsbyI6MSwidGlwb09wZXJhY2lvbiI6MSwidGlwb0NvbnRpbmdlbmNpYSI6bnVsbCwibW90aXZvQ29udGluIjpudWxsLCJmZWNFbWkiOiIyMDI2LTExLTEyIiwiaG9yRW1pIjoiMDE6MTA6NDgiLCJ0aXBvTW9uZWRhIjoiVVNEIn0sImRvY3VtZW50b1JlbGFjaW9uYWRvIjpudWxsLCJlbWlzb3IiOnsibml0IjoiMDYxNDI5MDc4NjEwMjMiLCJucmMiOiIxMjM0NTY3Iiwibm9tYnJlIjoiRU1QUkVTQSBERU1PLCBTLkEuIERFIEMuVi4iLCJjb2RBY3RpdmlkYWQiOiI2MjAxMCIsImRlc2NBY3RpdmlkYWQiOiJQcm9ncmFtYWNpw7NuIGluZm9ybcOhdGljYSIsIm5vbWJyZUNvbWVyY2lhbCI6Ik9wZW4gRmFjdHVyYSBEZW1vIiwiZGlyZWNjaW9uIjp7ImRlcGFydGFtZW50byI6IjA2IiwibXVuaWNpcGlvIjoiMjMiLCJkaXN0cml0byI6IjE0IiwiY29tcGxlbWVudG8iOiJDYWxsZSBFbCBSb3NhbCAjNTY3LCBDb2wuIEVzY2Fsw7NuIn0sInRlbGVmb25vIjoiMjIyMjMzMzMiLCJjb3JyZW8iOiJmYWN0dXJhY2lvbkBlamVtcGxvLmNvbS5zdiIsImNvZEVzdGFibGUiOiJNMDAxIiwiY29kUHVudG9WZW50YSI6IlAwMDEifSwicmVjZXB0b3IiOnsidGlwb0RvY3VtZW50byI6IjEzIiwibnVtRG9jdW1lbnRvIjoiMDEyMzQ1Njc4IiwibnJjIjpudWxsLCJub21icmUiOiJKdWFuIFDDqXJleiIsImNvZEFjdGl2aWRhZCI6bnVsbCwiZGVzY0FjdGl2aWRhZCI6bnVsbCwiZGlyZWNjaW9uIjpudWxsLCJ0ZWxlZm9ubyI6bnVsbCwiY29ycmVvIjoianVhbkBlamVtcGxvLmNvbSJ9LCJvdHJvc0RvY3VtZW50b3MiOm51bGwsInZlbnRhVGVyY2VybyI6bnVsbCwiY3VlcnBvRG9jdW1lbnRvIjpbeyJudW1JdGVtIjoxLCJ0aXBvSXRlbSI6MSwibnVtZXJvRG9jdW1lbnRvIjpudWxsLCJjYW50aWRhZCI6MiwiY29kaWdvIjoiQ0FGRS0zNDAiLCJjb2RUcmlidXRvIjpudWxsLCJ1bmlNZWRpZGEiOjU5LCJkZXNjcmlwY2lvbiI6IkNhZsOpIGRlIGVzcGVjaWFsaWRhZCAzNDAgZyIsInByZWNpb1VuaSI6OS41LCJtb250b0Rlc2N1IjowLCJ2ZW50YU5vU3VqIjowLCJ2ZW50YUV4ZW50YSI6MCwidmVudGFHcmF2YWRhIjoxOSwidHJpYnV0b3MiOm51bGwsInBzdiI6MCwibm9HcmF2YWRvIjowLCJpdmFJdGVtIjoyLjE4NTg0MDcxfSx7Im51bUl0ZW0iOjIsInRpcG9JdGVtIjoxLCJudW1lcm9Eb2N1bWVudG8iOm51bGwsImNhbnRpZGFkIjoxLCJjb2RpZ28iOm51bGwsImNvZFRyaWJ1dG8iOm51bGwsInVuaU1lZGlkYSI6NTksImRlc2NyaXBjaW9uIjoiVGF6YSBkZSBjZXLDoW1pY2EiLCJwcmVjaW9VbmkiOjEyLCJtb250b0Rlc2N1IjoyLCJ2ZW50YU5vU3VqIjowLCJ2ZW50YUV4ZW50YSI6MCwidmVudGFHcmF2YWRhIjoxMCwidHJpYnV0b3MiOm51bGwsInBzdiI6MCwibm9HcmF2YWRvIjowLCJpdmFJdGVtIjoxLjE1MDQ0MjQ4fV0sInJlc3VtZW4iOnsidG90YWxOb1N1aiI6MCwidG90YWxFeGVudGEiOjAsInRvdGFsR3JhdmFkYSI6MjksInN1YlRvdGFsVmVudGFzIjoyOSwiZGVzY3VOb1N1aiI6MCwiZGVzY3VFeGVudGEiOjAsImRlc2N1R3JhdmFkYSI6MCwicG9yY2VudGFqZURlc2N1ZW50byI6MCwidG90YWxEZXNjdSI6MiwidHJpYnV0b3MiOm51bGwsInN1YlRvdGFsIjoyOSwiaXZhUmV0ZSI6MCwibW9udG9Ub3RhbE9wZXJhY2lvbiI6MjksInRvdGFsTm9HcmF2YWRvIjowLCJ0b3RhbFBhZ2FyIjoyOSwidG90YWxMZXRyYXMiOiJWRUlOVElOVUVWRSAwMC8xMDAgRMOTTEFSRVMiLCJ0b3RhbEl2YSI6My4zNCwic2FsZG9GYXZvciI6MCwiY29uZGljaW9uT3BlcmFjaW9uIjoxLCJwYWdvcyI6W3siY29kaWdvIjoiMDEiLCJtb250b1BhZ28iOjI5LCJyZWZlcmVuY2lhIjpudWxsLCJwbGF6byI6bnVsbCwicGVyaW9kbyI6bnVsbH1dLCJudW1QYWdvRWxlY3Ryb25pY28iOm51bGwsIm9ic2VydmFjaW9uZXMiOm51bGx9LCJhcGVuZGljZSI6bnVsbH0.Pluvv1vhLYJzeHdlnA2Nim9Vw-FAFe_n0G0d2n1V2kYSL8aeZNTwcDzcHO3Me62MvAVllZ0QT-WQObeU8Tf1Sk1-BP-IevYSPdonKy2qLsGJlS6CNhHK2ubgw50yEwazg_Cp5hVJ94_FIVEseORzaUOF1rYGuTFsNlr8ASTt-LtQPPu3Rrd7YeX8chfH1PltU2BABU7Wg-9Q1tIXJ9TGs_YksoosFJyrOxStTS0Q2Kuiu7A-gsWHLp1sjCzFQu18NhO-d_oT9LBzBUsTeerKgdrcjYZn_qfchSSPdbkYTWYM79kYaxIJL_-3ax6EwU2iaV5FvhaY3YGw0UOrehV6jA",
+  "selloRecibido": "2026D4538DDABA15503D6C18CEE4EF849869B428"
+}

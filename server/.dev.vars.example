@@ -1,0 +1,17 @@
+# Copie a .dev.vars y complete. En producción: `wrangler secret put <NOMBRE>`.
+# Secreto de sesiones de Better Auth (32+ caracteres aleatorios): openssl rand -base64 32
+BETTER_AUTH_SECRET=
+# Llave maestra (32 bytes en base64) para cifrar credenciales del MH y certificados: openssl rand -base64 32
+CRED_KEK_V1=
+# Credencial del operador (sin panel): crea organizaciones y administra emisor, credenciales y claves.
+# 32+ caracteres: openssl rand -base64 48
+ADMIN_TOKEN=
+# Opcional: apunta el cliente del MH a un simulador local (bun run mock en packages/dte).
+# MH_BASE_URL=http://localhost:8787
+# Simulador del MH dentro del Worker: POST /api/v1/emisor/credenciales-prueba emite sin trámites en
+# el ambiente 00. Sólo esas credenciales usan el simulador; las que suba el usuario van a Hacienda.
+# MH_SIMULADO=1
+# Permite webhooks a http://localhost para probarlos en desarrollo. Nunca en producción.
+# WEBHOOKS_LOCAL=1
+# Orígenes adicionales de confianza (p. ej. un panel propio en otro puerto).
+# TRUSTED_ORIGINS=http://localhost:5173

@@ -1,0 +1,40 @@
+---
+// Botón de instalación en un clic del servidor MCP remoto.
+import { enlacesInstalacion, idiomaDe } from '../lib/mcp'
+
+const { agente } = Astro.props as { agente: keyof typeof enlacesInstalacion }
+const { nombre, href } = enlacesInstalacion[agente]
+const texto = idiomaDe(Astro.locals.starlightRoute?.lang) === 'en' ? 'Install in' : 'Instalar en'
+---
+
+<div class="instalar not-content">
+  <a href={href}>{texto} {nombre}</a>
+</div>
+
+<style>
+  .instalar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  a {
+    display: inline-flex;
+    align-items: center;
+    height: 2.25rem;
+    padding: 0 1rem;
+    border-radius: 10px;
+    background: var(--of-verde);
+    color: var(--of-verde-oscuro);
+    font-size: var(--sl-text-sm);
+    font-weight: 500;
+    text-decoration: none;
+  }
+  a:hover {
+    background: var(--of-verde-claro);
+  }
+  a:focus-visible {
+    outline: 2px solid var(--sl-color-white);
+    outline-offset: 2px;
+  }
+</style>

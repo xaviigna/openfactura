@@ -1,0 +1,116 @@
+{
+  "identificacion": {
+    "version": 4,
+    "ambiente": "00",
+    "tipoDte": "03",
+    "numeroControl": "DTE-03-M001P001-000000000000001",
+    "codigoGeneracion": "C4067B84-9A7C-4C40-9E19-20F4DC79F875",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2026-11-12",
+    "horEmi": "01:10:48",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "06142907861023",
+    "nrc": "1234567",
+    "nombre": "EMPRESA DEMO, S.A. DE C.V.",
+    "codActividad": "62010",
+    "descActividad": "Programación informática",
+    "nombreComercial": "Open Factura Demo",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "distrito": "14",
+      "complemento": "Calle El Rosal #567, Col. Escalón"
+    },
+    "telefono": "22223333",
+    "correo": "facturacion@ejemplo.com.sv",
+    "codEstable": "M001",
+    "codPuntoVenta": "P001"
+  },
+  "receptor": {
+    "nit": "06142907861031",
+    "nrc": "2345678",
+    "nombre": "CLIENTE CONTRIBUYENTE, S.A. DE C.V.",
+    "codActividad": "46900",
+    "descActividad": "Venta al por mayor de otros productos",
+    "nombreComercial": null,
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "distrito": "14",
+      "complemento": "Av. Olímpica #100"
+    },
+    "telefono": null,
+    "correo": "compras@cliente.com.sv"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 2,
+      "numeroDocumento": null,
+      "cantidad": 40,
+      "codigo": null,
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Desarrollo de software (horas)",
+      "precioUni": 35,
+      "montoDescu": 0,
+      "ventaNoSuj": 0,
+      "ventaExenta": 0,
+      "ventaGravada": 1400,
+      "tributos": [
+        "20"
+      ],
+      "psv": 0,
+      "noGravado": 0
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0,
+    "totalExenta": 0,
+    "totalGravada": 1400,
+    "subTotalVentas": 1400,
+    "descuNoSuj": 0,
+    "descuExenta": 0,
+    "descuGravada": 0,
+    "porcentajeDescuento": 0,
+    "totalDescu": 0,
+    "tributos": [
+      {
+        "codigo": "20",
+        "descripcion": "Impuesto al Valor Agregado 13%",
+        "valor": 182
+      }
+    ],
+    "subTotal": 1400,
+    "ivaPerci": 0,
+    "ivaRete": 0,
+    "montoTotalOperacion": 1582,
+    "totalNoGravado": 0,
+    "totalPagar": 1582,
+    "totalLetras": "MIL QUINIENTOS OCHENTA Y DOS 00/100 DÓLARES",
+    "saldoFavor": 0,
+    "condicionOperacion": 2,
+    "pagos": [
+      {
+        "codigo": null,
+        "montoPago": 0,
+        "referencia": null,
+        "plazo": "01",
+        "periodo": 30
+      }
+    ],
+    "numPagoElectronico": null,
+    "observaciones": null
+  },
+  "apendice": null,
+  "firmaElectronica": "eyJhbGciOiJSUzUxMiJ9.eyJpZGVudGlmaWNhY2lvbiI6eyJ2ZXJzaW9uIjo0LCJhbWJpZW50ZSI6IjAwIiwidGlwb0R0ZSI6IjAzIiwibnVtZXJvQ29udHJvbCI6IkRURS0wMy1NMDAxUDAwMS0wMDAwMDAwMDAwMDAwMDEiLCJjb2RpZ29HZW5lcmFjaW9uIjoiQzQwNjdCODQtOUE3Qy00QzQwLTlFMTktMjBGNERDNzlGODc1IiwidGlwb01vZGVsbyI6MSwidGlwb09wZXJhY2lvbiI6MSwidGlwb0NvbnRpbmdlbmNpYSI6bnVsbCwibW90aXZvQ29udGluIjpudWxsLCJmZWNFbWkiOiIyMDI2LTExLTEyIiwiaG9yRW1pIjoiMDE6MTA6NDgiLCJ0aXBvTW9uZWRhIjoiVVNEIn0sImRvY3VtZW50b1JlbGFjaW9uYWRvIjpudWxsLCJlbWlzb3IiOnsibml0IjoiMDYxNDI5MDc4NjEwMjMiLCJucmMiOiIxMjM0NTY3Iiwibm9tYnJlIjoiRU1QUkVTQSBERU1PLCBTLkEuIERFIEMuVi4iLCJjb2RBY3RpdmlkYWQiOiI2MjAxMCIsImRlc2NBY3RpdmlkYWQiOiJQcm9ncmFtYWNpw7NuIGluZm9ybcOhdGljYSIsIm5vbWJyZUNvbWVyY2lhbCI6Ik9wZW4gRmFjdHVyYSBEZW1vIiwiZGlyZWNjaW9uIjp7ImRlcGFydGFtZW50byI6IjA2IiwibXVuaWNpcGlvIjoiMjMiLCJkaXN0cml0byI6IjE0IiwiY29tcGxlbWVudG8iOiJDYWxsZSBFbCBSb3NhbCAjNTY3LCBDb2wuIEVzY2Fsw7NuIn0sInRlbGVmb25vIjoiMjIyMjMzMzMiLCJjb3JyZW8iOiJmYWN0dXJhY2lvbkBlamVtcGxvLmNvbS5zdiIsImNvZEVzdGFibGUiOiJNMDAxIiwiY29kUHVudG9WZW50YSI6IlAwMDEifSwicmVjZXB0b3IiOnsibml0IjoiMDYxNDI5MDc4NjEwMzEiLCJucmMiOiIyMzQ1Njc4Iiwibm9tYnJlIjoiQ0xJRU5URSBDT05UUklCVVlFTlRFLCBTLkEuIERFIEMuVi4iLCJjb2RBY3RpdmlkYWQiOiI0NjkwMCIsImRlc2NBY3RpdmlkYWQiOiJWZW50YSBhbCBwb3IgbWF5b3IgZGUgb3Ryb3MgcHJvZHVjdG9zIiwibm9tYnJlQ29tZXJjaWFsIjpudWxsLCJkaXJlY2Npb24iOnsiZGVwYXJ0YW1lbnRvIjoiMDYiLCJtdW5pY2lwaW8iOiIyMyIsImRpc3RyaXRvIjoiMTQiLCJjb21wbGVtZW50byI6IkF2LiBPbMOtbXBpY2EgIzEwMCJ9LCJ0ZWxlZm9ubyI6bnVsbCwiY29ycmVvIjoiY29tcHJhc0BjbGllbnRlLmNvbS5zdiJ9LCJvdHJvc0RvY3VtZW50b3MiOm51bGwsInZlbnRhVGVyY2VybyI6bnVsbCwiY3VlcnBvRG9jdW1lbnRvIjpbeyJudW1JdGVtIjoxLCJ0aXBvSXRlbSI6MiwibnVtZXJvRG9jdW1lbnRvIjpudWxsLCJjYW50aWRhZCI6NDAsImNvZGlnbyI6bnVsbCwiY29kVHJpYnV0byI6bnVsbCwidW5pTWVkaWRhIjo1OSwiZGVzY3JpcGNpb24iOiJEZXNhcnJvbGxvIGRlIHNvZnR3YXJlIChob3JhcykiLCJwcmVjaW9VbmkiOjM1LCJtb250b0Rlc2N1IjowLCJ2ZW50YU5vU3VqIjowLCJ2ZW50YUV4ZW50YSI6MCwidmVudGFHcmF2YWRhIjoxNDAwLCJ0cmlidXRvcyI6WyIyMCJdLCJwc3YiOjAsIm5vR3JhdmFkbyI6MH1dLCJyZXN1bWVuIjp7InRvdGFsTm9TdWoiOjAsInRvdGFsRXhlbnRhIjowLCJ0b3RhbEdyYXZhZGEiOjE0MDAsInN1YlRvdGFsVmVudGFzIjoxNDAwLCJkZXNjdU5vU3VqIjowLCJkZXNjdUV4ZW50YSI6MCwiZGVzY3VHcmF2YWRhIjowLCJwb3JjZW50YWplRGVzY3VlbnRvIjowLCJ0b3RhbERlc2N1IjowLCJ0cmlidXRvcyI6W3siY29kaWdvIjoiMjAiLCJkZXNjcmlwY2lvbiI6IkltcHVlc3RvIGFsIFZhbG9yIEFncmVnYWRvIDEzJSIsInZhbG9yIjoxODJ9XSwic3ViVG90YWwiOjE0MDAsIml2YVBlcmNpIjowLCJpdmFSZXRlIjowLCJtb250b1RvdGFsT3BlcmFjaW9uIjoxNTgyLCJ0b3RhbE5vR3JhdmFkbyI6MCwidG90YWxQYWdhciI6MTU4MiwidG90YWxMZXRyYXMiOiJNSUwgUVVJTklFTlRPUyBPQ0hFTlRBIFkgRE9TIDAwLzEwMCBEw5NMQVJFUyIsInNhbGRvRmF2b3IiOjAsImNvbmRpY2lvbk9wZXJhY2lvbiI6MiwicGFnb3MiOlt7ImNvZGlnbyI6bnVsbCwibW9udG9QYWdvIjowLCJyZWZlcmVuY2lhIjpudWxsLCJwbGF6byI6IjAxIiwicGVyaW9kbyI6MzB9XSwibnVtUGFnb0VsZWN0cm9uaWNvIjpudWxsLCJvYnNlcnZhY2lvbmVzIjpudWxsfSwiYXBlbmRpY2UiOm51bGx9.FQa28kxbtIi06v6FR5ZehozLw-KTeiohCFtLgcvedht_e4I_-Cj68JoExUjh8peHVZtLO7V6Li7R60Mr-Ib4I6_xD_6c-Fz59znMQxGPsFHuuMQCVaJ_JIG8CajcfKdc_YOqO1qQ2-TmdPy84V8vEqKeu_2EVoZolmuHld4YWpfF1B1TGvIJAWYyNVDyVh0wzbPv03m6MiNCtLU3LdqU1fPMInltVP4WfbANiKPBr6l09gRbtZYCu66-Rs3g8X3wvLNz6CPv_tJ9Xysu0uaGTLGLFEe7f-9R1NqeuhjeQ6KxhAeWXC5oF3lN_hO3-YDCxekTxfSKjOTxg_EilVThRQ",
+  "selloRecibido": "2026C65275D5739C514D30FF6457D22BFA02D006"
+}

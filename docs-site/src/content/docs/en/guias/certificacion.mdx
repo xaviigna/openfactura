@@ -1,0 +1,108 @@
+---
+title: Hacienda certification tests
+description: Issue, in one click, the minimum tests the Ministry of Finance requires to authorize you as a DTE issuer.
+---
+
+import { Aside, Steps, TabItem, Tabs } from '@astrojs/starlight/components'
+
+<Aside type="note" title="Available in Open Factura Cloud">
+  Automatic certification is part of [Open Factura Cloud](https://openfactura.co). If you self-host,
+  issue the minimum tests yourself with the API or the CLI and track the count in Hacienda's issuer
+  portal (Sitio Emisores DTE).
+</Aside>
+
+To authorize you as an issuer, Hacienda requires that you successfully transmit a minimum number of
+documents in the test environment, within your 2-month window. Open Factura issues them for you:
+
+| Test                          | Minimum |
+| ----------------------------- | ------- |
+| Invoice (01)                  | 90      |
+| Tax Credit Invoice (03)       | 75      |
+| Invalidation event            | 5       |
+| Contingency event             | 5       |
+
+These are mandatory for every issuer on the Transmission System (Sistema de Transmisión). If you are
+going to issue other documents, click **Certify the other documents too** when you finish: it also
+issues the tests for Delivery Note (50), Credit Note (50), Debit Note (25), Withholding Receipt (50),
+Settlement Receipt (75), Settlement Accounting Document (50), Export Invoice (90), Excluded Subject
+Invoice (25), Donation Receipt (25), and the return (5) and special operations (5) events. That way
+you can request authorization for everything at once.
+
+## Before you begin
+
+- Hacienda's **test credentials** loaded (certificate and API password).
+- A **taxpayer customer** (with NIT and NRC) to receive the test Tax Credit Invoices.
+- The issuer's **responsible person**: Hacienda requires it on invalidation and contingency events.
+  The page asks for it if it's missing.
+
+## How it works
+
+<Steps>
+
+1. **Dry run.** It issues one Invoice, one Tax Credit Invoice, one invalidation, and one contingency
+   cycle. If something is wrong, it shows up here and not on document 60. The dashboard pauses when
+   the dry run ends so you can check the counter in the Sitio Emisores DTE.
+2. **Volume.** It issues the rest: up to 90 Invoices and 75 Tax Credit Invoices, then the remaining
+   invalidations and contingencies. An invalidated Invoice still counts, just as in Hacienda's
+   counter.
+3. **If Hacienda rejects a test, it stops** and shows you the MH code and observations. It doesn't
+   spend any more control numbers. Fix the cause and resume: it continues where it left off.
+4. **When complete**, go to the Sitio Emisores DTE, check the counter, and open **Solicitar
+   Autorización** (Request Authorization).
+
+</Steps>
+
+Test Tax Credit Invoices need **another taxpayer** as the recipient: Hacienda rejects the ones
+addressed to your own company (`[receptor.nit] VALOR NO VALIDO`). Create one under **Customers** with
+NIT, NRC, economic activity, and address, and select it before starting.
+
+<Tabs syncKey="via">
+<TabItem label="Dashboard">
+
+Open **Certification** and click **Start**. You can pause and resume whenever you want.
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+openfactura certificacion ejecutar              # the mandatory tests
+openfactura certificacion ejecutar --completo   # every document and event
+openfactura certificacion estado
+```
+
+`ejecutar` exits with 0 on completion and with 1 if Hacienda rejected a test or stopped responding.
+
+</TabItem>
+<TabItem label="API">
+
+```bash
+curl -X POST https://app.openfactura.co/api/v1/certificacion/iniciar \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" -d '{}'
+
+# Repeat while "estado" is "en_curso":
+curl -X POST https://app.openfactura.co/api/v1/certificacion/avanzar \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+```
+
+The key needs `dte:read`, `dte:emit`, and `dte:invalidate`.
+
+</TabItem>
+<TabItem label="MCP">
+
+Ask your agent: "run my Hacienda certification tests". It uses `certificacion_avanzar` until
+completion and shows you the rejection, if any.
+
+</TabItem>
+</Tabs>
+
+<Aside>
+The progress you see counts what Open Factura transmitted and got stamped since you started. **The
+official counter is the one in the Sitio Emisores DTE**, and only Hacienda grants the authorization.
+If Hacienda opens a new window for you, use "Start from scratch".
+</Aside>
+
+<Aside type="caution">
+With the simulator's credentials everything works the same, but it is a **drill**: nothing reaches
+Hacienda or counts toward your authorization.
+</Aside>

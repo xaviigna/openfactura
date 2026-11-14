@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1794469030181,
+      "tag": "0000_short_swarm",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1794498720656,
+      "tag": "0001_eventos_retorno",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794500517445,
+      "tag": "0002_webhooks",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794520042991,
+      "tag": "0003_credencial_simulada",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794524502492,
+      "tag": "0004_registros_api",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794607918413,
+      "tag": "0005_webhook_creado_por",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794620829504,
+      "tag": "0006_webhook_creado_por_clave",
+      "breakpoints": true
+    }
+  ]
+}

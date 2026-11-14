@@ -1,0 +1,80 @@
+---
+title: Introducción
+description: Open Factura es una plataforma de código abierto para emitir Documentos Tributarios Electrónicos (DTE) de El Salvador desde tu sistema, tu terminal o tu asistente de IA.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components'
+
+Open Factura emite **Documentos Tributarios Electrónicos (DTE)** ante el Ministerio de Hacienda (MH)
+de El Salvador según la Normativa de Cumplimiento 2.0. Tú envías JSON; Open Factura calcula los
+impuestos, asigna el número de control, firma, transmite y te devuelve el documento con su sello de
+recepción, su JSON oficial y su PDF.
+
+La API es de código abierto: úsala en la nube (`openfactura.co`), con el panel incluido, o despliégala
+en tu propia cuenta de Cloudflare ([autoalojamiento](/autoalojamiento/)).
+
+## Antes de empezar
+
+- Una cuenta en [app.openfactura.co](https://app.openfactura.co) con una organización.
+- El emisor registrado y sus credenciales del ambiente de pruebas del MH (contraseña de API y
+  certificado `.crt`).
+- Una clave de API de pruebas (`of_test_…`).
+
+¿Todavía no estás autorizado por Hacienda? Lee [Ser emisor ante Hacienda](/hacienda/ser-emisor/).
+
+## Tres formas de conectarse
+
+Las tres usan los mismos servicios, los mismos permisos y la misma clave de API.
+
+<CardGrid>
+  <Card title="API REST" icon="seti:json">
+    JSON sobre HTTPS en `https://app.openfactura.co/api/v1`, descrita con OpenAPI 3.1.
+  </Card>
+  <Card title="MCP" icon="puzzle">
+    Herramientas para Claude, Cursor y otros asistentes, remotas en `/mcp` o locales por stdio.
+  </Card>
+  <Card title="CLI" icon="seti:shell">
+    `openfactura dte emitir factura.json` desde la terminal o un pipeline de integración continua.
+  </Card>
+</CardGrid>
+
+## Empieza aquí
+
+<CardGrid>
+  <LinkCard
+    title="Inicio rápido"
+    description="De la cuenta nueva a la primera factura de prueba en minutos."
+    href="/inicio-rapido/"
+  />
+  <LinkCard
+    title="Emitir documentos"
+    description="Factura, Crédito Fiscal, notas, exportación, sujeto excluido y más."
+    href="/guias/emitir/"
+  />
+  <LinkCard
+    title="Conectar un asistente (MCP)"
+    description="Que Claude valide, confirme y emita por ti."
+    href="/herramientas/mcp/"
+  />
+  <LinkCard
+    title="Referencia de la API"
+    description="Cada ruta, parámetro, respuesta y código de error."
+    href="/api/"
+  />
+</CardGrid>
+
+## Explora
+
+<CardGrid>
+  <LinkCard title="Autenticación y claves" href="/autenticacion/" />
+  <LinkCard title="Ambientes: pruebas y producción" href="/ambientes/" />
+  <LinkCard title="Idempotencia" href="/guias/idempotencia/" />
+  <LinkCard title="Contingencia" href="/guias/contingencia/" />
+  <LinkCard title="Invalidación" href="/guias/invalidacion/" />
+  <LinkCard title="Evento de retorno" href="/guias/retorno/" />
+  <LinkCard title="CLI" href="/herramientas/cli/" />
+  <LinkCard title="Habilidades para agentes" href="/herramientas/habilidades/" />
+  <LinkCard title="SDK @openfactura/dte" href="/herramientas/sdk/" />
+  <LinkCard title="Autoalojamiento" href="/autoalojamiento/" />
+  <LinkCard title="Errores" href="/errores/" />
+</CardGrid>

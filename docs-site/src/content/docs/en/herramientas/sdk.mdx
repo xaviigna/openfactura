@@ -1,0 +1,53 @@
+---
+title: SDK @openfactura/dte
+description: TypeScript SDK (MIT) to build, validate, sign, and transmit DTEs directly to the MH, with no Java or Docker.
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+`@openfactura/dte` is the engine of Open Factura, published separately under the MIT license so you
+can embed it in any system. It builds, validates, signs, and transmits DTEs according to the MH's
+Regulation 2.0 (Normativa 2.0) and Technical Manual v2. Signing uses WebCrypto: it runs on Node 20+,
+Cloudflare Workers, Deno, and Bun.
+
+<Aside>
+If you use the Open Factura API, you don't need the SDK: the `datos` field of `POST /dte` is exactly
+the input of its builders. Use the SDK if you want to sign and transmit with your own credentials,
+without going through Open Factura.
+</Aside>
+
+```ts
+import { ClienteMH, construirFactura, emitirDte } from '@openfactura/dte'
+import { generarPdfDte } from '@openfactura/dte/pdf'
+
+const cliente = new ClienteMH({ ambiente: '00', usuario: NIT, password: PASSWORD_API })
+
+const dte = construirFactura(
+  { ambiente: '00', emisor, correlativo: 1 },
+  { items: [{ descripcion: 'Café 340 g', cantidad: 2, precioUni: 9.5 }] }, // prices include VAT
+)
+
+const { archivo } = await emitirDte(cliente, dte, { certificado: crtXml, password: CLAVE_PRIVADA })
+archivo.selloRecibido // the MH's reception stamp
+await generarPdfDte(archivo) // graphic representation with QR
+```
+
+## What's included
+
+| Area          | Detail                                                                                                                                                   |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Builders      | Invoice (01), Tax Credit Invoice (03), Delivery Note (04), Notes (05/06), Withholding (07), Settlement (08), Settlement Accounting Doc. (09), Export (11), Excluded Subject (14), Donation (15); invalidation, contingency, return (18), and special operations (17) events |
+| Validation    | The 15 official JSON Schemas and the CAT-001…CAT-033 catalogs, with an `eval`-free validator suitable for Workers                                        |
+| Signing       | JWS RS512 compatible with the official signer; reads the MH's `.crt`                                                                                     |
+| Transmission  | Authentication, single and batch reception, queries, invalidation, contingency, and the Technical Manual's retry policy                                  |
+| Extras        | Control number, generation code, lookup URL and QR, deadlines, PDF, and a simulated MH (`@openfactura/dte/mock`) for development and CI                  |
+
+## Calculation rules
+
+- Body to 8 decimals and summary to 2, rounding half up.
+- Invoice: prices **with** VAT. Tax Credit Invoice, notes, and delivery note: prices **without** VAT.
+- Per-item and global discounts, 1% VAT withholding and collection (percepción), 10% income tax
+  withholding on excluded subjects.
+- NIT, DUI, and NRC are sent without hyphens; every address carries `distrito` (CAT-008).
+
+Code and tests: [`packages/dte`](https://github.com/xaviigna/openfactura/tree/main/packages/dte).

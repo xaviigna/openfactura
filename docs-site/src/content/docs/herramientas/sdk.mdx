@@ -1,0 +1,52 @@
+---
+title: SDK @openfactura/dte
+description: SDK en TypeScript (MIT) para construir, validar, firmar y transmitir DTE directamente al MH, sin Java ni Docker.
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+`@openfactura/dte` es el motor de Open Factura, publicado aparte con licencia MIT para integrarlo en
+cualquier sistema. Construye, valida, firma y transmite DTE según la Normativa 2.0 y el Manual
+Técnico v2 del MH. La firma usa WebCrypto: corre en Node 20+, Cloudflare Workers, Deno y Bun.
+
+<Aside>
+Si usas la API de Open Factura no necesitas el SDK: el campo `datos` de `POST /dte` es exactamente la
+entrada de sus constructores. Usa el SDK si quieres firmar y transmitir con tus propias credenciales,
+sin pasar por Open Factura.
+</Aside>
+
+```ts
+import { ClienteMH, construirFactura, emitirDte } from '@openfactura/dte'
+import { generarPdfDte } from '@openfactura/dte/pdf'
+
+const cliente = new ClienteMH({ ambiente: '00', usuario: NIT, password: PASSWORD_API })
+
+const dte = construirFactura(
+  { ambiente: '00', emisor, correlativo: 1 },
+  { items: [{ descripcion: 'Café 340 g', cantidad: 2, precioUni: 9.5 }] }, // precios con IVA
+)
+
+const { archivo } = await emitirDte(cliente, dte, { certificado: crtXml, password: CLAVE_PRIVADA })
+archivo.selloRecibido // sello de recepción del MH
+await generarPdfDte(archivo) // representación gráfica con QR
+```
+
+## Qué incluye
+
+| Área          | Detalle                                                                                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Constructores | Factura (01), Crédito Fiscal (03), Remisión (04), Notas (05/06), Retención (07), Liquidación (08), Doc. Contable de Liquidación (09), Exportación (11), Sujeto Excluido (14), Donación (15); eventos de invalidación, contingencia, retorno (18) y operaciones especiales (17) |
+| Validación    | Los 15 JSON Schemas oficiales y los catálogos CAT-001…CAT-033, con un validador sin `eval` apto para Workers                                             |
+| Firma         | JWS RS512 compatible con el firmador oficial; lee el `.crt` del MH                                                                                       |
+| Transmisión   | Autenticación, recepción individual y por lotes, consultas, invalidación, contingencia y la política de reintentos del Manual Técnico                    |
+| Extras        | Número de control, código de generación, URL y QR de consulta, plazos, PDF y un MH simulado (`@openfactura/dte/mock`) para desarrollo y CI               |
+
+## Reglas de cálculo
+
+- Cuerpo a 8 decimales y resumen a 2, redondeo medio hacia arriba.
+- Factura: precios **con** IVA. Crédito Fiscal, notas y remisión: precios **sin** IVA.
+- Descuentos por ítem y globales, retención y percepción de IVA del 1 %, retención de renta del 10 % en
+  sujeto excluido.
+- NIT, DUI y NRC se envían sin guiones; toda dirección lleva `distrito` (CAT-008).
+
+Código y pruebas: [`packages/dte`](https://github.com/xaviigna/openfactura/tree/main/packages/dte).

@@ -1,0 +1,74 @@
+---
+title: Invalidación
+description: Anular un DTE o un evento procesado, con sus tipos, plazos y el orden correcto cuando existe un retorno.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+
+<Aside type="caution">
+La invalidación es **irreversible** y tiene efecto fiscal. Requiere el permiso `dte:invalidate`.
+</Aside>
+
+## Antes de invalidar
+
+1. Consulta el documento (`GET /dte/{codigo}`) y confirma que está `procesado`: sólo esos se
+   invalidan; si no, `409 estado_invalido`.
+2. Si tiene un **evento de retorno** vigente, la API responde `409 retorno_vigente` con
+   `details.codigoGeneracion`: invalida primero ese retorno.
+3. Revisa el plazo:
+   - Factura (01), Exportación (11) y Sujeto Excluido (14): **3 meses** desde el sello.
+   - Los demás (Crédito Fiscal 03, notas 05/06, etc.): hasta el **10.º día hábil del mes siguiente** a
+     la emisión. Esto incluye Liquidación (08), Doc. Contable de Liquidación (09) y Donación (15).
+   - Fuera de plazo el MH la rechaza (`422 invalidacion_rechazada`). Para un CCF vencido, lo normal es
+     una Nota de Crédito (05).
+
+## Tipo de anulación
+
+| `tipoAnulacion` | Cuándo                                       | Requiere                                         |
+| --------------- | -------------------------------------------- | ------------------------------------------------ |
+| `1`             | Error en la información                      | `codigoGeneracionReemplazo` (emite antes el correcto) |
+| `2`             | Rescindir la operación (la venta no ocurrió) | —                                                |
+| `3`             | Otro                                         | `motivoAnulacion` y `codigoGeneracionReemplazo`  |
+
+La Nota de Crédito (05), el Comprobante de Liquidación (08) y los eventos no llevan documento de
+reemplazo: se invalidan y después se emite el correcto, así que `codigoGeneracionReemplazo` se ignora.
+
+Opcionales: `solicitante` (por defecto, el receptor del documento) y `responsable` (por defecto, el
+configurado en el emisor), cada uno `{ nombre, tipoDocumento, numDocumento }`.
+
+## Invalidar
+
+<Tabs syncKey="via">
+<TabItem label="curl">
+
+```bash
+curl https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/invalidar \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "tipoAnulacion": 2, "motivoAnulacion": "Operación rescindida" }'
+```
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+openfactura dte invalidar 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 --tipo 2 --motivo "Operación rescindida"
+openfactura dte invalidar <codigo> --tipo 1 --reemplazo <codigo-del-dte-que-lo-corrige>
+```
+
+</TabItem>
+<TabItem label="MCP">
+
+`dte_invalidar` con `codigoGeneracion`, `tipoAnulacion` y, si aplica, `motivoAnulacion` y
+`codigoGeneracionReemplazo`. El asistente debe resumirte la operación y pedirte un "sí" explícito.
+
+</TabItem>
+</Tabs>
+
+La respuesta es el documento, ahora en estado `invalidado`.
+
+## Invalidar un evento
+
+La misma ruta invalida un evento de retorno u operaciones especiales si recibe su código de
+generación. Entonces responde `{ "invalidado": true, "tipo": "retorno", "codigoGeneracion": "…" }`.
+Un retorno se invalida dentro de los 4 días siguientes a su sello.

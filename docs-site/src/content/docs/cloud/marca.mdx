@@ -1,0 +1,36 @@
+---
+title: Marca y correo
+description: Disponible en Open Factura Cloud. Tu logo en el PDF y los documentos por correo a tus receptores.
+sidebar:
+  badge:
+    text: Cloud
+    variant: tip
+---
+
+## Correo al receptor
+
+Cuando Hacienda sella un documento de **producción** y el receptor tiene correo, se lo enviamos
+desde `facturas@openfactura.co` con el nombre de tu empresa, el PDF y el JSON oficial (con firma y
+sello) adjuntos. Las respuestas llegan al correo de tu empresa. Si un envío falla, se reintenta.
+
+| Método y ruta | Descripción |
+|---|---|
+| `POST /api/v1/ext/correo/dte/:codigo` | Envía (o reenvía) un documento. Cuerpo opcional `{ "para": "otro@correo.com" }`; por defecto, al receptor. |
+| `GET /api/v1/ext/correo/dte/:codigo` | Envíos de un documento: `para`, `origen` (`auto`\|`manual`), `estado`, `intentos`. |
+
+En el MCP: `dte_enviar_correo`.
+
+## Marca
+
+| Método y ruta | Permiso | Descripción |
+|---|---|---|
+| `GET /api/v1/ext/marca` | `emisor:read` | `logo` (data URL), `correoRespuesta`, `ocultarOpenFactura`, `puedeOcultar`. |
+| `PUT /api/v1/ext/marca/logo` | `emisor:write` | `{ "base64": "…" }`: PNG o JPG de hasta 200 KB. Sale en el PDF de la API, del MCP y del correo. |
+| `DELETE /api/v1/ext/marca/logo` | `emisor:write` | Quita el logo. |
+| `PUT /api/v1/ext/marca` | `emisor:write` | `{ "correoRespuesta": "facturacion@tuempresa.com" \| null, "ocultarOpenFactura": true }`. |
+
+`ocultarOpenFactura` (el correo sale sólo con tu nombre, sin «vía Open Factura») está incluido en
+los planes **Pro** y **Platform**; en otro plan responde `402 plan_requerido`. Con Plataforma, cada
+cliente configura su propia marca en su espacio.
+
+Estas funciones son exclusivas de la versión administrada y no forman parte del código abierto.

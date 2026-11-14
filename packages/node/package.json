@@ -1,0 +1,51 @@
+{
+  "name": "@openfactura/node",
+  "version": "0.1.0",
+  "description": "SDK de la API de Open Factura (facturación electrónica de El Salvador, DTE): tipado, con reintentos e idempotencia, y Plataforma para integrar a tus clientes.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xaviigna/openfactura.git",
+    "directory": "packages/node"
+  },
+  "homepage": "https://docs.openfactura.co/herramientas/sdk-node/",
+  "bugs": "https://github.com/xaviigna/openfactura/issues",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "dte",
+    "el-salvador",
+    "factura-electronica",
+    "hacienda",
+    "sdk",
+    "api"
+  ],
+  "scripts": {
+    "generar": "bun scripts/generar.ts",
+    "build": "tsup",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.0"
+  }
+}

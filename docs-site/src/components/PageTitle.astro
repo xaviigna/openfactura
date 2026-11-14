@@ -1,0 +1,444 @@
+---
+// Título de la página con el menú «Copiar página» (Markdown, asistentes de IA y servidor MCP).
+import { enlaceCursor, enlaceVSCode, idiomaDe, SITIO, URL_MCP } from '../lib/mcp'
+
+const { entry } = Astro.locals.starlightRoute
+const ruta = decodeURI(Astro.url.pathname)
+const md = `${ruta.replace(/\/+$/, '') || '/index'}.md`
+// Textos del menú en el idioma de la página (español en la raíz, inglés en /en/).
+const t = {
+  es: {
+    pregunta: `Lee ${SITIO}${md} y responde mis preguntas sobre Open Factura.`,
+    copiar: 'Copiar página',
+    copiarDetalle: 'Copia la página en Markdown para LLMs',
+    chatgpt: 'Abrir en ChatGPT',
+    claude: 'Abrir en Claude',
+    preguntar: 'Pregunta sobre esta página',
+    mcp: 'Copiar servidor MCP',
+    mcpDetalle: 'Copia la URL del servidor MCP',
+    cursor: 'Conectar con Cursor',
+    cursorDetalle: 'Instala el servidor MCP en Cursor',
+    vscode: 'Conectar con VS Code',
+    vscodeDetalle: 'Instala el servidor MCP en VS Code',
+    masOpciones: 'Más opciones para esta página',
+    opciones: 'Opciones de la página',
+    copiado: '¡Copiado!',
+    error: 'No se pudo copiar',
+  },
+  en: {
+    pregunta: `Read ${SITIO}${md} and answer my questions about Open Factura.`,
+    copiar: 'Copy page',
+    copiarDetalle: 'Copy the page as Markdown for LLMs',
+    chatgpt: 'Open in ChatGPT',
+    claude: 'Open in Claude',
+    preguntar: 'Ask about this page',
+    mcp: 'Copy MCP server',
+    mcpDetalle: 'Copy the MCP server URL',
+    cursor: 'Connect to Cursor',
+    cursorDetalle: 'Install the MCP server in Cursor',
+    vscode: 'Connect to VS Code',
+    vscodeDetalle: 'Install the MCP server in VS Code',
+    masOpciones: 'More options for this page',
+    opciones: 'Page options',
+    copiado: 'Copied!',
+    error: 'Could not copy',
+  },
+}[idiomaDe(Astro.locals.starlightRoute.lang)]
+const pregunta = encodeURIComponent(t.pregunta)
+const mostrar = entry.id !== '404' && !entry.id.endsWith('/404')
+
+const iconos = {
+  copiar:
+    '<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/>',
+  chat: '<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12Z"/>',
+  chispa:
+    '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>',
+  enchufe: '<path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0Z"/><path d="M12 17v4"/>',
+  cubo: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+  codigo: '<path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+}
+const svg = (nombre: keyof typeof iconos, clase = 'icono') =>
+  `<svg class="${clase}" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconos[nombre]}</svg>`
+const externo =
+  '<svg class="externo" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>'
+
+const opciones = [
+  {
+    accion: 'copiar',
+    icono: 'copiar',
+    titulo: t.copiar,
+    detalle: t.copiarDetalle,
+  },
+  {
+    href: `https://chatgpt.com/?q=${pregunta}`,
+    icono: 'chat',
+    titulo: t.chatgpt,
+    detalle: t.preguntar,
+  },
+  {
+    href: `https://claude.ai/new?q=${pregunta}`,
+    icono: 'chispa',
+    titulo: t.claude,
+    detalle: t.preguntar,
+  },
+  {
+    accion: 'mcp',
+    icono: 'enchufe',
+    titulo: t.mcp,
+    detalle: t.mcpDetalle,
+  },
+  {
+    href: enlaceCursor,
+    icono: 'cubo',
+    titulo: t.cursor,
+    detalle: t.cursorDetalle,
+  },
+  {
+    href: enlaceVSCode,
+    icono: 'codigo',
+    titulo: t.vscode,
+    detalle: t.vscodeDetalle,
+  },
+] as const
+---
+
+<div class="titulo-pagina">
+  <h1 id="_top">{entry.data.title}</h1>
+  {
+    mostrar && (
+      <menu-copiar
+        class="copiar"
+        data-md={md}
+        data-mcp={URL_MCP}
+        data-copiar={t.copiar}
+        data-copiado={t.copiado}
+        data-error={t.error}
+      >
+        <div class="grupo">
+          <a class="principal" href={md} data-accion="copiar">
+            <Fragment set:html={svg('copiar')} />
+            <span class="etiqueta">{t.copiar}</span>
+          </a>
+          <button
+            class="chevron"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-label={t.masOpciones}
+            hidden
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+        <div class="menu" role="menu" aria-label={t.opciones} hidden>
+          {opciones.map((o) => {
+            const contenido = (
+              <>
+                <span class="caja-icono">
+                  <Fragment set:html={svg(o.icono)} />
+                </span>
+                <span class="texto">
+                  <span class="titulo">
+                    {o.titulo}
+                    {'href' in o && <Fragment set:html={externo} />}
+                  </span>
+                  <span class="detalle" data-detalle={o.detalle}>
+                    {o.detalle}
+                  </span>
+                </span>
+              </>
+            )
+            return 'href' in o ? (
+              <a
+                role="menuitem"
+                tabindex="-1"
+                href={o.href}
+                target={o.href.startsWith('https:') ? '_blank' : undefined}
+                rel="noopener noreferrer"
+              >
+                {contenido}
+              </a>
+            ) : (
+              <button role="menuitem" tabindex="-1" type="button" data-accion={o.accion}>
+                {contenido}
+              </button>
+            )
+          })}
+        </div>
+        <span class="sr-only" aria-live="polite" data-aviso />
+      </menu-copiar>
+    )
+  }
+</div>
+
+<script>
+  class MenuCopiar extends HTMLElement {
+    connectedCallback() {
+      const chevron = this.querySelector<HTMLButtonElement>('.chevron')!
+      const menu = this.querySelector<HTMLElement>('.menu')!
+      const items = [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+      const aviso = this.querySelector<HTMLElement>('[data-aviso]')!
+      const md = this.dataset.md!
+      chevron.hidden = false
+
+      const abrir = (foco: 'primero' | 'ultimo' | null) => {
+        menu.hidden = false
+        chevron.setAttribute('aria-expanded', 'true')
+        if (foco) items[foco === 'primero' ? 0 : items.length - 1].focus()
+      }
+      const cerrar = (devolverFoco = false) => {
+        if (menu.hidden) return
+        menu.hidden = true
+        chevron.setAttribute('aria-expanded', 'false')
+        if (devolverFoco) chevron.focus()
+      }
+
+      const avisar = (destino: HTMLElement, texto: string, original: string) => {
+        destino.textContent = texto
+        aviso.textContent = texto
+        setTimeout(() => {
+          destino.textContent = original
+        }, 2000)
+      }
+
+      const copiarPagina = async () => {
+        const texto = fetch(md).then((r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`)
+          return r.text()
+        })
+        // Safari exige escribir en el portapapeles durante el clic: se le pasa la promesa.
+        if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+          const blob = texto.then((t) => new Blob([t], { type: 'text/plain' }))
+          await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })])
+        } else {
+          await navigator.clipboard.writeText(await texto)
+        }
+      }
+
+      const ejecutar = async (accion: string, origen: HTMLElement) => {
+        const etiqueta =
+          origen.querySelector<HTMLElement>('.etiqueta') ??
+          origen.querySelector<HTMLElement>('.detalle')!
+        const original =
+          etiqueta.dataset.detalle ?? (etiqueta.classList.contains('etiqueta') ? this.dataset.copiar! : '')
+        try {
+          if (accion === 'copiar') await copiarPagina()
+          else await navigator.clipboard.writeText(this.dataset.mcp!)
+          avisar(etiqueta, this.dataset.copiado!, original)
+        } catch {
+          avisar(etiqueta, this.dataset.error!, original)
+        }
+      }
+
+      this.querySelector<HTMLAnchorElement>('.principal')!.addEventListener('click', (e) => {
+        e.preventDefault()
+        ejecutar('copiar', e.currentTarget as HTMLElement)
+      })
+
+      chevron.addEventListener('click', () => (menu.hidden ? abrir(null) : cerrar()))
+      chevron.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          abrir('primero')
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          abrir('ultimo')
+        }
+      })
+
+      for (const item of items) {
+        item.addEventListener('click', (e) => {
+          const accion = item.dataset.accion
+          if (accion) {
+            e.preventDefault()
+            ejecutar(accion, item)
+          } else cerrar()
+        })
+      }
+
+      menu.addEventListener('keydown', (e) => {
+        const actual = items.indexOf(document.activeElement as HTMLElement)
+        const mover = (i: number) => items[(i + items.length) % items.length].focus()
+        if (e.key === 'ArrowDown') mover(actual + 1)
+        else if (e.key === 'ArrowUp') mover(actual - 1)
+        else if (e.key === 'Home') mover(0)
+        else if (e.key === 'End') mover(items.length - 1)
+        else if (e.key === 'Escape') cerrar(true)
+        else if (e.key === 'Tab') return cerrar()
+        else if (e.key === ' ' && document.activeElement instanceof HTMLAnchorElement) {
+          document.activeElement.click()
+        } else return
+        e.preventDefault()
+      })
+
+      document.addEventListener('click', (e) => {
+        if (!this.contains(e.target as Node)) cerrar()
+      })
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !menu.hidden) cerrar(true)
+      })
+    }
+  }
+  customElements.define('menu-copiar', MenuCopiar)
+</script>
+
+<style>
+  @layer starlight.core {
+    h1 {
+      margin-top: 1rem;
+      font-size: var(--sl-text-h1);
+      line-height: var(--sl-line-height-headings);
+      font-weight: 500;
+      color: var(--sl-color-white);
+    }
+  }
+
+  .titulo-pagina {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+  }
+
+  .copiar {
+    position: relative;
+    margin-top: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .grupo {
+    display: flex;
+    border: 1px solid var(--of-borde);
+    border-radius: 10px;
+    background: var(--of-superficie);
+    overflow: hidden;
+  }
+
+  .principal,
+  .chevron {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    height: 2.125rem;
+    padding: 0 0.75rem;
+    border: 0;
+    background: transparent;
+    color: var(--sl-color-gray-1);
+    font: inherit;
+    font-size: var(--sl-text-sm);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .chevron {
+    padding: 0 0.5rem;
+    border-inline-start: 1px solid var(--of-borde);
+    color: var(--sl-color-gray-2);
+  }
+
+  .principal:hover,
+  .chevron:hover,
+  .chevron[aria-expanded='true'] {
+    background: var(--of-superficie-alta);
+    color: var(--sl-color-white);
+  }
+
+  .principal:focus-visible,
+  .chevron:focus-visible,
+  .menu [role='menuitem']:focus-visible {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: -2px;
+  }
+
+  .menu {
+    position: absolute;
+    inset-inline-end: 0;
+    top: calc(100% + 0.5rem);
+    z-index: 20;
+    width: min(20rem, calc(100vw - 2rem));
+    padding: 0.375rem;
+    border: 1px solid var(--of-borde);
+    border-radius: 14px;
+    background: var(--of-superficie);
+    box-shadow: 0 16px 40px rgb(0 0 0 / 0.55);
+  }
+
+  .menu[hidden] {
+    display: none;
+  }
+
+  .menu [role='menuitem'] {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.55rem 0.625rem;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .menu [role='menuitem']:hover,
+  .menu [role='menuitem']:focus {
+    background: var(--of-superficie-alta);
+  }
+
+  .caja-icono {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--of-borde);
+    border-radius: 8px;
+    color: var(--sl-color-gray-1);
+  }
+
+  .texto {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.35;
+  }
+
+  .titulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-sm);
+    font-weight: 500;
+  }
+
+  .titulo :global(.externo) {
+    color: var(--sl-color-gray-3);
+  }
+
+  .detalle {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+  }
+
+  /* En pantallas estrechas el botón va debajo del título y el menú se abre hacia la derecha. */
+  @media (max-width: 50rem) {
+    .titulo-pagina {
+      flex-direction: column;
+    }
+    .copiar {
+      margin-top: 0;
+    }
+    .menu {
+      inset-inline-start: 0;
+      inset-inline-end: auto;
+    }
+  }
+</style>

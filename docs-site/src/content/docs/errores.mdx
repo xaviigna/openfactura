@@ -1,0 +1,57 @@
+---
+title: Errores
+description: El formato común de errores y qué hacer con cada código.
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+Todo error tiene la misma forma:
+
+```json
+{ "error": { "code": "dte_invalido", "message": "…", "details": {} } }
+```
+
+Decide siempre por `code`, nunca por el texto de `message`. Los códigos son contrato público y no
+cambian de nombre.
+
+## Códigos
+
+| HTTP | `code`                         | Qué pasó                                                                  | Qué hacer                                                                                       |
+| ---- | ------------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 400  | `datos_invalidos`              | Cuerpo o parámetros inválidos; `details` = `[{ ruta, mensaje }]`          | Corrige cada ruta y repite.                                                                     |
+| 400  | `dte_invalido`                 | El DTE no cumple el esquema del MH; `details.problemas` = `[{ ruta, mensaje, regla }]`. No se emitió nada | Corrige y vuelve a validar.                                         |
+| 401  | `no_autenticado`               | Falta sesión, o la clave es inválida, fue revocada o expiró               | Revisa la clave o crea otra.                                                                    |
+| 402  | `plan_requerido`               | El plan de la cuenta no incluye la operación (sólo en la nube)            | Mejora tu plan; no se consumió número de control.                                               |
+| 403  | `sin_permiso`                  | Falta el permiso `details.permiso`                                        | Usa una clave con ese permiso.                                                                  |
+| 403  | `origen_no_permitido`          | Petición con cookie desde otro origen                                     | Usa el panel o una clave de API.                                                                |
+| 404  | `no_encontrado`                | El recurso no existe en tu organización                                   | Revisa el id o el código.                                                                       |
+| 409  | `sin_organizacion`, `sin_organizacion_activa` | La sesión no tiene organización activa                      | Crea o activa una organización.                                                                 |
+| 409  | `emisor_no_configurado`, `credenciales_incompletas`, `sin_punto_venta` | Falta configuración                  | Complétala en el panel (**Emisor**).                                                            |
+| 409  | `nit_bloqueado`                | El NIT del emisor no puede cambiarse después de emitir documentos        | Crea otra organización para otro NIT.                                                           |
+| 409  | `estado_invalido`              | El documento no está en un estado que permita la operación                | Consulta el documento.                                                                          |
+| 409  | `ambiente_distinto`            | El documento o evento es de otro ambiente                                 | Usa la clave del ambiente correcto.                                                             |
+| 409  | `retorno_excedido`             | El retorno supera lo que queda del documento                              | `details.disponible` dice cuánto queda.                                                         |
+| 409  | `retorno_vigente`              | El documento tiene un retorno vigente                                     | Invalida antes el retorno (`details.codigoGeneracion`).                                         |
+| 409  | `idempotencia_distinta`        | Esa `Idempotency-Key` ya se usó con otro cuerpo                           | Otra clave para otro documento; el mismo cuerpo para el mismo.                                  |
+| 409  | `idempotencia_en_curso`        | El primer intento sigue en proceso                                        | Espera y repite con la misma clave.                                                             |
+| 409  | `cliente_repetido`, `producto_repetido`, `codigo_repetido` | Ya existe un registro con ese documento o código | Actualiza el existente.                                                                         |
+| 409  | `sin_archivo`                  | El documento sigue pendiente y aún no tiene archivo                       | Consulta de nuevo en unos minutos.                                                              |
+| 409  | `simulador_inactivo`           | Credenciales de prueba pedidas a un servidor sin simulador                | Carga credenciales reales del MH.                                                              |
+| 422  | `dte_rechazado`                | El MH rechazó el documento; el número de control queda como rechazado     | Muestra `details.mh.observaciones`, corrige y emite uno nuevo con otra `Idempotency-Key`.       |
+| 422  | `invalidacion_rechazada`       | El MH rechazó la invalidación (a menudo, fuera de plazo)                  | Revisa `details.mh` y los [plazos](/guias/invalidacion/).                                       |
+| 422  | `contingencia_rechazada`       | El MH rechazó el evento de contingencia                                   | Revisa `details.mh`.                                                                            |
+| 422  | `evento_rechazado`             | El MH rechazó un retorno u operaciones especiales                         | Corrige y reenvía con otra `Idempotency-Key`.                                                   |
+| 429  | `limite_excedido`              | Demasiadas peticiones                                                     | Espera `Retry-After` segundos.                                                                  |
+| 429  | `limite_plan`                  | Se alcanzó el límite del plan, p. ej. DTE del mes (sólo en la nube)       | Mejora tu plan o espera al siguiente periodo; no se consumió número de control.                 |
+| 500  | `error_interno`                | Error inesperado del servidor                                             | Reintenta; si persiste, repórtalo.                                                              |
+| 502  | `mh_credenciales_rechazadas`   | El MH no aceptó la contraseña de API o el certificado                     | Revisa **Empresa y Hacienda → Credenciales del MH**.                                                        |
+| 502  | `mh_no_disponible`             | No se pudo hablar con el MH; no se consumió número de control             | Reintenta con la misma `Idempotency-Key`.                                                       |
+| 502  | `emision_fallida`              | No se pudo firmar; el documento quedó `rechazado` sin transmitirse        | Revisa el certificado y emite de nuevo.                                                         |
+| 502  | `emision_incierta`             | No se pudo confirmar el resultado; el documento queda `pendiente`         | **No emitas otro.** Consulta `details.codigoGeneracion`; se concilia solo con el MH.             |
+
+En `details.mh` el MH informa `{ codigo, mensaje, observaciones[] }`.
+
+<Aside>
+La lista completa de códigos también está en el esquema `Error` de la
+[referencia de la API](/api/).
+</Aside>

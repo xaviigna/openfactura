@@ -1,0 +1,41 @@
+---
+title: Rate limits
+description: How many requests each key allows, the RateLimit headers, and how to retry after a 429.
+---
+
+| What                                  | Limit                           |
+| ------------------------------------- | ------------------------------- |
+| Each API key                          | 120 requests per minute         |
+| Each dashboard session                | 600 requests per minute         |
+| Attempts with invalid keys, per IP    | 30 per minute                   |
+| Session routes (`/api/auth/*`)        | Per-IP limit                    |
+| Body size                             | 512 KB                          |
+
+On a self-hosted installation, the per-key limit is changed with the `LIMITE_CLAVE_POR_MINUTO`
+variable.
+
+## Headers
+
+Every response authenticated with an API key includes:
+
+```http
+RateLimit-Limit: 120
+RateLimit-Remaining: 117
+RateLimit-Reset: 42
+```
+
+`RateLimit-Reset` is the number of seconds until the window resets.
+
+## When you exceed the limit
+
+`429 limite_excedido` with the `Retry-After` header (seconds) and `details.reintentarEn`:
+
+```json
+{ "error": { "code": "limite_excedido", "message": "…", "details": { "reintentarEn": 18 } } }
+```
+
+Wait `Retry-After` seconds and retry. If it was an issuance, use the **same**
+[`Idempotency-Key`](/en/guias/idempotencia/). The CLI exits with code `4` and prints the
+`Retry-After`.
+
+A body larger than 512 KB gets `413` with the code `datos_invalidos`.

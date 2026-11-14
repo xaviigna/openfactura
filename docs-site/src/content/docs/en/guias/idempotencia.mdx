@@ -1,0 +1,46 @@
+---
+title: Idempotency
+description: Retry an issuance with the same Idempotency-Key and never issue the same document twice.
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+An issuance has fiscal effect. If the network fails right after you send it, you don't know whether
+the document was issued. That's why these routes accept the `Idempotency-Key` header:
+
+- `POST /dte`
+- `POST /dte/{codigo}/retorno`
+- `POST /eventos/operaciones-especiales`
+
+```bash
+curl https://app.openfactura.co/api/v1/dte \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: pedido-1042" \
+  -d @factura.json
+```
+
+## Rules
+
+- The key is yours: a UUID or an identifier from your system (`pedido-1042`), up to 200 characters.
+- **Same key and same body** → the original response, with the header `Idempotent-Replayed: true`.
+  Nothing is issued twice.
+- **Same key and a different body** → `409 idempotencia_distinta`.
+- **The first attempt is still in progress** → `409 idempotencia_en_curso`: wait a few seconds and
+  retry.
+- Keys are kept for **24 hours** and are **independent per environment**: a key used in test returns
+  nothing in production.
+- Successes, `dte_rechazado`, and `emision_incierta` are stored as the final response. Any other
+  error releases the key so you can retry.
+
+<Aside type="tip">
+Golden rule: **retry only with the same key**. A new key can create a second document with fiscal
+value. Use a new key only for a different document, or after a `dte_rechazado` once you fix the data.
+</Aside>
+
+## In the CLI and MCP
+
+- The CLI generates a UUID for every `dte emitir` and prints it to stderr **before** sending. To
+  retry: `openfactura dte emitir factura.json --idempotency-key <the same one>`.
+- The MCP tools `dte_emitir`, `dte_retorno`, and `operaciones_especiales_informar` require the
+  `idempotencyKey` argument.

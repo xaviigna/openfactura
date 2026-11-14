@@ -1,0 +1,142 @@
+---
+title: CLI
+description: openfactura, la línea de comandos para emitir, consultar e invalidar DTE desde la terminal, scripts e integración continua.
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+`@openfactura/cli` (MIT) habla con Open Factura sólo por su API REST: no firma ni transmite por su
+cuenta y no necesita el certificado de Hacienda en tu equipo. Requiere Node.js 20 o superior (también
+funciona con Bun).
+
+```bash
+npm i -g @openfactura/cli
+openfactura --version
+
+# o sin instalar
+npx @openfactura/cli --help
+```
+
+## Iniciar sesión
+
+```bash
+openfactura login --url https://app.openfactura.co
+# Clave de API (of_test_… u of_live_…): ← se teclea sin mostrarse
+```
+
+`login` verifica la clave y la guarda en `~/.config/openfactura/config.json` con permisos `0600`.
+Otras formas:
+
+```bash
+echo "$CLAVE" | openfactura login --url https://app.openfactura.co   # desde una tubería
+openfactura login --profile produccion                            # otro perfil
+openfactura logout
+```
+
+En tu propio servidor (sin panel), el operador crea la organización y una clave de pruebas con el
+`ADMIN_TOKEN` del servidor; la clave queda guardada como con `login` y el token no se guarda:
+
+```bash
+OPENFACTURA_ADMIN_TOKEN=… openfactura alta "Mi Empresa" --url https://TU-DOMINIO
+```
+
+En integración continua basta con variables de entorno:
+
+```bash
+export OPENFACTURA_URL=https://app.openfactura.co
+export OPENFACTURA_API_KEY=of_test_...
+openfactura whoami
+```
+
+| Valor            | Prioridad                                                                    |
+| ---------------- | ---------------------------------------------------------------------------- |
+| URL del servidor | `--url` → `OPENFACTURA_URL` → perfil guardado → `https://app.openfactura.co` |
+| Clave de API     | `OPENFACTURA_API_KEY` → perfil guardado                                      |
+| Perfil           | `--profile` → `OPENFACTURA_PROFILE` → `default`                              |
+
+## Comandos
+
+Todos aceptan `--json` (el JSON de la API en stdout), `--url`, `--profile` y `--help`.
+
+```bash
+openfactura whoami                      # actor, permisos, ambiente
+openfactura emisor                      # datos fiscales, establecimientos, credenciales cargadas
+
+openfactura clientes list --q "contribuyente"
+openfactura clientes add --file cliente.json
+openfactura productos list --q licencia
+openfactura productos add --codigo LIC-001 --descripcion "Licencia anual" --precio 100 --tipo-item 2
+
+openfactura catalogos CAT-013 --departamento 06
+
+openfactura dte validar factura.json
+openfactura dte emitir factura.json [--idempotency-key <clave>]
+openfactura dte list --tipo 01 --estado procesado --desde 2026-11-01 --hasta 2026-11-30
+openfactura dte get <codigo>
+openfactura dte json <codigo> -o dte.json
+openfactura dte pdf <codigo> -o factura.pdf
+openfactura dte invalidar <codigo> --tipo 2 --motivo "Operación rescindida"
+openfactura dte retorno <codigo> retorno.json
+
+openfactura eventos operaciones-especiales simplificadas.json
+openfactura eventos list --tipo retorno
+openfactura eventos get|json|pdf <codigo>
+
+openfactura contingencia transmitir
+
+openfactura certificacion estado              # sólo en Open Factura Cloud
+openfactura certificacion ejecutar            # emite las pruebas mínimas (Open Factura Cloud)
+```
+
+El archivo de `dte emitir` es el mismo cuerpo de `POST /api/v1/dte` (ve
+[Emitir documentos](/guias/emitir/)). `-` lee de la entrada estándar.
+
+<Aside>
+Con una clave `of_live_…`, `dte emitir`, `dte retorno`, `eventos operaciones-especiales`,
+`dte invalidar` y `contingencia transmitir` piden confirmación. Usa `--yes` para omitirla; sin una
+terminal interactiva, `--yes` es obligatorio.
+</Aside>
+
+## Tus clientes (Plataforma)
+
+Con [Plataforma](/cloud/plataforma/) (Open Factura Cloud) administras las empresas de tus clientes
+desde la terminal. `plataforma …` usa siempre **tu** clave (habilitada para Plataforma); `usar`
+cambia de contexto, como las cuentas de `gh` o los contextos de `kubectl`:
+
+```bash
+openfactura plataforma add "Casa Barista" --external-id cb-1 --nit 0614-290786-102-3
+openfactura plataforma enlace cb-1             # su enlace para activar la cuenta
+openfactura plataforma list                    # estado y qué le falta (→ el que usas)
+
+openfactura usar cb-1                          # desde aquí actúas como Casa Barista
+openfactura dte emitir factura.json            # se emite en SU espacio, con su numeración
+openfactura webhooks add --url https://pos.casabarista.sv/hooks
+openfactura usar --yo                          # de vuelta en tu cuenta
+
+openfactura plataforma clave cb-1 --live --yes # clave para el sistema del cliente (sólo emite por él)
+```
+
+`usar` crea **una vez** una clave en el espacio del cliente (de pruebas; con `--live`, de
+producción, con confirmación) y la guarda en tu perfil con permisos `0600`. Al cambiar de cliente
+no se crean claves nuevas. `whoami` muestra con quién actúas. Con `OPENFACTURA_API_KEY` definida,
+manda esa clave y se ignora el cliente en uso.
+
+## En scripts
+
+```bash
+codigo=$(openfactura dte emitir factura.json --json | jq -r .codigoGeneracion)
+openfactura dte pdf "$codigo" -o "facturas/$codigo.pdf"
+```
+
+Los errores van a stderr como `Error [codigo]: mensaje`; con `--json`, stderr recibe el JSON de error
+de la API.
+
+| Salida | Significado                                                       |
+| ------ | ----------------------------------------------------------------- |
+| `0`    | Todo bien                                                         |
+| `1`    | Error de la API o de validación (incluye errores de red)          |
+| `2`    | Uso incorrecto: opción inválida, archivo ilegible, falta `--yes`  |
+| `3`    | Sin autenticar: falta la clave, o es inválida, revocada o expiró  |
+| `4`    | Límite de peticiones excedido                                     |
+
+La CLI también incluye un [servidor MCP por stdio](/herramientas/mcp/): `openfactura mcp`.

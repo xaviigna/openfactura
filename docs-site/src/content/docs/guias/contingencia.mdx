@@ -1,0 +1,80 @@
+---
+title: Contingencia
+description: Qué pasa cuando el MH no responde, cómo se transmiten después los documentos y en qué se diferencia de una emisión incierta.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+
+Si el MH no responde al emitir, Open Factura no pierde la venta: emite el documento en
+**contingencia** (modelo diferido). Responde `202 Accepted` con estado `contingencia`.
+
+- El documento **ya es válido**: quedó firmado y tiene número de control. Entrégalo normalmente.
+- **No lo vuelvas a emitir.**
+- Debe transmitirse al MH después, con el evento de contingencia.
+
+## Plazos (Normativa 2.0, regla 13.2)
+
+| Paso                                                         | Plazo                                       |
+| ------------------------------------------------------------ | ------------------------------------------- |
+| Reintentar la conexión con el MH                             | Como mínimo cada 15 minutos                 |
+| Transmitir el evento de contingencia                         | 24 horas desde que cesa la causa            |
+| Transmitir los documentos                                    | 72 horas desde el sello del evento          |
+| Contingencia de más de 3 días consecutivos                   | Informe Técnico de Contingencia **antes** del evento |
+
+**En producción el servidor la transmite solo**: cada 5 minutos reintenta y, cuando el MH responde,
+envía el evento y los documentos, así que los plazos de 24 y 72 horas se cumplen sin intervención.
+Si la contingencia pasa de **3 días**, deja de hacerlo: presenta a Hacienda el Informe Técnico de
+Contingencia y transmítela tú. `GET /resumen` trae `contingencia` (`documentos`, `desde`,
+`requiereInforme`) para mostrarlo. En el ambiente de pruebas no se transmite sola.
+
+## Transmitir a mano
+
+<Tabs syncKey="via">
+<TabItem label="curl">
+
+```bash
+curl -X POST https://app.openfactura.co/api/v1/contingencia/transmitir \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+```
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+openfactura contingencia transmitir
+```
+
+</TabItem>
+<TabItem label="Panel">
+
+Abre **Contingencia** en el panel y transmite los documentos pendientes.
+
+</TabItem>
+</Tabs>
+
+Requiere el permiso `dte:invalidate` y el **responsable** configurado en los datos del emisor.
+Open Factura envía el evento de contingencia con hasta 40 documentos del ambiente activo y luego
+transmite cada uno. La respuesta:
+
+```json
+{ "evento": { "id": "…", "codigoGeneracion": "…" }, "procesados": [], "rechazados": [], "restantes": 0 }
+```
+
+- `procesados`: documentos que recibieron sello.
+- `rechazados`: documentos que el MH rechazó.
+- `restantes`: si es mayor que 0, vuelve a llamar.
+- Si el MH vuelve a caer, lo que falta sigue en contingencia para el próximo intento.
+- Si el MH rechaza el evento: `422 contingencia_rechazada` con `details.mh`.
+
+## Contingencia no es emisión incierta
+
+| Situación               | Código / estado                  | Qué hacer                                                                                                  |
+| ----------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| El MH no respondió      | `202`, estado `contingencia`     | Entrega el documento; en producción la contingencia se transmite sola.                                    |
+| Resultado desconocido   | `502 emision_incierta`, `pendiente` | **No emitas otro.** Consulta `GET /dte/{details.codigoGeneracion}`; el servidor lo concilia solo con el MH cada pocos minutos. |
+| El MH no estaba disponible antes de firmar | `502 mh_no_disponible` | No se consumió número de control: reintenta con la misma `Idempotency-Key`.                              |
+
+<Aside>
+Los documentos en contingencia y los eventos de contingencia cuentan para las pruebas mínimas de
+Hacienda: ejercítalos en el ambiente de pruebas.
+</Aside>

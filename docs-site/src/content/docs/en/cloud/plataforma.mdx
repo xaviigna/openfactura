@@ -1,0 +1,173 @@
+---
+title: Plataforma — onboard your customers
+description: Available in Open Factura Cloud (Pro and Platform plans). One developer, many customers, each in its own isolated space.
+sidebar:
+  label: Plataforma
+  badge:
+    text: Cloud
+    variant: tip
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components'
+
+With **Plataforma** you build e-invoicing into each of your customers' systems (their ERP, their
+point of sale, their store) and manage it all from one place.
+
+```
+You (developer)
+ └─ Customer: Casa Barista           ← their own isolated space
+     ├─ Their company and MH credentials
+     ├─ Their branches and points of sale
+     ├─ Their documents, recipients, and products
+     └─ Their API keys                ← your system issues on their behalf with them
+ └─ Customer: Ferretería El Clavo    ← another space, isolated too
+```
+
+**Isolation.** Each customer is its own organization: its control numbers, its documents, and its
+(encrypted) credentials belong to it alone. A customer's key sees nothing of yours or of your other
+customers, and your keys don't issue on anyone's behalf. Your customer can disconnect whenever they
+want: their data remains theirs.
+
+## The full flow
+
+<Steps>
+
+1. **Enable one of your keys for Plataforma.** In the dashboard: *Clients → API access*. Only the
+   keys you enable there can manage customers. API base: `https://app.openfactura.co/cloud/plataforma`.
+
+2. **Create the customer.** What you already know about them arrives prefilled in their onboarding.
+
+   ```bash
+   curl https://app.openfactura.co/cloud/plataforma/clientes \
+     -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "nombre": "Casa Barista",
+       "externalId": "cliente-482",
+       "datos": { "nit": "0614-290786-102-3", "razonSocial": "CASA BARISTA, S.A. DE C.V.", "correo": "pagos@casabarista.sv" }
+     }'
+   ```
+
+   Their space exists from that moment (`organizationId`): you can configure it before the customer
+   arrives (from the dashboard, *Customers → the customer → Their account*) and create their keys and
+   webhooks. In production, it issues once the customer activates their account.
+
+3. **Send them their onboarding link.** Single use; it expires in 72 h (1 to 168 with
+   `expiraEnHoras`).
+
+   ```bash
+   curl -X POST https://app.openfactura.co/cloud/plataforma/clientes/cli_…/enlace \
+     -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA"
+   # → { "url": "https://app.openfactura.co/cloud/alta/…", "expira": 1763… }
+   ```
+
+   With the link, your customer creates their user and **activates their account**: they become the
+   owner, review what you configured, and complete whatever is missing (their Hacienda credentials,
+   if you didn't upload them). If they already use Open Factura with their company, they can connect
+   that one instead.
+
+4. **Find out when they're ready.** Subscribe a [webhook](/en/guias/webhooks/) to `cliente.listo`: it
+   arrives once when the customer can issue in test and again when they can in production. You can
+   also query `GET /clientes/:id`: `preparacion` (`conectado`, `pruebas`, `produccion`) and `falta`
+   (what is still missing).
+
+5. **Create their API key.** It works only in their space. Store it in your customer's system.
+
+   ```bash
+   curl https://app.openfactura.co/cloud/plataforma/clientes/cli_…/claves \
+     -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA" \
+     -H "Content-Type: application/json" \
+     -d '{ "nombre": "POS Casa Barista", "modo": "live", "scopes": ["dte:emit", "dte:read"] }'
+   # → { "clave": "of_live_…" }  (shown this one time only)
+   ```
+
+   <Aside>A test key on your account can only create test keys for your customers.</Aside>
+
+6. **Issue from your customer's system** with the [usual API](/en/guias/emitir/) and their key. Open
+   Factura validates the document, signs it, transmits it to Hacienda, and returns the stamp, the
+   PDF, and the JSON. In production, if the recipient has an email address, they receive it with the
+   PDF (with your customer's logo) and the official JSON: see
+   [Branding and email](/en/cloud/marca/).
+
+   ```bash
+   curl https://app.openfactura.co/api/v1/dte \
+     -H "Authorization: Bearer $CLAVE_DEL_CLIENTE" \
+     -H "Idempotency-Key: venta-10931" \
+     -H "Content-Type: application/json" \
+     -d '{ "tipoDte": "01", "puntoVentaId": "pv_sucursal_centro", "datos": { … } }'
+   ```
+
+</Steps>
+
+## Branches
+
+Each customer registers its establishments and points of sale (`/api/v1/establecimientos`,
+`/api/v1/puntos-venta`, with its key). Each document states who issues it with `puntoVentaId`, and
+each point of sale keeps its own numbering. A customer with three stores issues from all three with a
+single integration.
+
+## Multi-tenant webhooks
+
+Your webhooks **also receive the events of all your customers** (`dte.procesado`, `dte.rechazado`,
+`dte.contingencia`, `dte.invalidado`…) with `cliente` in `datos` so you know whose it is. Your
+customer still receives their own, without `cliente`.
+
+Should a customer's system receive **only** its own events? Create the webhook in their space:
+`POST /clientes/:id/webhooks` (or in the dashboard, *New webhook → For whom?*).
+
+```json
+{
+  "evento": "dte.procesado",
+  "organizacion": "org_de_tu_plataforma",
+  "ambiente": "01",
+  "datos": {
+    "codigoGeneracion": "0862382B-…",
+    "cliente": { "id": "cli_…", "externalId": "cliente-482", "nombre": "Casa Barista", "organizationId": "org_…" }
+  }
+}
+```
+
+`cliente.listo` carries `{ id, externalId, nombre, organizationId, preparacion }`.
+
+## With your AI agent (MCP)
+
+With a key enabled for Plataforma, the [MCP](/en/herramientas/mcp/) adds these tools:
+
+| Tool | What it does |
+|---|---|
+| `plataforma_clientes_listar` | Your customers, their status, and what's missing |
+| `plataforma_cliente_crear` | Adds a customer (with prefilled data) |
+| `plataforma_cliente_enlace` | Their onboarding link |
+| `plataforma_cliente_clave_crear` | An API key in their space |
+
+*"Add Casa Barista, NIT 0614-290786-102-3, and give me their onboarding link."*
+
+## Reference
+
+Every endpoint, with its fields, responses, and errors, is in the
+[Open Factura Cloud reference](/api-cloud/) (in Spanish). Summary:
+
+Base: `https://app.openfactura.co/cloud/plataforma`, with `Authorization: Bearer <key enabled for
+Plataforma>`. Errors use the [usual format](/en/errores/).
+
+| Method and route | Description |
+|---|---|
+| `POST /clientes` | Creates a pending customer. Body: `nombre` (2–120), `externalId?` (unique in your account), `datos?` { `nit`, `nrc`, `razonSocial`, `nombreComercial`, `correo`, `telefono` }. `201`. |
+| `GET /clientes` | Lists. Filters: `?estado=pendiente\|activo\|desactivado`, `?externalId=`. |
+| `GET /clientes/:id` | One customer: `estado`, `preparacion`, `falta`, `enlaceExpira`, `aceptado`, `organizationId`. |
+| `DELETE /clientes/:id` | Pending: deletes it. Active: deactivates it (their data remains theirs). |
+| `POST /clientes/:id/enlace` | Onboarding link. Optional body `{ expiraEnHoras: 1–168 }`. A new one invalidates the previous one. `409 cliente_no_pendiente` if they already connected. |
+| `GET /clientes/:id/empresa` | Their company as registered with Hacienda (NIT, NRC, legal name, activity, environment) and which credentials they uploaded. Never the credentials. |
+| `GET /clientes/:id/uso` | Production DTEs for the month (`?periodo=AAAA-MM`, i.e. YYYY-MM). |
+| `POST /clientes/:id/claves` | Key in their space: `nombre`, `modo` (`test`\|`live`), `scopes`, `expiraEnDias?`. `201`. |
+| `GET /clientes/:id/claves` | The keys you created for them (without the secret). |
+| `DELETE /clientes/:id/claves/:clave` | Revokes one of those keys. |
+| `POST /clientes/:id/webhooks` | Webhook in their space: receives only their events (without `cliente`). Body as in [`POST /api/v1/webhooks`](/en/guias/webhooks/). The secret only appears here. `201`. |
+| `GET /clientes/:id/webhooks` | The webhooks you created for them. |
+| `DELETE /clientes/:id/webhooks/:webhook` | Deletes one of those webhooks. |
+
+Specific errors: `402 plan_requerido` (Plataforma belongs to the Pro and Platform plans), `403
+clave_sin_plataforma` (the key isn't enabled), `403 modo_no_permitido`, `409 external_id_repetido`,
+`429 limite_plan` (the plan's company limit).
+
+This feature is exclusive to the managed version and is not part of the open-source code.

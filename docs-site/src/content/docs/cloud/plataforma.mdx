@@ -1,0 +1,170 @@
+---
+title: Plataforma — integra a tus clientes
+description: Disponible en Open Factura Cloud (planes Pro y Platform). Un desarrollador, muchos clientes, cada uno en su propio espacio aislado.
+sidebar:
+  label: Plataforma
+  badge:
+    text: Cloud
+    variant: tip
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components'
+
+Con **Plataforma** integras la facturación electrónica en el sistema de cada uno de tus clientes
+(su ERP, su punto de venta, su tienda) y la administras desde un solo lugar.
+
+```
+Tú (desarrollador)
+ └─ Cliente: Casa Barista            ← su propio espacio, aislado
+     ├─ Su empresa y credenciales del MH
+     ├─ Sus sucursales y puntos de venta
+     ├─ Sus documentos, receptores y productos
+     └─ Sus claves de API             ← tu sistema emite a su nombre con ellas
+ └─ Cliente: Ferretería El Clavo     ← otro espacio, otro aislamiento
+```
+
+**Aislamiento.** Cada cliente es una organización propia: su número de control, sus documentos y sus
+credenciales (cifradas) son sólo suyos. La clave de un cliente no ve nada de ti ni de tus otros
+clientes, y tus claves no emiten a nombre de nadie. Tu cliente puede desconectarse cuando quiera:
+sus datos siguen siendo suyos.
+
+## El flujo completo
+
+<Steps>
+
+1. **Habilita una clave tuya para Plataforma.** En el panel: *Clientes → Acceso por API*. Sólo las
+   claves que habilites ahí administran clientes. Base de la API: `https://app.openfactura.co/cloud/plataforma`.
+
+2. **Crea el cliente.** Lo que ya sabes de él llega prellenado a su alta.
+
+   ```bash
+   curl https://app.openfactura.co/cloud/plataforma/clientes \
+     -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "nombre": "Casa Barista",
+       "externalId": "cliente-482",
+       "datos": { "nit": "0614-290786-102-3", "razonSocial": "CASA BARISTA, S.A. DE C.V.", "correo": "pagos@casabarista.sv" }
+     }'
+   ```
+
+   Su espacio existe desde ese momento (`organizationId`): puedes configurarlo antes de que el
+   cliente llegue (desde el panel, *Clientes → el cliente → Su cuenta*) y crear sus claves y
+   webhooks. En producción emite cuando el cliente activa su cuenta.
+
+3. **Envíale su enlace de alta.** Un solo uso; vence en 72 h (de 1 a 168 con `expiraEnHoras`).
+
+   ```bash
+   curl -X POST https://app.openfactura.co/cloud/plataforma/clientes/cli_…/enlace \
+     -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA"
+   # → { "url": "https://app.openfactura.co/cloud/alta/…", "expira": 1763… }
+   ```
+
+   Con el enlace, tu cliente crea su usuario y **activa su cuenta**: queda como dueño, revisa lo
+   que configuraste y completa lo que falte (sus credenciales de Hacienda, si no las cargaste tú).
+   Si ya usa Open Factura con su empresa, puede conectar ésa en su lugar.
+
+4. **Entérate cuando esté listo.** Suscribe un [webhook](/guias/webhooks/) a `cliente.listo`: llega
+   una vez cuando el cliente puede emitir en pruebas y otra cuando puede en producción. También
+   puedes consultar `GET /clientes/:id`: `preparacion` (`conectado`, `pruebas`, `produccion`) y
+   `falta` (lo que le falta).
+
+5. **Crea su clave de API.** Funciona sólo en su espacio. Guárdala en el sistema de tu cliente.
+
+   ```bash
+   curl https://app.openfactura.co/cloud/plataforma/clientes/cli_…/claves \
+     -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA" \
+     -H "Content-Type: application/json" \
+     -d '{ "nombre": "POS Casa Barista", "modo": "live", "scopes": ["dte:emit", "dte:read"] }'
+   # → { "clave": "of_live_…" }  (sólo aparece esta vez)
+   ```
+
+   <Aside>Una clave de pruebas de tu cuenta sólo puede crear claves de pruebas de tus clientes.</Aside>
+
+6. **Emite desde el sistema de tu cliente** con la [API de siempre](/guias/emitir/) y su clave. Open
+   Factura valida el documento, lo firma, lo transmite a Hacienda y te devuelve el sello, el PDF y el
+   JSON. En producción, si el receptor tiene correo, le llega con el PDF (con el logo de tu cliente)
+   y el JSON oficial: ver [Marca y correo](/cloud/marca/).
+
+   ```bash
+   curl https://app.openfactura.co/api/v1/dte \
+     -H "Authorization: Bearer $CLAVE_DEL_CLIENTE" \
+     -H "Idempotency-Key: venta-10931" \
+     -H "Content-Type: application/json" \
+     -d '{ "tipoDte": "01", "puntoVentaId": "pv_sucursal_centro", "datos": { … } }'
+   ```
+
+</Steps>
+
+## Sucursales
+
+Cada cliente registra sus establecimientos y puntos de venta (`/api/v1/establecimientos`,
+`/api/v1/puntos-venta`, con su clave). Cada documento indica quién emite con `puntoVentaId`, y cada
+punto de venta lleva su propia numeración. Un cliente con tres tiendas emite desde las tres con una
+sola integración.
+
+## Webhooks multi-tenant
+
+Tus webhooks reciben **también los eventos de todos tus clientes** (`dte.procesado`,
+`dte.rechazado`, `dte.contingencia`, `dte.invalidado`…) con `cliente` en `datos` para saber de quién
+es. Tu cliente sigue recibiendo los suyos, sin `cliente`.
+
+¿El sistema de un cliente debe recibir **sólo** sus eventos? Crea el webhook en su espacio:
+`POST /clientes/:id/webhooks` (o en el panel, *Nuevo webhook → ¿Para quién?*).
+
+```json
+{
+  "evento": "dte.procesado",
+  "organizacion": "org_de_tu_plataforma",
+  "ambiente": "01",
+  "datos": {
+    "codigoGeneracion": "0862382B-…",
+    "cliente": { "id": "cli_…", "externalId": "cliente-482", "nombre": "Casa Barista", "organizationId": "org_…" }
+  }
+}
+```
+
+`cliente.listo` lleva `{ id, externalId, nombre, organizationId, preparacion }`.
+
+## Con tu agente de IA (MCP)
+
+Con una clave habilitada para Plataforma, el [MCP](/herramientas/mcp/) suma estas herramientas:
+
+| Herramienta | Hace |
+|---|---|
+| `plataforma_clientes_listar` | Tus clientes, su estado y qué les falta |
+| `plataforma_cliente_crear` | Agrega un cliente (con datos prellenados) |
+| `plataforma_cliente_enlace` | Su enlace de alta |
+| `plataforma_cliente_clave_crear` | Una clave de API en su espacio |
+
+*«Agrega a Casa Barista, NIT 0614-290786-102-3, y dame su enlace de alta.»*
+
+## Referencia
+
+Cada endpoint, con sus campos, respuestas y errores, está en la
+[Referencia de Open Factura Cloud](/api-cloud/). Resumen:
+
+Base: `https://app.openfactura.co/cloud/plataforma`, con `Authorization: Bearer <clave habilitada
+para Plataforma>`. Errores con el [formato de siempre](/errores/).
+
+| Método y ruta | Descripción |
+|---|---|
+| `POST /clientes` | Crea un cliente pendiente. Cuerpo: `nombre` (2–120), `externalId?` (único en tu cuenta), `datos?` { `nit`, `nrc`, `razonSocial`, `nombreComercial`, `correo`, `telefono` }. `201`. |
+| `GET /clientes` | Lista. Filtros: `?estado=pendiente\|activo\|desactivado`, `?externalId=`. |
+| `GET /clientes/:id` | Un cliente: `estado`, `preparacion`, `falta`, `enlaceExpira`, `aceptado`, `organizationId`. |
+| `DELETE /clientes/:id` | Pendiente: lo elimina. Activo: lo desactiva (sus datos siguen siendo suyos). |
+| `POST /clientes/:id/enlace` | Enlace de alta. Cuerpo opcional `{ expiraEnHoras: 1–168 }`. Uno nuevo invalida al anterior. `409 cliente_no_pendiente` si ya conectó. |
+| `GET /clientes/:id/empresa` | Su empresa ante Hacienda (NIT, NRC, razón social, actividad, ambiente) y qué credenciales cargó. Nunca las credenciales. |
+| `GET /clientes/:id/uso` | DTE de producción del mes (`?periodo=AAAA-MM`). |
+| `POST /clientes/:id/claves` | Clave en su espacio: `nombre`, `modo` (`test`\|`live`), `scopes`, `expiraEnDias?`. `201`. |
+| `GET /clientes/:id/claves` | Las claves que creaste para él (sin el secreto). |
+| `DELETE /clientes/:id/claves/:clave` | Revoca una de esas claves. |
+| `POST /clientes/:id/webhooks` | Webhook en su espacio: recibe sólo sus eventos (sin `cliente`). Cuerpo como [`POST /api/v1/webhooks`](/guias/webhooks/). El secreto sólo aparece aquí. `201`. |
+| `GET /clientes/:id/webhooks` | Los webhooks que creaste para él. |
+| `DELETE /clientes/:id/webhooks/:webhook` | Borra uno de esos webhooks. |
+
+Errores propios: `402 plan_requerido` (Plataforma es de los planes Pro y Platform), `403 clave_sin_plataforma`
+(la clave no está habilitada), `403 modo_no_permitido`, `409 external_id_repetido`, `429
+limite_plan` (empresas del plan).
+
+Esta función es exclusiva de la versión administrada y no forma parte del código abierto.

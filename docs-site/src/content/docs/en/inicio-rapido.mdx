@@ -1,0 +1,198 @@
+---
+title: Quickstart
+description: Create your account, register the issuer, generate a test key, and issue your first invoice with curl, the CLI, or MCP.
+---
+
+import { Aside, Steps, TabItem, Tabs } from '@astrojs/starlight/components'
+
+In this guide you issue an **Invoice (Factura, 01)** in the MH test environment. Nothing you do here
+has fiscal value.
+
+<Steps>
+
+1. **Create your account and organization.**
+
+   Go to [app.openfactura.co](https://app.openfactura.co), sign up (the password must be at least 10
+   characters long), and create an organization. You become its owner, with every permission.
+
+2. **Register the issuer.**
+
+   When you create the organization, guided onboarding asks for your tax details exactly as they
+   appear on your NRC card: NIT, NRC, name, economic activity, address (department, municipality, and
+   district), phone, and email. Saving creates the establishment `M001` and the point of sale `P001`.
+   You can edit them later under **Company & Tax Authority → Tax details**.
+
+3. **Connect to Hacienda.**
+
+   In the last onboarding step, upload the following for environment `00`:
+   - the test **certificate** (`.crt`) and the password of your private key,
+   - the **API password** you set in Hacienda's issuer portal (Sitio Emisores DTE).
+
+   When you click **Connect to Hacienda**, Open Factura checks that the password opens the key and
+   that the certificate's NIT matches the issuer's, then authenticates against the MH. Secrets are
+   stored encrypted and the API never returns them. If you choose "I'll do it later", onboarding stays
+   available from **Home**, and you can also upload the credentials under **Company & Tax Authority → MH credentials**.
+
+   <Aside>
+   No Hacienda credentials yet? See [Becoming an issuer with Hacienda](/en/hacienda/ser-emisor/).
+   To develop without them, you can [run Open Factura locally](/en/autoalojamiento/#on-your-machine)
+   with the MH simulator.
+   </Aside>
+
+4. **Create a test API key.**
+
+   Under **API keys → New key**, choose **test** mode and the `dte:read` and `dte:emit`
+   permissions. Copy the `of_test_…` key: it is shown only once.
+
+   ```bash
+   export OPENFACTURA_API_KEY=of_test_...
+   ```
+
+5. **Validate and issue your first invoice.**
+
+   On an Invoice, `precioUni` **includes VAT (IVA)**. Open Factura calculates the VAT, the rounding,
+   and the total.
+
+   <Tabs syncKey="via">
+   <TabItem label="curl">
+
+   Validate first: it doesn't consume a control number, sign, or transmit.
+
+   ```bash
+   curl https://app.openfactura.co/api/v1/dte/validar \
+     -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "tipoDte": "01",
+       "datos": { "items": [{ "descripcion": "Servicio", "cantidad": 2, "precioUni": 11.3 }] }
+     }'
+   ```
+
+   If `problemas` comes back empty, issue with your own `Idempotency-Key`:
+
+   ```bash
+   curl https://app.openfactura.co/api/v1/dte \
+     -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+     -H "Content-Type: application/json" \
+     -H "Idempotency-Key: primera-factura-001" \
+     -d '{
+       "tipoDte": "01",
+       "datos": { "items": [{ "descripcion": "Servicio", "cantidad": 2, "precioUni": 11.3 }] }
+     }'
+   ```
+
+   </TabItem>
+   <TabItem label="CLI">
+
+   ```bash
+   npm i -g @openfactura/cli
+   openfactura login --url https://app.openfactura.co   # prompts for the key without echoing it
+   ```
+
+   Save the body as `factura.json`:
+
+   ```json
+   {
+     "tipoDte": "01",
+     "datos": { "items": [{ "descripcion": "Servicio", "cantidad": 2, "precioUni": 11.3 }] }
+   }
+   ```
+
+   ```bash
+   openfactura dte validar factura.json
+   openfactura dte emitir factura.json
+   ```
+
+   The CLI generates and prints an `Idempotency-Key` before sending.
+
+   </TabItem>
+   <TabItem label="MCP">
+
+   Connect your agent (Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI, Windsurf,
+   Zed, Cline, or Goose) with the CLI, which uses the key saved by `login`:
+
+   ```bash
+   npx @openfactura/cli login
+   npx @openfactura/cli mcp install --todos     # or a single agent: cursor, codex, vscode…
+   ```
+
+   Any other MCP client connects to `https://openfactura.co/mcp` with the header
+   `Authorization: Bearer of_test_...`. Per-agent configuration is in
+   [Connect your agent](/en/herramientas/agentes/).
+
+   Then ask it, for example:
+
+   > Issue a final-consumer invoice for 2 services at $11.30 each, VAT included.
+
+   The assistant uses `dte_validar`, shows you the summary, and calls `dte_emitir` only once you
+   confirm.
+
+   </TabItem>
+   </Tabs>
+
+</Steps>
+
+## Response
+
+`201 Created` with the `Documento` processed by the MH:
+
+```json
+{
+  "id": "…",
+  "codigoGeneracion": "0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4",
+  "numeroControl": "DTE-01-M001P001-000000000000001",
+  "tipoDte": "01",
+  "ambiente": "00",
+  "estado": "procesado",
+  "fechaEmision": "2026-11-12",
+  "horaEmision": "01:38:12",
+  "receptorNombre": null,
+  "receptorDocumento": null,
+  "total": 22.6,
+  "selloRecibido": "20265EE94C1B2C4CBB56F56121E37F5AC8CA7D27",
+  "origen": "api",
+  "error": null,
+  "creado": 1794469092559,
+  "urlConsulta": "https://admin.factura.gob.sv/…"
+}
+```
+
+If the MH doesn't respond, you get `202 Accepted` with status `contingencia`: the document is already
+signed and valid, and it is transmitted later (see [Contingency](/en/guias/contingencia/)).
+
+## Deliver the document
+
+The recipient gets the **official JSON** and its **graphic representation** (PDF):
+
+<Tabs syncKey="via">
+<TabItem label="curl">
+
+```bash
+curl -o factura.json https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/json \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+curl -o factura.pdf https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/pdf \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+```
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+openfactura dte json 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 -o factura.json
+openfactura dte pdf 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 -o factura.pdf
+```
+
+</TabItem>
+<TabItem label="MCP">
+
+`dte_obtener` with the `codigoGeneracion` returns the status, the stamp, and the MH response. For the
+files, use the CLI or the API.
+
+</TabItem>
+</Tabs>
+
+## Next steps
+
+- [Issue each document type](/en/guias/emitir/)
+- [Idempotency](/en/guias/idempotencia/): retry without issuing twice.
+- [Environments](/en/ambientes/): go to production.

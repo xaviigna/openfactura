@@ -1,0 +1,107 @@
+---
+title: Certificación ante Hacienda
+description: Emite en un clic las pruebas mínimas que exige el Ministerio de Hacienda para autorizarte como emisor de DTE.
+---
+
+import { Aside, Steps, TabItem, Tabs } from '@astrojs/starlight/components'
+
+<Aside type="note" title="Disponible en Open Factura Cloud">
+  La certificación automática es parte de [Open Factura Cloud](https://openfactura.co). Si te
+  autoalojas, emite las pruebas mínimas por tu cuenta con la API o la CLI y lleva el conteo en el
+  Sitio Emisores DTE de Hacienda.
+</Aside>
+
+Para autorizarte como emisor, Hacienda exige que transmitas con éxito un mínimo de documentos en el
+ambiente de pruebas, dentro de los 2 meses de tu plazo. Open Factura los emite por ti:
+
+| Prueba                        | Mínimo |
+| ----------------------------- | ------ |
+| Factura (01)                  | 90     |
+| Comprobante de Crédito Fiscal (03) | 75 |
+| Evento de invalidación        | 5      |
+| Evento de contingencia        | 5      |
+
+Son las obligatorias para todo emisor del Sistema de Transmisión. Si vas a emitir otros documentos,
+al terminar pulsa **Certificar también los demás documentos**: emite además las pruebas de Nota de
+Remisión (50), Nota de Crédito (50), Nota de Débito (25), Comprobante de Retención (50), Comprobante
+de Liquidación (75), Documento Contable de Liquidación (50), Factura de Exportación (90), Sujeto
+Excluido (25), Donación (25) y los eventos de retorno (5) y operaciones especiales (5). Así puedes
+solicitar la autorización de todo de una vez.
+
+## Antes de empezar
+
+- Las **credenciales de pruebas** de Hacienda cargadas (certificado y contraseña de API).
+- Un **cliente contribuyente** (con NIT y NRC) que reciba los Créditos Fiscales de prueba.
+- El **responsable** del emisor: Hacienda lo exige en los eventos de invalidación y contingencia. La
+  página te lo pide si falta.
+
+## Cómo funciona
+
+<Steps>
+
+1. **Ensayo.** Emite una Factura, un Crédito Fiscal, una invalidación y un ciclo de contingencia. Si
+   algo está mal, aparece aquí y no en el documento 60. El panel se pausa al terminar el ensayo para
+   que compruebes el contador del Sitio Emisores DTE.
+2. **Volumen.** Emite el resto: hasta 90 Facturas y 75 Créditos Fiscales, y luego las
+   invalidaciones y las contingencias que falten. Una Factura invalidada sigue contando, igual que
+   en el contador de Hacienda.
+3. **Si Hacienda rechaza una prueba, se detiene** y te muestra el código y las observaciones del MH.
+   No gasta más números de control. Corrige la causa y reanuda: continúa donde quedó.
+4. **Al completar**, entra al Sitio Emisores DTE, comprueba el contador y abre **Solicitar
+   Autorización**.
+
+</Steps>
+
+Los Créditos Fiscales de prueba necesitan como receptor a **otro contribuyente**: Hacienda rechaza
+los que van dirigidos a tu propia empresa (`[receptor.nit] VALOR NO VALIDO`). Crea en **Clientes** uno
+con NIT, NRC, actividad económica y dirección, y elígelo antes de iniciar.
+
+<Tabs syncKey="via">
+<TabItem label="Panel">
+
+Abre **Certificación** y pulsa **Iniciar**. Puedes pausar y reanudar cuando quieras.
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+openfactura certificacion ejecutar              # lo obligatorio
+openfactura certificacion ejecutar --completo   # todos los documentos y eventos
+openfactura certificacion estado
+```
+
+`ejecutar` sale con 0 al completar y con 1 si Hacienda rechazó una prueba o dejó de responder.
+
+</TabItem>
+<TabItem label="API">
+
+```bash
+curl -X POST https://app.openfactura.co/api/v1/certificacion/iniciar \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" -d '{}'
+
+# Repite mientras "estado" sea "en_curso":
+curl -X POST https://app.openfactura.co/api/v1/certificacion/avanzar \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+```
+
+La clave necesita `dte:read`, `dte:emit` y `dte:invalidate`.
+
+</TabItem>
+<TabItem label="MCP">
+
+Pide a tu agente: «certifícame ante Hacienda». Usa `certificacion_avanzar` hasta completar y te
+muestra el rechazo si lo hay.
+
+</TabItem>
+</Tabs>
+
+<Aside>
+El avance que ves cuenta lo que Open Factura transmitió con sello desde que iniciaste. **El contador
+oficial es el del Sitio Emisores DTE.** Si Hacienda te abre un plazo nuevo, usa «Empezar desde cero».
+</Aside>
+
+<Aside type="caution">
+Con las credenciales del simulador todo funciona igual, pero es un **simulacro**: nada llega a
+Hacienda ni cuenta para tu autorización.
+</Aside>

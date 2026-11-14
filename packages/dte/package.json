@@ -1,0 +1,41 @@
+{
+  "name": "@openfactura/dte",
+  "version": "0.1.0",
+  "description": "SDK de Documentos Tributarios Electrónicos (DTE) de El Salvador — Normativa 2.0. Construye, valida, firma y transmite al Ministerio de Hacienda.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./src/index.ts", "default": "./src/index.ts" },
+    "./pdf": { "types": "./src/pdf/index.ts", "default": "./src/pdf/index.ts" },
+    "./mock": { "types": "./src/mh/mock.ts", "default": "./src/mh/mock.ts" }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+      "./pdf": { "types": "./dist/pdf/index.d.ts", "default": "./dist/pdf/index.js" },
+      "./mock": { "types": "./dist/mh/mock.d.ts", "default": "./dist/mh/mock.js" }
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "demo": "tsx examples/demo.ts",
+    "mock": "tsx examples/mock-server.ts"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "qrcode-generator": "^2.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ajv": "^8.20.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.0"
+  }
+}

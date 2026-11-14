@@ -1,0 +1,1 @@
+ALTER TABLE `credencial_mh` ADD `simulada` integer DEFAULT false NOT NULL;

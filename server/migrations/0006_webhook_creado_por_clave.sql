@@ -1,0 +1,1 @@
+ALTER TABLE `webhook` ADD `creado_por_clave` text;

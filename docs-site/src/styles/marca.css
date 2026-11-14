@@ -1,0 +1,227 @@
+/*
+ * Marca de Open Factura: la misma paleta oscura de openfactura.co. El sitio sólo tiene tema oscuro,
+ * así que los valores se fijan también para [data-theme='light'].
+ */
+:root,
+:root[data-theme="light"],
+::backdrop {
+  color-scheme: dark;
+
+  --of-fondo: #0a0a0a;
+  --of-fondo-alterno: #111111;
+  --of-superficie: #141414;
+  --of-superficie-alta: #1c1c1c;
+  --of-borde: #262626;
+  --of-verde: #00c87e;
+  --of-verde-claro: #33d698;
+  --of-verde-oscuro: #04130c;
+
+  --sl-color-white: #ededed;
+  --sl-color-gray-1: #ededed;
+  --sl-color-gray-2: #b4b4b4;
+  --sl-color-gray-3: #8a8a8a;
+  --sl-color-gray-4: #5c5c5c;
+  --sl-color-gray-5: #262626;
+  --sl-color-gray-6: #141414;
+  --sl-color-gray-7: #111111;
+  --sl-color-black: #0a0a0a;
+
+  --sl-color-accent-low: #0b2a1e;
+  --sl-color-accent: #00c87e;
+  --sl-color-accent-high: #33d698;
+
+  --sl-color-text: #b4b4b4;
+  --sl-color-text-accent: #33d698;
+  --sl-color-text-invert: #04130c;
+  --sl-color-bg: #0a0a0a;
+  --sl-color-bg-nav: #0a0a0a;
+  --sl-color-bg-sidebar: #0a0a0a;
+  --sl-color-bg-inline-code: #141414;
+  --sl-color-bg-accent: #00c87e;
+  --sl-color-hairline-light: #262626;
+  --sl-color-hairline: #262626;
+  --sl-color-hairline-shade: #0a0a0a;
+  --sl-color-backdrop-overlay: rgb(10 10 10 / 0.8);
+
+  --sl-color-green-low: #0b2a1e;
+  --sl-color-green: #00c87e;
+  --sl-color-green-high: #33d698;
+  --sl-color-orange-low: #2e1f0c;
+  --sl-color-orange: #f2a65a;
+  --sl-color-orange-high: #f8cfa3;
+  --sl-color-blue-low: #102033;
+  --sl-color-blue: #93c5fd;
+  --sl-color-blue-high: #c7e0fe;
+  --sl-color-purple-low: #221c38;
+  --sl-color-purple: #c4b5fd;
+  --sl-color-purple-high: #e2dafe;
+  --sl-color-red-low: #3a1216;
+  --sl-color-red: #f87171;
+  --sl-color-red-high: #fecaca;
+
+  --sl-font:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --sl-font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sl-text-h1: 2.375rem;
+}
+
+body {
+  background-color: var(--of-fondo);
+}
+
+/* Encabezado y barra lateral: fondo plano con bordes finos, como la portada. */
+.header {
+  border-bottom-color: var(--of-borde);
+}
+
+.site-title {
+  gap: 0.6rem;
+  font-size: 1.125rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--sl-color-white);
+}
+
+.site-title img {
+  height: 1.75rem;
+}
+
+h1,
+h2,
+h3,
+h4,
+.sl-markdown-content :is(h1, h2, h3, h4) {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* Buscador. */
+site-search button[data-open-modal] {
+  border-color: var(--of-borde);
+  border-radius: 10px;
+  background-color: var(--of-superficie);
+}
+
+site-search dialog {
+  border-color: var(--of-borde);
+  border-radius: 16px;
+  background-color: var(--of-superficie);
+}
+
+/* Enlace activo del menú lateral: verde tenue en vez de un bloque sólido. */
+.sidebar-content a[aria-current="page"],
+.sidebar-content a[aria-current="page"]:hover,
+.sidebar-content a[aria-current="page"]:focus {
+  background-color: rgb(0 200 126 / 0.12);
+  color: var(--of-verde-claro);
+  font-weight: 500;
+}
+
+.sidebar-content a:hover {
+  color: var(--sl-color-white);
+}
+
+.right-sidebar {
+  border-inline-start-color: var(--of-borde);
+}
+
+/* Contenido (los enlaces ya usan --sl-color-text-accent). */
+.sl-markdown-content a:not(:where(.not-content *)) {
+  text-underline-offset: 0.2em;
+}
+
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+  color: var(--sl-color-white);
+}
+
+.sl-markdown-content :not(pre) > code:not(:where(.not-content *)) {
+  border: 1px solid var(--of-borde);
+  border-radius: 6px;
+  padding: 0.1em 0.35em;
+  color: var(--sl-color-gray-1);
+}
+
+.sl-markdown-content strong:not(:where(.not-content *)) {
+  color: var(--sl-color-white);
+}
+
+.sl-markdown-content table {
+  border-radius: 12px;
+}
+
+.sl-markdown-content :is(th, td) {
+  border-color: var(--of-borde);
+}
+
+.sl-markdown-content th {
+  background-color: var(--of-fondo-alterno);
+  color: var(--sl-color-white);
+}
+
+/* Tarjetas. */
+.card,
+.sl-link-card {
+  border: 1px solid var(--of-borde);
+  border-radius: 14px;
+  background-color: var(--of-superficie);
+  box-shadow: none;
+}
+
+.sl-link-card:hover {
+  border-color: var(--of-verde);
+  background-color: var(--of-superficie-alta);
+}
+
+.card .icon {
+  border-color: var(--of-borde);
+  border-radius: 10px;
+  background-color: var(--sl-color-accent-low);
+  color: var(--of-verde-claro);
+}
+
+/* Avisos. */
+/* Borde fino en los cuatro lados, como las tarjetas de la portada; sólo el título lleva color. */
+:root .starlight-aside {
+  border: 1px solid var(--of-borde);
+  border-radius: 12px;
+  background: var(--of-superficie);
+}
+
+/* Pestañas. */
+starlight-tabs [role="tablist"] {
+  border-bottom-color: var(--of-borde);
+}
+
+starlight-tabs [role="tab"] {
+  padding-inline: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Botones (LinkButton y similares). */
+.sl-link-button.primary {
+  border-color: var(--of-verde);
+  border-radius: 10px;
+  background-color: var(--of-verde);
+  color: var(--of-verde-oscuro);
+}
+
+.sl-link-button.primary:hover {
+  border-color: #33d698;
+  background-color: #33d698;
+}
+
+/* Pie: paginación como tarjetas finas. */
+.pagination-links a {
+  border-color: var(--of-borde);
+  border-radius: 14px;
+  background-color: var(--of-superficie);
+  box-shadow: none;
+}
+
+.pagination-links a:hover {
+  border-color: var(--of-verde);
+}
+
+::selection {
+  background-color: rgb(0 200 126 / 0.3);
+}

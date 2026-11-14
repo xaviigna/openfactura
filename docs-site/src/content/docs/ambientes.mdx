@@ -1,0 +1,44 @@
+---
+title: Ambientes
+description: Pruebas (00) y producción (01) del Ministerio de Hacienda, y cómo pasar de uno a otro.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components'
+
+El MH tiene dos ambientes, y Open Factura los mantiene separados de punta a punta:
+
+| Ambiente | Código | Clave de API | Valor fiscal |
+| -------- | ------ | ------------ | ------------ |
+| Pruebas  | `00`   | `of_test_…`  | Ninguno      |
+| Producción | `01` | `of_live_…`  | Legal        |
+
+- **El prefijo de la clave decide el ambiente.** Una clave de pruebas nunca toca producción, ni al revés.
+- El panel usa el ambiente guardado en el emisor (**Empresa y Hacienda → Datos fiscales → Ambiente**).
+- Las credenciales del MH (contraseña de API y certificado) son **distintas en cada ambiente**: las de
+  pruebas no sirven en producción.
+- Cada clave ve sólo los documentos y eventos de su ambiente. Las claves de idempotencia también son
+  independientes por ambiente.
+- Los PDF del ambiente de pruebas advierten que el documento no tiene valor legal.
+
+Si operas sobre un documento de otro ambiente, la API responde `409 ambiente_distinto`.
+
+## Pasar a producción
+
+<Steps>
+
+1. Completa las pruebas mínimas que exige Hacienda y obtén la autorización como emisor (ve
+   [Ser emisor ante Hacienda](/hacienda/ser-emisor/)).
+2. En el Sitio Emisores DTE, ambiente productivo, genera el certificado y la contraseña de API de
+   producción.
+3. En **Empresa y Hacienda → Credenciales del MH**, cárgalos para el ambiente `01`
+   (`PUT /api/v1/emisor/credenciales/01`).
+4. Para el panel, cambia el ambiente del emisor a producción. Para integraciones, crea una clave
+   `of_live_…` con los permisos mínimos.
+5. Emite un primer documento real y verifica su sello y su `urlConsulta`.
+
+</Steps>
+
+<Aside type="caution">
+Con una clave `of_live_…` cada emisión tiene efecto fiscal y consume un número de control. La CLI pide
+confirmación en producción; un asistente MCP debe pedirte un "sí" explícito antes de emitir.
+</Aside>

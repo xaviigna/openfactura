@@ -1,0 +1,5929 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API de Open Factura",
+    "version": "1.0.0",
+    "summary": "Facturación electrónica de El Salvador (DTE, Normativa 2.0).",
+    "description": "API REST de Open Factura. Todo es JSON. Autentícate con una clave de API (`Authorization: Bearer of_test_…` para el ambiente de pruebas `00`, `of_live_…` para producción `01`) o con la cookie de sesión del panel. Errores: `{ \"error\": { \"code\", \"message\", \"details\" } }`; decide siempre por `code`. Límite: 120 peticiones por minuto por clave, con encabezados `RateLimit-*`.",
+    "license": {
+      "name": "AGPL-3.0-only",
+      "identifier": "AGPL-3.0-only"
+    },
+    "contact": {
+      "name": "Open Factura",
+      "url": "https://github.com/xaviigna/openfactura"
+    }
+  },
+  "externalDocs": {
+    "description": "Documentación",
+    "url": "https://docs.openfactura.co"
+  },
+  "servers": [
+    {
+      "url": "https://app.openfactura.co/api/v1",
+      "description": "Open Factura en la nube"
+    }
+  ],
+  "security": [
+    {
+      "claveApi": []
+    },
+    {
+      "sesion": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Sesión",
+      "description": "Identidad del actor y tablero."
+    },
+    {
+      "name": "Emisor",
+      "description": "Datos fiscales, establecimientos, puntos de venta y credenciales del MH."
+    },
+    {
+      "name": "Clientes",
+      "description": "Receptores guardados."
+    },
+    {
+      "name": "Productos",
+      "description": "Catálogo de productos y servicios (precios sin IVA)."
+    },
+    {
+      "name": "DTE",
+      "description": "Emisión, consulta, invalidación y contingencia de documentos."
+    },
+    {
+      "name": "Eventos",
+      "description": "Evento de Retorno (18) y Operaciones Especiales (17)."
+    },
+    {
+      "name": "Catálogos",
+      "description": "Catálogos oficiales del MH (CAT-xxx)."
+    },
+    {
+      "name": "Claves de API",
+      "description": "Claves `of_test_…` y `of_live_…`. Sólo desde una sesión del panel."
+    },
+    {
+      "name": "Webhooks",
+      "description": "Notificaciones firmadas (HMAC-SHA256) cuando cambia el estado de un documento o evento."
+    },
+    {
+      "name": "Auditoría",
+      "description": "Bitácora de acciones de la organización."
+    },
+    {
+      "name": "Registros",
+      "description": "Peticiones hechas con claves de API (sólo metadatos; 30 días)."
+    }
+  ],
+  "paths": {
+    "/openapi.json": {
+      "get": {
+        "operationId": "openapi_obtener",
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Documento OpenAPI 3.1 de esta API",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Este documento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/yo": {
+      "get": {
+        "operationId": "yo_obtener",
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Quién hace la petición",
+        "description": "Usuario o clave, organización, permisos y ambiente activo del MH.",
+        "responses": {
+          "200": {
+            "description": "Actor autenticado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Yo"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/resumen": {
+      "get": {
+        "operationId": "resumen_obtener",
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Resumen del tablero",
+        "description": "Permiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "responses": {
+          "200": {
+            "description": "Totales del mes y documentos recientes.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resumen"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/uso": {
+      "get": {
+        "operationId": "uso_obtener",
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Uso por día",
+        "description": "Documentos emitidos, procesados y rechazados y monto procesado por día en el ambiente activo. Sin fechas: los últimos 30 días (hora de El Salvador). Rango máximo: 366 días. Sólo incluye los días con movimiento.\n\nPermiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Totales del rango y detalle por día.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uso"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/emisor": {
+      "get": {
+        "operationId": "emisor_obtener",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Datos del emisor",
+        "description": "Datos fiscales, establecimientos con sus puntos de venta y el estado de las credenciales del MH por ambiente (sólo banderas; los secretos nunca se devuelven).\n\nPermiso: `emisor:read`.",
+        "x-permiso": "emisor:read",
+        "responses": {
+          "200": {
+            "description": "Emisor.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmisorVista"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "put": {
+        "operationId": "emisor_guardar",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Crear o actualizar el emisor",
+        "description": "La primera vez crea el establecimiento `M001` y el punto de venta `P001`. Si se omite `ambiente` se conserva el actual.\n\nPermiso: `emisor:write`.",
+        "x-permiso": "emisor:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Emisor"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Emisor guardado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmisorVista"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/emisor/credenciales/{ambiente}": {
+      "put": {
+        "operationId": "emisor_credenciales_guardar",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Guardar credenciales del MH",
+        "description": "`certificado` es el contenido XML del `.crt` de Hacienda y va siempre con su contraseña. Se verifica que la contraseña abra la llave y que el NIT del certificado sea el del emisor. Los secretos se cifran y nunca se devuelven.\n\nPermiso: `emisor:write`.",
+        "x-permiso": "emisor:write",
+        "parameters": [
+          {
+            "name": "ambiente",
+            "in": "path",
+            "required": true,
+            "description": "`00` pruebas, `01` producción.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "00",
+                "01"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Credenciales"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado de las credenciales de ese ambiente.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoCredenciales"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/emisor/credenciales-prueba": {
+      "post": {
+        "operationId": "emisor_credenciales_prueba",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Generar credenciales de prueba (simulador)",
+        "description": "Sólo en servidores con `MH_SIMULADO=1`: genera un certificado y una contraseña de prueba para el ambiente `00`, atendidos por el simulador del MH. Sólo estas credenciales usan el simulador: las que sube el usuario van a Hacienda. Sin el simulador responde `409 simulador_inactivo`.\n\nPermiso: `emisor:write`.",
+        "x-permiso": "emisor:write",
+        "responses": {
+          "200": {
+            "description": "Estado de las credenciales del ambiente 00.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoCredenciales"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/emisor/probar": {
+      "post": {
+        "operationId": "emisor_probar",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Probar la conexión con el MH",
+        "description": "Permiso: `emisor:write`.",
+        "x-permiso": "emisor:write",
+        "responses": {
+          "200": {
+            "description": "Resultado de autenticarse contra el MH.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "ambiente": {
+                      "type": "string",
+                      "enum": [
+                        "00",
+                        "01"
+                      ]
+                    },
+                    "mensaje": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "ambiente",
+                    "mensaje"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/establecimientos": {
+      "get": {
+        "operationId": "establecimientos_listar",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Listar establecimientos",
+        "description": "Permiso: `emisor:read`.",
+        "x-permiso": "emisor:read",
+        "responses": {
+          "200": {
+            "description": "Establecimientos con sus puntos de venta.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EstablecimientoVista"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "post": {
+        "operationId": "establecimiento_crear",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Crear un establecimiento",
+        "description": "Permiso: `emisor:write`.",
+        "x-permiso": "emisor:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Establecimiento"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lista actualizada de establecimientos.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EstablecimientoVista"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/establecimientos/{id}": {
+      "put": {
+        "operationId": "establecimiento_actualizar",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Actualizar un establecimiento",
+        "description": "Permiso: `emisor:write`.",
+        "x-permiso": "emisor:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Establecimiento"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lista actualizada de establecimientos.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EstablecimientoVista"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/puntos-venta": {
+      "post": {
+        "operationId": "punto_venta_crear",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Crear un punto de venta",
+        "description": "Permiso: `emisor:write`.",
+        "x-permiso": "emisor:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PuntoVenta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lista actualizada de establecimientos.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EstablecimientoVista"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/clientes": {
+      "get": {
+        "operationId": "clientes_listar",
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Buscar clientes",
+        "description": "`q` busca por nombre, nombre comercial o número de documento. Hasta 100 por defecto.\n\nPermiso: `clientes:read`.",
+        "x-permiso": "clientes:read",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clientes.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Cliente"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "post": {
+        "operationId": "cliente_crear",
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Crear un cliente",
+        "description": "Permiso: `clientes:write`.",
+        "x-permiso": "clientes:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteEntrada"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cliente creado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cliente"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/clientes/{id}": {
+      "get": {
+        "operationId": "cliente_obtener",
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Obtener un cliente",
+        "description": "Permiso: `clientes:read`.",
+        "x-permiso": "clientes:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cliente.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cliente"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "put": {
+        "operationId": "cliente_actualizar",
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Actualizar un cliente",
+        "description": "Permiso: `clientes:write`.",
+        "x-permiso": "clientes:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteEntrada"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cliente actualizado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cliente"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "cliente_eliminar",
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Eliminar un cliente",
+        "description": "Permiso: `clientes:write`.",
+        "x-permiso": "clientes:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eliminado": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "eliminado"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/productos": {
+      "get": {
+        "operationId": "productos_listar",
+        "tags": [
+          "Productos"
+        ],
+        "summary": "Buscar productos",
+        "description": "`q` busca por descripción o código. Hasta 100 por defecto.\n\nPermiso: `productos:read`.",
+        "x-permiso": "productos:read",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Productos.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Producto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "post": {
+        "operationId": "producto_crear",
+        "tags": [
+          "Productos"
+        ],
+        "summary": "Crear un producto",
+        "description": "`precioUnitario` va sin IVA.\n\nPermiso: `productos:write`.",
+        "x-permiso": "productos:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductoEntrada"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Producto creado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Producto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/productos/{id}": {
+      "get": {
+        "operationId": "producto_obtener",
+        "tags": [
+          "Productos"
+        ],
+        "summary": "Obtener un producto",
+        "description": "Permiso: `productos:read`.",
+        "x-permiso": "productos:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Producto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "put": {
+        "operationId": "producto_actualizar",
+        "tags": [
+          "Productos"
+        ],
+        "summary": "Actualizar un producto",
+        "description": "Permiso: `productos:write`.",
+        "x-permiso": "productos:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductoEntrada"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Producto actualizado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Producto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "producto_eliminar",
+        "tags": [
+          "Productos"
+        ],
+        "summary": "Eliminar un producto",
+        "description": "Permiso: `productos:write`.",
+        "x-permiso": "productos:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eliminado": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "eliminado"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/dte": {
+      "get": {
+        "operationId": "dte_listar",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Listar documentos",
+        "description": "Documentos del ambiente activo. `q` busca por receptor, número de control o código de generación; `desde`/`hasta` en formato AAAA-MM-DD.\n\nPermiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pendiente",
+                "procesado",
+                "rechazado",
+                "contingencia",
+                "invalidado"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "porPagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de documentos.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaDocumentos"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "post": {
+        "operationId": "dte_emitir",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Emitir un DTE",
+        "description": "Construye, valida, firma y transmite el documento al MH. `datos` es la entrada del constructor del SDK `@openfactura/dte` para ese tipo. En Factura (01) `precioUni` incluye IVA; en Crédito Fiscal, notas y remisión va sin IVA. Si se envía `clienteId` y falta `datos.receptor`, el receptor se toma del cliente guardado. El Comprobante de Liquidación (08), el Documento Contable de Liquidación (09) y el Comprobante de Donación (15) no admiten contingencia: con el MH caído responden `mh_no_disponible`.\n\nPermiso: `dte:emit`.",
+        "x-permiso": "dte:emit",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Emision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Procesado por el MH, con `selloRecibido`.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Documento"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Contingencia: el MH no respondió; el DTE quedó firmado y se transmite después.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Documento"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error402"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "502": {
+            "$ref": "#/components/responses/Error502"
+          }
+        }
+      }
+    },
+    "/dte/validar": {
+      "post": {
+        "operationId": "dte_validar",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Validar sin emitir",
+        "description": "Construye el DTE y lo valida contra el esquema del MH. No consume número de control, no firma y no transmite.\n\nPermiso: `dte:emit`.",
+        "x-permiso": "dte:emit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Emision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DTE construido, problemas y total.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Validacion"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/dte/{codigo}": {
+      "get": {
+        "operationId": "dte_obtener",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Obtener un documento",
+        "description": "Permiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "description": "Código de generación (UUID) o id interno.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documento con su DTE, la respuesta del MH y sus eventos.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentoDetalle"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/dte/{codigo}/json": {
+      "get": {
+        "operationId": "dte_json",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Archivo DTE oficial (JSON)",
+        "description": "Estructura del DTE más `firmaElectronica` y `selloRecibido`, para entregar al receptor.\n\nPermiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "description": "Código de generación (UUID) o id interno.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo DTE.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/dte/{codigo}/pdf": {
+      "get": {
+        "operationId": "dte_pdf",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Representación gráfica (PDF)",
+        "description": "Permiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "description": "Código de generación (UUID) o id interno.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF del documento.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/dte/{codigo}/invalidar": {
+      "post": {
+        "operationId": "dte_invalidar",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Invalidar un documento o un evento",
+        "description": "Irreversible. `tipoAnulacion`: 1 error en la información (requiere `codigoGeneracionReemplazo`), 2 rescindir la operación, 3 otro (requiere motivo y reemplazo). `:codigo` también puede ser un evento de retorno u operaciones especiales: entonces responde `{ invalidado, tipo, codigoGeneracion }`. Un DTE con un retorno vigente responde `409 retorno_vigente`.\n\nPermiso: `dte:invalidate`.",
+        "x-permiso": "dte:invalidate",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "description": "Código de generación (UUID) o id interno.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Invalidacion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Documento invalidado, o el evento invalidado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/DocumentoDetalle"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "invalidado": {
+                          "const": true
+                        },
+                        "tipo": {
+                          "type": "string",
+                          "enum": [
+                            "retorno",
+                            "operaciones_especiales"
+                          ]
+                        },
+                        "codigoGeneracion": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "invalidado",
+                        "tipo",
+                        "codigoGeneracion"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "502": {
+            "$ref": "#/components/responses/Error502"
+          }
+        }
+      }
+    },
+    "/dte/{codigo}/retorno": {
+      "post": {
+        "operationId": "dte_retorno",
+        "tags": [
+          "Eventos"
+        ],
+        "summary": "Evento de Retorno (18)",
+        "description": "Devolución de bienes, reembolsos o envases sobre una Factura (01), Factura de Exportación (11) o Sujeto Excluido (14) procesados, sin invalidar el documento. `precioUni` como en el documento original (en Factura, con IVA). Plazo: 3 meses desde la fecha del DTE. La suma de los retornos no puede superar el documento (`409 retorno_excedido` con `details.disponible`).\n\nPermiso: `dte:emit`.",
+        "x-permiso": "dte:emit",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "description": "Código de generación (UUID) o id interno.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Retorno"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Evento procesado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Evento"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "502": {
+            "$ref": "#/components/responses/Error502"
+          }
+        }
+      }
+    },
+    "/contingencia/transmitir": {
+      "post": {
+        "operationId": "contingencia_transmitir",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Transmitir documentos en contingencia",
+        "description": "Envía el evento de contingencia con los documentos en estado `contingencia` del ambiente activo (hasta 40 por llamada) y luego transmite cada uno. Si `restantes` es mayor que 0, vuelve a llamar. Requiere el responsable configurado en el emisor.\n\nPermiso: `dte:invalidate`.",
+        "x-permiso": "dte:invalidate",
+        "responses": {
+          "200": {
+            "description": "Resultado del lote.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "evento": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "codigoGeneracion": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "Nulo si no había documentos en contingencia."
+                    },
+                    "procesados": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Documento"
+                      }
+                    },
+                    "rechazados": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Documento"
+                      }
+                    },
+                    "restantes": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "evento",
+                    "procesados",
+                    "rechazados",
+                    "restantes"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "502": {
+            "$ref": "#/components/responses/Error502"
+          }
+        }
+      }
+    },
+    "/eventos/operaciones-especiales": {
+      "post": {
+        "operationId": "operaciones_especiales_informar",
+        "tags": [
+          "Eventos"
+        ],
+        "summary": "Evento de Operaciones Especiales (17)",
+        "description": "Informa facturas simplificadas (`tipoDocumento: \"02\"`, siempre por rangos `docDel`–`docAl`) o comprobantes de control interno (`\"97\"`, uno a uno o por rangos; no se mezclan). Precios sin IVA. `fecha` define el periodo (por defecto hoy, nunca futura).\n\nPermiso: `dte:emit`.",
+        "x-permiso": "dte:emit",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperacionesEspeciales"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Evento procesado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Evento"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "502": {
+            "$ref": "#/components/responses/Error502"
+          }
+        }
+      }
+    },
+    "/eventos": {
+      "get": {
+        "operationId": "eventos_listar",
+        "tags": [
+          "Eventos"
+        ],
+        "summary": "Listar eventos",
+        "description": "Los 50 eventos de retorno u operaciones especiales más recientes del ambiente activo.\n\nPermiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "retorno",
+                "operaciones_especiales"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eventos.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Evento"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/eventos/{codigo}": {
+      "get": {
+        "operationId": "evento_obtener",
+        "tags": [
+          "Eventos"
+        ],
+        "summary": "Obtener un evento",
+        "description": "Permiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "description": "Código de generación (UUID) o id interno.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Evento con su JSON y la respuesta del MH.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventoDetalle"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/eventos/{codigo}/json": {
+      "get": {
+        "operationId": "evento_json",
+        "tags": [
+          "Eventos"
+        ],
+        "summary": "Archivo del evento (JSON)",
+        "description": "Permiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "description": "Código de generación (UUID) o id interno.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo del evento firmado, con sello.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/eventos/{codigo}/pdf": {
+      "get": {
+        "operationId": "evento_pdf",
+        "tags": [
+          "Eventos"
+        ],
+        "summary": "Representación gráfica del evento (PDF)",
+        "description": "Permiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "description": "Código de generación (UUID) o id interno.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF del evento.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/catalogos": {
+      "get": {
+        "operationId": "catalogos_listar",
+        "tags": [
+          "Catálogos"
+        ],
+        "summary": "Listar catálogos del MH",
+        "responses": {
+          "200": {
+            "description": "Catálogos disponibles.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "nombre": {
+                        "type": "string"
+                      },
+                      "total": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/catalogos/{id}": {
+      "get": {
+        "operationId": "catalogo_buscar",
+        "tags": [
+          "Catálogos"
+        ],
+        "summary": "Consultar un catálogo",
+        "description": "`CAT-012` departamentos, `CAT-013` municipios (filtra con `departamento`), `CAT-008` distritos, `CAT-019` actividades económicas (50 por defecto; usa `q`), `CAT-014` unidades, `CAT-017` formas de pago, `CAT-022` documentos.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "departamento",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 2
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Valores del catálogo.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogo"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/claves": {
+      "get": {
+        "operationId": "claves_listar",
+        "tags": [
+          "Claves de API"
+        ],
+        "summary": "Listar claves de API",
+        "description": "Permiso: `claves:manage`.",
+        "x-permiso": "claves:manage",
+        "responses": {
+          "200": {
+            "description": "Claves (nunca la clave completa).",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Clave"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "post": {
+        "operationId": "clave_crear",
+        "tags": [
+          "Claves de API"
+        ],
+        "summary": "Crear una clave de API",
+        "description": "La clave completa (`clave`) se devuelve sólo en esta respuesta. Una clave nunca puede llevar `emisor:write`, `claves:manage` ni `auditoria:read`.\n\nPermiso: `claves:manage`.",
+        "x-permiso": "claves:manage",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaveApiEntrada"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Clave creada.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaveCreada"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/claves/{id}": {
+      "delete": {
+        "operationId": "clave_revocar",
+        "tags": [
+          "Claves de API"
+        ],
+        "summary": "Revocar una clave",
+        "description": "Permiso: `claves:manage`.",
+        "x-permiso": "claves:manage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revocada de inmediato.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revocada": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "revocada"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/webhooks": {
+      "get": {
+        "operationId": "webhooks_listar",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Listar webhooks",
+        "description": "Permiso: `webhooks:manage`.",
+        "x-permiso": "webhooks:manage",
+        "responses": {
+          "200": {
+            "description": "Webhooks de la organización (nunca el secreto).",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Webhook"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "post": {
+        "operationId": "webhook_crear",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Crear un webhook",
+        "description": "Sólo `https://` y nunca destinos privados o locales. Máximo 10 por organización. El secreto (`whsec_…`) se devuelve sólo en esta respuesta.\n\nPermiso: `webhooks:manage`.",
+        "x-permiso": "webhooks:manage",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookEntrada"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook creado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookConSecreto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/webhooks/{id}": {
+      "patch": {
+        "operationId": "webhook_actualizar",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Cambiar URL, descripción, eventos o activarlo/desactivarlo",
+        "description": "Permiso: `webhooks:manage`.",
+        "x-permiso": "webhooks:manage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookCambios"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook actualizado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "webhook_eliminar",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Eliminar un webhook y sus entregas",
+        "description": "Permiso: `webhooks:manage`.",
+        "x-permiso": "webhooks:manage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eliminado": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "eliminado"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/webhooks/{id}/rotar-secreto": {
+      "post": {
+        "operationId": "webhook_rotar_secreto",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Generar un secreto nuevo",
+        "description": "El secreto anterior deja de valer de inmediato. El nuevo se devuelve sólo aquí.\n\nPermiso: `webhooks:manage`.",
+        "x-permiso": "webhooks:manage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook con el secreto nuevo.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookConSecreto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/webhooks/{id}/probar": {
+      "post": {
+        "operationId": "webhook_probar",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Enviar un evento `webhook.prueba` ahora",
+        "description": "Permiso: `webhooks:manage`.",
+        "x-permiso": "webhooks:manage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado del envío (no se reintenta).",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entregado": {
+                      "type": "boolean"
+                    },
+                    "status": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "error": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "entrega": {
+                      "$ref": "#/components/schemas/EntregaWebhook"
+                    }
+                  },
+                  "required": [
+                    "entregado",
+                    "entrega"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/webhooks/{id}/entregas": {
+      "get": {
+        "operationId": "webhook_entregas",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Últimas 50 entregas de un webhook",
+        "description": "Permiso: `webhooks:manage`.",
+        "x-permiso": "webhooks:manage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entregas, de la más reciente a la más antigua (sin el cuerpo).",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntregaWebhook"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/webhooks/entregas/{id}/reenviar": {
+      "post": {
+        "operationId": "webhook_entrega_reenviar",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Reenviar una entrega ahora",
+        "description": "Mismo cuerpo, firma nueva; reinicia el calendario de reintentos.\n\nPermiso: `webhooks:manage`.",
+        "x-permiso": "webhooks:manage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entrega tras el envío.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntregaWebhook"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/auditoria": {
+      "get": {
+        "operationId": "auditoria_listar",
+        "tags": [
+          "Auditoría"
+        ],
+        "summary": "Bitácora de auditoría",
+        "description": "Paginación hacia atrás con `antesDe` (marca de tiempo en milisegundos).\n\nPermiso: `auditoria:read`.",
+        "x-permiso": "auditoria:read",
+        "parameters": [
+          {
+            "name": "antesDe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registros, del más reciente al más antiguo.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistroAuditoria"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/registros": {
+      "get": {
+        "operationId": "registros_listar",
+        "tags": [
+          "Registros"
+        ],
+        "summary": "Registros de peticiones de la API",
+        "description": "Peticiones hechas con claves de API (REST y MCP) en los últimos 30 días: método, patrón de ruta, estado HTTP, duración y clave. Nunca guarda cuerpos, encabezados ni parámetros. Paginación hacia atrás con `antesDe` (marca de tiempo en milisegundos).\n\nPermiso: `registros:read`.",
+        "x-permiso": "registros:read",
+        "parameters": [
+          {
+            "name": "antesDe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ok",
+                "error"
+              ]
+            }
+          },
+          {
+            "name": "origen",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "name": "claveId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 40
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Peticiones, de la más reciente a la más antigua.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistroApi"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "claveApi": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "of_test_… | of_live_…",
+        "description": "Clave de API creada en el panel (Ajustes → Claves de API). `of_test_…` trabaja en el ambiente de pruebas del MH (`00`) y `of_live_…` en producción (`01`). Lleva los permisos elegidos al crearla."
+      },
+      "sesion": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "better-auth.session_token",
+        "description": "Cookie de sesión del panel web (Better Auth, `/api/auth/*`; con HTTPS lleva el prefijo `__Secure-`). Las peticiones que modifican datos deben venir del mismo origen. No se acepta en `/mcp`."
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "description": "Hasta 200 caracteres. Repetir con la misma clave y el mismo cuerpo devuelve la respuesta original con `Idempotent-Replayed: true`, sin emitir dos veces; con otro cuerpo: `409 idempotencia_distinta`. Se conservan 24 horas, por ambiente.",
+        "schema": {
+          "type": "string",
+          "maxLength": 200
+        }
+      }
+    },
+    "headers": {
+      "RateLimit-Limit": {
+        "description": "Peticiones permitidas por minuto (sólo con clave de API).",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "RateLimit-Remaining": {
+        "description": "Peticiones restantes en la ventana actual (sólo con clave de API).",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "RateLimit-Reset": {
+        "description": "Segundos hasta que se reinicia la ventana (sólo con clave de API).",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "Retry-After": {
+        "description": "Segundos que hay que esperar.",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "Idempotent-Replayed": {
+        "description": "`true` cuando la respuesta es la guardada de un intento anterior.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "true"
+          ]
+        }
+      }
+    },
+    "responses": {
+      "Error400": {
+        "description": "Cuerpo o parámetros inválidos (`details` = `[{ ruta, mensaje }]`), o el DTE no cumple el esquema del MH (`details.problemas`). Códigos: `datos_invalidos`, `dte_invalido`.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error401": {
+        "description": "Falta sesión, o la clave de API no es válida, fue revocada o expiró. Códigos: `no_autenticado`.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error402": {
+        "description": "El plan de la cuenta no incluye la operación. Sólo lo devuelven distribuciones con planes (una instalación propia nunca). Códigos: `plan_requerido`.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error403": {
+        "description": "Falta un permiso (`details.permiso`) o el origen de la petición con cookie no está permitido. Códigos: `sin_permiso`, `origen_no_permitido`.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error404": {
+        "description": "El recurso no existe en esta organización. Códigos: `no_encontrado`.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error409": {
+        "description": "Falta configurar algo o hay un conflicto. Códigos: `sin_organizacion`, `sin_organizacion_activa`, `nit_bloqueado`, `emisor_no_configurado`, `credenciales_incompletas`, `sin_punto_venta`, `estado_invalido`, `ambiente_distinto`, `retorno_excedido`, `retorno_vigente`, `idempotencia_distinta`, `idempotencia_en_curso`, `cliente_repetido`, `producto_repetido`, `codigo_repetido`, `sin_archivo`, `limite_webhooks`, `simulador_inactivo`.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error422": {
+        "description": "El MH rechazó el documento o el evento; `details.mh` = `{ codigo, mensaje, observaciones[] }`. Códigos: `dte_rechazado`, `invalidacion_rechazada`, `contingencia_rechazada`, `evento_rechazado`.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error429": {
+        "description": "Límite de peticiones excedido (`Retry-After` indica cuántos segundos esperar) o, en distribuciones con planes, límite del plan alcanzado (`limite_plan`). Códigos: `limite_excedido`, `limite_plan`.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error500": {
+        "description": "Error inesperado del servidor. Códigos: `error_interno`.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error502": {
+        "description": "Problema hablando con el MH o al firmar. Con `emision_incierta` consulta `details.codigoGeneracion` antes de reintentar. Códigos: `mh_credenciales_rechazadas`, `mh_no_disponible`, `emision_fallida`, `emision_incierta`.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Emisor": {
+        "type": "object",
+        "properties": {
+          "nit": {
+            "type": "string"
+          },
+          "nrc": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          },
+          "nombreComercial": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "codActividad": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 6
+          },
+          "descActividad": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "departamento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2
+          },
+          "municipio": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2
+          },
+          "distrito": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2
+          },
+          "complemento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "telefono": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 30
+          },
+          "correo": {
+            "type": "string",
+            "maxLength": 100,
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "ambiente": {
+            "type": "string",
+            "enum": [
+              "00",
+              "01"
+            ]
+          },
+          "responsableNombre": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "responsableTipoDoc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "responsableNumDoc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "nit",
+          "nrc",
+          "nombre",
+          "codActividad",
+          "descActividad",
+          "departamento",
+          "municipio",
+          "distrito",
+          "complemento",
+          "telefono",
+          "correo"
+        ]
+      },
+      "Credenciales": {
+        "type": "object",
+        "properties": {
+          "apiPassword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "certificado": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200000
+          },
+          "certificadoPassword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      },
+      "Establecimiento": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "tipo": {
+            "default": "01",
+            "type": "string",
+            "enum": [
+              "01",
+              "02",
+              "04",
+              "07"
+            ]
+          },
+          "codMh": {
+            "type": "string",
+            "pattern": "^[MBSP]\\d{3}$"
+          },
+          "codInterno": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "departamento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "municipio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "distrito": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "complemento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "nombre",
+          "codMh"
+        ]
+      },
+      "PuntoVenta": {
+        "type": "object",
+        "properties": {
+          "establecimientoId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "codMh": {
+            "type": "string",
+            "pattern": "^P\\d{3}$"
+          },
+          "codInterno": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 15
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "establecimientoId",
+          "nombre",
+          "codMh"
+        ]
+      },
+      "ClienteEntrada": {
+        "type": "object",
+        "properties": {
+          "tipoDocumento": {
+            "type": "string",
+            "enum": [
+              "13",
+              "36",
+              "37",
+              "03",
+              "02"
+            ]
+          },
+          "numDocumento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "nrc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          },
+          "nombreComercial": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "codActividad": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 6
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "descActividad": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "departamento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "municipio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "distrito": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "complemento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "correo": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 100,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  {
+                    "type": "string",
+                    "const": ""
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "tipoDocumento",
+          "numDocumento",
+          "nombre"
+        ]
+      },
+      "ProductoEntrada": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 25
+          },
+          "descripcion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "precioUnitario": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 99999999999
+          },
+          "tipoItem": {
+            "default": 1,
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 1
+              },
+              {
+                "type": "number",
+                "const": 2
+              },
+              {
+                "type": "number",
+                "const": 3
+              },
+              {
+                "type": "number",
+                "const": 4
+              }
+            ]
+          },
+          "uniMedida": {
+            "default": 59,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99
+          },
+          "tipoVenta": {
+            "default": "gravada",
+            "type": "string",
+            "enum": [
+              "gravada",
+              "exenta",
+              "noSujeta"
+            ]
+          }
+        },
+        "required": [
+          "codigo",
+          "descripcion",
+          "precioUnitario"
+        ]
+      },
+      "Emision": {
+        "type": "object",
+        "properties": {
+          "tipoDte": {
+            "type": "string",
+            "enum": [
+              "11",
+              "14",
+              "15",
+              "01",
+              "03",
+              "04",
+              "05",
+              "06",
+              "07",
+              "08",
+              "09"
+            ]
+          },
+          "datos": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "clienteId": {
+            "type": "string"
+          },
+          "puntoVentaId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipoDte",
+          "datos"
+        ]
+      },
+      "Invalidacion": {
+        "type": "object",
+        "properties": {
+          "tipoAnulacion": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 1
+              },
+              {
+                "type": "number",
+                "const": 2
+              },
+              {
+                "type": "number",
+                "const": 3
+              }
+            ]
+          },
+          "motivoAnulacion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 250
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "codigoGeneracionReemplazo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 36
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "solicitante": {
+            "type": "object",
+            "properties": {
+              "nombre": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "tipoDocumento": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 2
+              },
+              "numDocumento": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "nombre",
+              "tipoDocumento",
+              "numDocumento"
+            ]
+          },
+          "responsable": {
+            "type": "object",
+            "properties": {
+              "nombre": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "tipoDocumento": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 2
+              },
+              "numDocumento": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "nombre",
+              "tipoDocumento",
+              "numDocumento"
+            ]
+          }
+        },
+        "required": [
+          "tipoAnulacion"
+        ]
+      },
+      "Retorno": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "minItems": 1,
+            "maxItems": 2000,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "descripcion": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                },
+                "cantidad": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "precioUni": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "tipoItem": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 1
+                    },
+                    {
+                      "type": "number",
+                      "const": 2
+                    },
+                    {
+                      "type": "number",
+                      "const": 3
+                    },
+                    {
+                      "type": "number",
+                      "const": 4
+                    }
+                  ]
+                },
+                "codigo": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 25
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "uniMedida": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 99
+                },
+                "descuento": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "tipoVenta": {
+                  "type": "string",
+                  "enum": [
+                    "gravada",
+                    "exenta",
+                    "noSujeta"
+                  ]
+                },
+                "seguro": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "flete": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "descripcion",
+                "cantidad",
+                "precioUni"
+              ]
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "OperacionesEspeciales": {
+        "type": "object",
+        "properties": {
+          "tipoDocumento": {
+            "type": "string",
+            "enum": [
+              "97",
+              "02"
+            ]
+          },
+          "fecha": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "items": {
+            "minItems": 1,
+            "maxItems": 2000,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "descripcion": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1500
+                },
+                "precioUni": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cantidad": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "numDocumento": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 36
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "docDel": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 36
+                },
+                "docAl": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 36
+                },
+                "fechaEmision": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "tipoVenta": {
+                  "type": "string",
+                  "enum": [
+                    "gravada",
+                    "exenta",
+                    "noSujeta"
+                  ]
+                },
+                "codigoGeneracionRef": {
+                  "type": "string",
+                  "minLength": 36,
+                  "maxLength": 36
+                }
+              },
+              "required": [
+                "descripcion",
+                "precioUni"
+              ]
+            }
+          }
+        },
+        "required": [
+          "tipoDocumento",
+          "items"
+        ]
+      },
+      "ClaveApiEntrada": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "modo": {
+            "type": "string",
+            "enum": [
+              "test",
+              "live"
+            ]
+          },
+          "scopes": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "dte:read",
+                "dte:emit",
+                "dte:invalidate",
+                "clientes:read",
+                "clientes:write",
+                "productos:read",
+                "productos:write",
+                "emisor:read",
+                "webhooks:manage",
+                "registros:read"
+              ]
+            }
+          },
+          "expiraEnDias": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3650
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "nombre",
+          "modo",
+          "scopes"
+        ]
+      },
+      "WebhookEntrada": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "descripcion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "eventos": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "dte.procesado",
+                    "dte.rechazado",
+                    "dte.contingencia",
+                    "dte.invalidado",
+                    "retorno.procesado",
+                    "retorno.invalidado",
+                    "operaciones_especiales.procesado",
+                    "operaciones_especiales.invalidado"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z_]*\\.[a-z_]+$"
+                }
+              ]
+            }
+          },
+          "activo": {
+            "default": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "url",
+          "eventos"
+        ]
+      },
+      "WebhookCambios": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "descripcion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "eventos": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "dte.procesado",
+                    "dte.rechazado",
+                    "dte.contingencia",
+                    "dte.invalidado",
+                    "retorno.procesado",
+                    "retorno.invalidado",
+                    "operaciones_especiales.procesado",
+                    "operaciones_especiales.invalidado"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z_]*\\.[a-z_]+$"
+                }
+              ]
+            }
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "datos_invalidos",
+                  "dte_invalido",
+                  "no_autenticado",
+                  "plan_requerido",
+                  "sin_permiso",
+                  "origen_no_permitido",
+                  "no_encontrado",
+                  "sin_organizacion",
+                  "sin_organizacion_activa",
+                  "nit_bloqueado",
+                  "emisor_no_configurado",
+                  "credenciales_incompletas",
+                  "sin_punto_venta",
+                  "estado_invalido",
+                  "ambiente_distinto",
+                  "retorno_excedido",
+                  "retorno_vigente",
+                  "idempotencia_distinta",
+                  "idempotencia_en_curso",
+                  "cliente_repetido",
+                  "producto_repetido",
+                  "codigo_repetido",
+                  "sin_archivo",
+                  "limite_webhooks",
+                  "simulador_inactivo",
+                  "dte_rechazado",
+                  "invalidacion_rechazada",
+                  "contingencia_rechazada",
+                  "evento_rechazado",
+                  "limite_excedido",
+                  "limite_plan",
+                  "error_interno",
+                  "mh_credenciales_rechazadas",
+                  "mh_no_disponible",
+                  "emision_fallida",
+                  "emision_incierta"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "description": "Detalle según el código; puede faltar."
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "Documento": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "codigoGeneracion": {
+            "type": "string",
+            "description": "UUID en mayúsculas."
+          },
+          "numeroControl": {
+            "type": "string",
+            "examples": [
+              "DTE-01-M001P001-000000000000001"
+            ]
+          },
+          "tipoDte": {
+            "type": "string",
+            "enum": [
+              "11",
+              "14",
+              "15",
+              "01",
+              "03",
+              "04",
+              "05",
+              "06",
+              "07",
+              "08",
+              "09"
+            ]
+          },
+          "ambiente": {
+            "type": "string",
+            "enum": [
+              "00",
+              "01"
+            ]
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "pendiente",
+              "procesado",
+              "rechazado",
+              "contingencia",
+              "invalidado"
+            ]
+          },
+          "fechaEmision": {
+            "type": "string",
+            "format": "date"
+          },
+          "horaEmision": {
+            "type": "string",
+            "examples": [
+              "01:38:12"
+            ]
+          },
+          "receptorNombre": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "receptorDocumento": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total": {
+            "type": "number"
+          },
+          "selloRecibido": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "origen": {
+            "type": "string",
+            "examples": [
+              "panel",
+              "api",
+              "mcp"
+            ]
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "creado": {
+            "type": "integer",
+            "description": "Milisegundos desde 1970."
+          },
+          "urlConsulta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Consulta pública en el portal del MH."
+          }
+        },
+        "required": [
+          "id",
+          "codigoGeneracion",
+          "numeroControl",
+          "tipoDte",
+          "ambiente",
+          "estado",
+          "total"
+        ]
+      },
+      "DocumentoDetalle": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Documento"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "dte": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Estructura del DTE tal como se firmó."
+              },
+              "respuestaMh": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "Última respuesta del MH."
+              },
+              "eventos": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ListaDocumentos": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Documento"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "pagina": {
+            "type": "integer"
+          },
+          "porPagina": {
+            "type": "integer"
+          },
+          "ambiente": {
+            "type": "string",
+            "enum": [
+              "00",
+              "01"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "porPagina",
+          "ambiente"
+        ]
+      },
+      "Validacion": {
+        "type": "object",
+        "properties": {
+          "dte": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "problemas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ruta": {
+                  "type": "string"
+                },
+                "mensaje": {
+                  "type": "string"
+                },
+                "regla": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "receptorNombre": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "dte",
+          "problemas",
+          "total"
+        ]
+      },
+      "Evento": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "retorno",
+              "operaciones_especiales"
+            ]
+          },
+          "tipoEvento": {
+            "type": "string",
+            "enum": [
+              "18",
+              "17"
+            ]
+          },
+          "codigoGeneracion": {
+            "type": "string"
+          },
+          "ambiente": {
+            "type": "string",
+            "enum": [
+              "00",
+              "01"
+            ]
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "procesado",
+              "rechazado",
+              "invalidado"
+            ]
+          },
+          "selloRecibido": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "documentoId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Documento de un retorno."
+          },
+          "creado": {
+            "type": "integer",
+            "description": "Milisegundos desde 1970."
+          }
+        },
+        "required": [
+          "id",
+          "tipo",
+          "codigoGeneracion",
+          "ambiente",
+          "estado"
+        ]
+      },
+      "EventoDetalle": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Evento"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "dte": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "respuestaMh": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "Yo": {
+        "type": "object",
+        "properties": {
+          "usuario": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "nombre": {
+                "type": "string"
+              },
+              "correo": {
+                "type": "string"
+              }
+            },
+            "description": "Nulo cuando autentica una clave de API."
+          },
+          "rol": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actor": {
+            "type": "string",
+            "enum": [
+              "usuario",
+              "clave"
+            ]
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "permisos": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "dte:read",
+                "dte:emit",
+                "dte:invalidate",
+                "clientes:read",
+                "clientes:write",
+                "productos:read",
+                "productos:write",
+                "emisor:read",
+                "emisor:write",
+                "claves:manage",
+                "webhooks:manage",
+                "auditoria:read",
+                "registros:read"
+              ]
+            }
+          },
+          "ambiente": {
+            "type": "string",
+            "enum": [
+              "00",
+              "01"
+            ]
+          },
+          "simulador": {
+            "type": "boolean",
+            "description": "El servidor usa el simulador del MH."
+          },
+          "extensiones": {
+            "type": "array",
+            "description": "Enlaces del panel que agregan las extensiones instaladas, filtrados por permisos. Vacío en una instalación estándar.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "titulo": {
+                  "type": "string"
+                },
+                "ruta": {
+                  "type": "string"
+                },
+                "icono": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "grupo": {
+                  "type": "string",
+                  "enum": [
+                    "desarrolladores",
+                    "administracion",
+                    "cuenta",
+                    "mas"
+                  ]
+                }
+              },
+              "required": [
+                "titulo",
+                "ruta"
+              ]
+            }
+          },
+          "url": {
+            "type": "string",
+            "description": "URL pública del servidor (`APP_URL`)."
+          },
+          "mcp": {
+            "type": "string",
+            "description": "URL pública del servidor MCP remoto (`URL_MCP` o `<APP_URL>/mcp`)."
+          },
+          "cuenta": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Plan y uso de la cuenta, cuando una extensión los aporta. Nulo en una instalación propia.",
+            "properties": {
+              "plan": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "nombre"
+                ]
+              },
+              "uso": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "etiqueta": {
+                      "type": "string"
+                    },
+                    "usado": {
+                      "type": "number"
+                    },
+                    "limite": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "etiqueta",
+                    "usado",
+                    "limite"
+                  ]
+                }
+              },
+              "mejorar": {
+                "type": "object",
+                "properties": {
+                  "titulo": {
+                    "type": "string"
+                  },
+                  "detalle": {
+                    "type": "string"
+                  },
+                  "ruta": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "titulo",
+                  "detalle",
+                  "ruta"
+                ]
+              }
+            },
+            "required": [
+              "plan"
+            ]
+          }
+        }
+      },
+      "Uso": {
+        "type": "object",
+        "properties": {
+          "ambiente": {
+            "type": "string",
+            "enum": [
+              "00",
+              "01"
+            ]
+          },
+          "desde": {
+            "type": "string"
+          },
+          "hasta": {
+            "type": "string"
+          },
+          "totales": {
+            "type": "object",
+            "properties": {
+              "emitidos": {
+                "type": "integer"
+              },
+              "procesados": {
+                "type": "integer"
+              },
+              "rechazados": {
+                "type": "integer"
+              },
+              "monto": {
+                "type": "number"
+              }
+            }
+          },
+          "dias": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fecha": {
+                  "type": "string"
+                },
+                "emitidos": {
+                  "type": "integer"
+                },
+                "procesados": {
+                  "type": "integer"
+                },
+                "rechazados": {
+                  "type": "integer"
+                },
+                "monto": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Resumen": {
+        "type": "object",
+        "properties": {
+          "ambiente": {
+            "type": "string",
+            "enum": [
+              "00",
+              "01"
+            ]
+          },
+          "mes": {
+            "type": "string"
+          },
+          "porEstado": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "procesadosMes": {
+            "type": "integer"
+          },
+          "totalMes": {
+            "type": "number"
+          },
+          "recientes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Documento"
+            }
+          },
+          "contingencia": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Documentos en contingencia en el ambiente activo; null si no hay. En producción el servidor la transmite solo cuando el MH vuelve a responder, salvo que pasen 3 días: entonces `requiereInforme` y, tras presentar el Informe Técnico de Contingencia (Normativa 2.0, regla 13.2.1.1), se transmite con `POST /contingencia/transmitir`.",
+            "properties": {
+              "documentos": {
+                "type": "integer"
+              },
+              "desde": {
+                "type": "integer",
+                "description": "Creación del documento más antiguo (ms desde epoch)"
+              },
+              "requiereInforme": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "documentos",
+              "desde",
+              "requiereInforme"
+            ]
+          }
+        }
+      },
+      "EstadoCredenciales": {
+        "type": "object",
+        "properties": {
+          "apiPassword": {
+            "type": "boolean"
+          },
+          "certificado": {
+            "type": "boolean"
+          },
+          "certificadoNit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "simuladas": {
+            "type": "boolean",
+            "description": "Generadas para el simulador del MH: los documentos no llegan a Hacienda."
+          },
+          "actualizado": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "EmisorVista": {
+        "type": "object",
+        "properties": {
+          "emisor": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Datos fiscales; nulo si no está configurado."
+          },
+          "establecimientos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EstablecimientoVista"
+            }
+          },
+          "credenciales": {
+            "type": "object",
+            "properties": {
+              "00": {
+                "$ref": "#/components/schemas/EstadoCredenciales"
+              },
+              "01": {
+                "$ref": "#/components/schemas/EstadoCredenciales"
+              }
+            }
+          },
+          "ambienteActivo": {
+            "type": "string",
+            "enum": [
+              "00",
+              "01"
+            ]
+          }
+        }
+      },
+      "EstablecimientoVista": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Establecimiento"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "puntosVenta": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Cliente": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ClienteEntrada"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "organizationId": {
+                "type": "string"
+              },
+              "creado": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "Producto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProductoEntrada"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "organizationId": {
+                "type": "string"
+              },
+              "creado": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "Catalogo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "valores": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "codigo": {
+                  "type": "string"
+                },
+                "valor": {
+                  "type": "string"
+                },
+                "departamento": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "codigo",
+                "valor"
+              ]
+            }
+          }
+        }
+      },
+      "Clave": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "prefijo": {
+            "type": "string",
+            "description": "Primeros caracteres de la clave."
+          },
+          "modo": {
+            "type": "string",
+            "enum": [
+              "test",
+              "live"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expira": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Milisegundos desde 1970; nulo si no expira."
+          },
+          "ultimoUso": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "revocada": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Cuándo se revocó; nulo si sigue vigente."
+          },
+          "creado": {
+            "type": "integer"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "activa",
+              "revocada",
+              "expirada"
+            ]
+          }
+        }
+      },
+      "ClaveCreada": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Clave"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "clave": {
+                "type": "string",
+                "description": "La clave completa. Sólo esta vez."
+              }
+            },
+            "required": [
+              "clave"
+            ]
+          }
+        ]
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "eventos": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "dte.procesado",
+                "dte.rechazado",
+                "dte.contingencia",
+                "dte.invalidado",
+                "retorno.procesado",
+                "retorno.invalidado",
+                "operaciones_especiales.procesado",
+                "operaciones_especiales.invalidado"
+              ]
+            }
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "creado": {
+            "type": "integer"
+          },
+          "actualizado": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "eventos",
+          "activo",
+          "creado"
+        ]
+      },
+      "WebhookConSecreto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Webhook"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "secreto": {
+                "type": "string",
+                "description": "whsec_…: clave de la firma HMAC. Sólo esta vez."
+              }
+            },
+            "required": [
+              "secreto"
+            ]
+          }
+        ]
+      },
+      "EntregaWebhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "webhookId": {
+            "type": "string"
+          },
+          "evento": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "pendiente",
+              "entregado",
+              "fallido"
+            ]
+          },
+          "intentos": {
+            "type": "integer"
+          },
+          "ultimoStatus": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ultimoError": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proximoIntento": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "creado": {
+            "type": "integer"
+          },
+          "entregado": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "webhookId",
+          "evento",
+          "estado",
+          "intentos",
+          "creado"
+        ]
+      },
+      "RegistroAuditoria": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "actorTipo": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "accion": {
+            "type": "string"
+          },
+          "recurso": {
+            "type": "string"
+          },
+          "recursoId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ip": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "detalle": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "creado": {
+            "type": [
+              "string",
+              "integer"
+            ]
+          }
+        }
+      },
+      "RegistroApi": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "creado": {
+            "type": "integer",
+            "description": "Marca de tiempo en milisegundos."
+          },
+          "metodo": {
+            "type": "string"
+          },
+          "ruta": {
+            "type": "string",
+            "description": "Patrón de la ruta, p. ej. `/api/v1/dte/:codigo`."
+          },
+          "estado": {
+            "type": "integer",
+            "description": "Estado HTTP de la respuesta."
+          },
+          "duracionMs": {
+            "type": "integer"
+          },
+          "origen": {
+            "type": "string",
+            "enum": [
+              "api",
+              "mcp"
+            ]
+          },
+          "clave": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "prefijo": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "nombre": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,93 @@
+---
+title: Autenticación y claves
+description: Claves de API of_test_ y of_live_, permisos, sesión del panel y cómo se guarda cada secreto.
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+Toda la API (`/api/v1/*`) y el servidor MCP (`/mcp`) exigen autenticación. Hay dos formas:
+
+| Quién       | Cómo                                    | Ambiente del MH                   |
+| ----------- | --------------------------------------- | --------------------------------- |
+| Integración | `Authorization: Bearer of_test_…`       | `00` pruebas                      |
+| Integración | `Authorization: Bearer of_live_…`       | `01` producción                   |
+| Panel web   | Cookie de sesión (`/api/auth/*`)        | El ambiente guardado en el emisor |
+
+El servidor MCP remoto sólo acepta claves de API, nunca la cookie del panel.
+
+```bash
+curl https://app.openfactura.co/api/v1/yo -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+```
+
+<Aside>
+En Open Factura Cloud la API y el panel viven en `https://app.openfactura.co`. El servidor MCP remoto
+usa la dirección corta `https://openfactura.co/mcp` (también responde en
+`https://app.openfactura.co/mcp`). Por compatibilidad, `https://openfactura.co/api/v1/*` sigue
+funcionando como alias de la API con claves de API; usa `app.openfactura.co` en integraciones nuevas.
+</Aside>
+
+`GET /yo` responde quién eres: actor (`usuario` o `clave`), organización, permisos y ambiente
+activo. Úsalo para comprobar una clave.
+
+## Crear una clave
+
+En el panel: **Claves de API → Nueva clave**. Elige nombre, modo (pruebas u producción), permisos y,
+si quieres, una caducidad en días. La clave completa se muestra **una sola vez**; el servidor guarda
+sólo su SHA-256 y, en adelante, muestra únicamente su prefijo.
+
+También se pueden administrar por la API (`GET|POST /claves`, `DELETE /claves/:id`), pero sólo desde
+una sesión del panel con el permiso `claves:manage`: una clave de API nunca puede crear otras claves.
+
+Revocar una clave tiene efecto inmediato. Una clave revocada o expirada responde
+`401 no_autenticado`.
+
+## Permisos
+
+| Permiso           | Permite                                             |
+| ----------------- | --------------------------------------------------- |
+| `dte:read`        | Consultar documentos, eventos, su JSON y su PDF     |
+| `dte:emit`        | Validar y emitir documentos, retornos y eventos 17  |
+| `dte:invalidate`  | Invalidar documentos y transmitir contingencias     |
+| `clientes:read`   | Consultar clientes                                  |
+| `clientes:write`  | Crear, editar y eliminar clientes                   |
+| `productos:read`  | Consultar productos                                 |
+| `productos:write` | Crear, editar y eliminar productos                  |
+| `emisor:read`     | Ver el emisor y sus establecimientos                |
+| `emisor:write`    | Editar el emisor, establecimientos y credenciales   |
+| `claves:manage`   | Crear y revocar claves de API                       |
+| `auditoria:read`  | Ver la bitácora de auditoría                        |
+| `registros:read` | Ver los registros de peticiones hechas con claves de API |
+
+Una clave de API **nunca** puede llevar `emisor:write`, `claves:manage` ni `auditoria:read`: eso se
+hace en el panel.
+
+Roles del panel: **Propietario** y **Administrador** tienen todos los permisos; **Facturador**
+(`member`) tiene `dte:read`, `dte:emit`, `clientes:*`, `productos:*` y `emisor:read`.
+
+Si falta un permiso, la respuesta es `403 sin_permiso` con el permiso que falta en `details.permiso`.
+
+### Permisos sugeridos
+
+- **Sólo consultar:** `dte:read`, `clientes:read`, `productos:read`, `emisor:read`.
+- **Facturar:** lo anterior más `dte:emit`, `clientes:write`, `productos:write`.
+- **Invalidar:** agrega `dte:invalidate` sólo si de verdad lo necesitas.
+
+## Sesión del panel
+
+El panel usa Better Auth en `/api/auth/*` (registro, inicio de sesión, organizaciones e
+invitaciones). Un usuario sin organización recibe `409 sin_organizacion`; si pertenece a varias y no
+tiene una activa, `409 sin_organizacion_activa` con la lista en `details.organizaciones`.
+
+Las peticiones con cookie que modifican datos deben venir del mismo origen del panel; si no,
+`403 origen_no_permitido`.
+
+## Credenciales del MH
+
+La contraseña de API del MH y la llave privada del certificado se guardan cifradas con AES-256-GCM y
+**nunca** se devuelven: `GET /emisor` sólo informa si están cargadas. No se registran en la
+auditoría ni en los logs.
+
+<Aside type="caution">
+No guardes claves en repositorios ni en el código del navegador. Usa variables de entorno o un gestor
+de secretos.
+</Aside>
