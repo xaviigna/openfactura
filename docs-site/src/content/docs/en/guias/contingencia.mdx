@@ -1,0 +1,81 @@
+---
+title: Contingency
+description: What happens when the MH doesn't respond, how documents are transmitted afterwards, and how it differs from an uncertain issuance.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+
+If the MH doesn't respond when you issue, Open Factura doesn't lose the sale: it issues the document
+in **contingency** (deferred model). It responds `202 Accepted` with status `contingencia`.
+
+- The document **is already valid**: it is signed and has a control number. Deliver it as usual.
+- **Don't issue it again.**
+- It must be transmitted to the MH later, with the contingency event.
+
+## Deadlines (Normativa 2.0, rule 13.2)
+
+| Step                                                         | Deadline                                    |
+| ------------------------------------------------------------ | ------------------------------------------- |
+| Retry the connection to the MH                               | At least every 15 minutes                   |
+| Transmit the contingency event                               | 24 hours after the cause ends               |
+| Transmit the documents                                       | 72 hours after the event is stamped         |
+| Contingency longer than 3 consecutive days                   | Contingency Technical Report **before** the event |
+
+**In production the server transmits it on its own**: it retries every 5 minutes and, once the MH
+responds, sends the event and the documents, so the 24- and 72-hour deadlines are met without
+intervention. If the contingency lasts more than **3 days**, it stops: file the Contingency Technical
+Report with Hacienda and transmit it yourself. `GET /resumen` returns `contingencia` (`documentos`,
+`desde`, `requiereInforme`) so you can show it. In the test environment it is not transmitted
+automatically.
+
+## Transmit manually
+
+<Tabs syncKey="via">
+<TabItem label="curl">
+
+```bash
+curl -X POST https://app.openfactura.co/api/v1/contingencia/transmitir \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+```
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+openfactura contingencia transmitir
+```
+
+</TabItem>
+<TabItem label="Dashboard">
+
+Open **Contingency** in the dashboard and transmit the pending documents.
+
+</TabItem>
+</Tabs>
+
+It requires the `dte:invalidate` permission and the **responsible person** (`responsable`) configured
+in the issuer's details. Open Factura sends the contingency event with up to 40 documents from the
+active environment and then transmits each one. The response:
+
+```json
+{ "evento": { "id": "…", "codigoGeneracion": "…" }, "procesados": [], "rechazados": [], "restantes": 0 }
+```
+
+- `procesados`: documents that received a stamp.
+- `rechazados`: documents the MH rejected.
+- `restantes`: if greater than 0, call again.
+- If the MH goes down again, whatever is left stays in contingency for the next attempt.
+- If the MH rejects the event: `422 contingencia_rechazada` with `details.mh`.
+
+## Contingency is not an uncertain issuance
+
+| Situation               | Code / status                    | What to do                                                                                                 |
+| ----------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| The MH didn't respond   | `202`, status `contingencia`     | Deliver the document; in production the contingency is transmitted automatically.                         |
+| Unknown outcome         | `502 emision_incierta`, `pendiente` | **Don't issue another one.** Query `GET /dte/{details.codigoGeneracion}`; the server reconciles it with the MH on its own every few minutes. |
+| The MH was unavailable before signing | `502 mh_no_disponible` | No control number was consumed: retry with the same `Idempotency-Key`.                                 |
+
+<Aside>
+Documents in contingency and contingency events count toward Hacienda's minimum tests: exercise them
+in the test environment.
+</Aside>

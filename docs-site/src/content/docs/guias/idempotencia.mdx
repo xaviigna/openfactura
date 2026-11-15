@@ -1,0 +1,46 @@
+---
+title: Idempotencia
+description: Reintenta una emisión con la misma Idempotency-Key y nunca emita dos veces el mismo documento.
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+Una emisión tiene efecto fiscal. Si la red falla justo después de enviarla, no sabes si el
+documento se emitió. Por eso estas rutas aceptan el encabezado `Idempotency-Key`:
+
+- `POST /dte`
+- `POST /dte/{codigo}/retorno`
+- `POST /eventos/operaciones-especiales`
+
+```bash
+curl https://app.openfactura.co/api/v1/dte \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: pedido-1042" \
+  -d @factura.json
+```
+
+## Reglas
+
+- La clave es tuya: un UUID o un identificador de tu sistema (`pedido-1042`), de hasta 200 caracteres.
+- **Misma clave y mismo cuerpo** → la respuesta original, con el encabezado `Idempotent-Replayed: true`.
+  No se emite dos veces.
+- **Misma clave y otro cuerpo** → `409 idempotencia_distinta`.
+- **El primer intento sigue en curso** → `409 idempotencia_en_curso`: espera unos segundos y repite.
+- Las claves se conservan **24 horas** y son **independientes por ambiente**: una clave usada en
+  pruebas no devuelve nada en producción.
+- Se guardan como respuesta definitiva los éxitos, `dte_rechazado` y `emision_incierta`. Los demás
+  errores liberan la clave para reintentar.
+
+<Aside type="tip">
+Regla de oro: **reintenta sólo con la misma clave**. Una clave nueva puede crear un segundo documento
+con valor fiscal. Usa una clave nueva únicamente para un documento distinto, o después de un
+`dte_rechazado` cuando corriges los datos.
+</Aside>
+
+## En la CLI y en MCP
+
+- La CLI genera un UUID para cada `dte emitir` y lo muestra por stderr **antes** de enviar. Para
+  reintentar: `openfactura dte emitir factura.json --idempotency-key <la misma>`.
+- Las herramientas MCP `dte_emitir`, `dte_retorno` y `operaciones_especiales_informar` exigen el
+  argumento `idempotencyKey`.

@@ -1,0 +1,197 @@
+---
+title: Inicio rápido
+description: Crea tu cuenta, registra el emisor, genera una clave de pruebas y emite tu primera factura con curl, la CLI o MCP.
+---
+
+import { Aside, Steps, TabItem, Tabs } from '@astrojs/starlight/components'
+
+En esta guía emites una **Factura (01)** en el ambiente de pruebas del MH. Nada de lo que hagas aquí
+tiene valor fiscal.
+
+<Steps>
+
+1. **Crea tu cuenta y tu organización.**
+
+   Entra a [app.openfactura.co](https://app.openfactura.co), regístrate (la contraseña debe tener al menos 10
+   caracteres) y crea una organización. Tú quedas como propietario, con todos los permisos.
+
+2. **Registra el emisor.**
+
+   Al crear la organización, el alta guiada te pide los datos fiscales tal como aparecen en tu
+   tarjeta de NRC: NIT, NRC, nombre, actividad económica, dirección (departamento, municipio y
+   distrito), teléfono y correo. Al guardar se crean el establecimiento `M001` y el punto de venta
+   `P001`. Después puedes editarlos en **Empresa y Hacienda → Datos fiscales**.
+
+3. **Conecta con Hacienda.**
+
+   En el último paso del alta carga, para el ambiente `00`:
+   - el **certificado** `.crt` de pruebas y la contraseña de tu llave privada,
+   - la **contraseña de API** que personalizaste en el Sitio Emisores DTE.
+
+   Al pulsar **Conectar con Hacienda**, Open Factura verifica que la contraseña abra la llave y que
+   el NIT del certificado sea el del emisor, y luego autentica contra el MH. Los secretos se guardan
+   cifrados y la API nunca los devuelve. Si eliges «Lo haré después», el alta sigue disponible desde
+   **Inicio**, y las credenciales también se cargan en **Empresa y Hacienda → Credenciales del MH**.
+
+   <Aside>
+   ¿Aún no tienes credenciales de Hacienda? Ve [Ser emisor ante Hacienda](/hacienda/ser-emisor/).
+   Para desarrollar sin ellas puedes [ejecutar Open Factura en local](/autoalojamiento/#en-tu-equipo)
+   con el simulador del MH.
+   </Aside>
+
+4. **Crea una clave de API de pruebas.**
+
+   En **Claves de API → Nueva clave**, elige el modo **pruebas** y los permisos `dte:read` y
+   `dte:emit`. Copia la clave `of_test_…`: se muestra una sola vez.
+
+   ```bash
+   export OPENFACTURA_API_KEY=of_test_...
+   ```
+
+5. **Valida y emite tu primera factura.**
+
+   En una Factura, `precioUni` **incluye IVA**. Open Factura calcula el IVA, los redondeos y el total.
+
+   <Tabs syncKey="via">
+   <TabItem label="curl">
+
+   Primero valida: no consume número de control, no firma y no transmite.
+
+   ```bash
+   curl https://app.openfactura.co/api/v1/dte/validar \
+     -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "tipoDte": "01",
+       "datos": { "items": [{ "descripcion": "Servicio", "cantidad": 2, "precioUni": 11.3 }] }
+     }'
+   ```
+
+   Si `problemas` viene vacío, emite con una `Idempotency-Key` propia:
+
+   ```bash
+   curl https://app.openfactura.co/api/v1/dte \
+     -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+     -H "Content-Type: application/json" \
+     -H "Idempotency-Key: primera-factura-001" \
+     -d '{
+       "tipoDte": "01",
+       "datos": { "items": [{ "descripcion": "Servicio", "cantidad": 2, "precioUni": 11.3 }] }
+     }'
+   ```
+
+   </TabItem>
+   <TabItem label="CLI">
+
+   ```bash
+   npm i -g @openfactura/cli
+   openfactura login --url https://app.openfactura.co   # pide la clave sin mostrarla
+   ```
+
+   Guarda el cuerpo en `factura.json`:
+
+   ```json
+   {
+     "tipoDte": "01",
+     "datos": { "items": [{ "descripcion": "Servicio", "cantidad": 2, "precioUni": 11.3 }] }
+   }
+   ```
+
+   ```bash
+   openfactura dte validar factura.json
+   openfactura dte emitir factura.json
+   ```
+
+   La CLI genera y muestra una `Idempotency-Key` antes de enviar.
+
+   </TabItem>
+   <TabItem label="MCP">
+
+   Conecta tu agente (Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI, Windsurf,
+   Zed, Cline o Goose) con la CLI, que usa la clave guardada por `login`:
+
+   ```bash
+   npx @openfactura/cli login
+   npx @openfactura/cli mcp install --todos     # o un agente: cursor, codex, vscode…
+   ```
+
+   Cualquier otro cliente MCP se conecta a `https://openfactura.co/mcp` con la cabecera
+   `Authorization: Bearer of_test_...`. La configuración de cada agente está en
+   [Conecta tu agente](/herramientas/agentes/).
+
+   Y pídele, por ejemplo:
+
+   > Emite una factura de consumidor final por 2 servicios de $11.30 cada uno, IVA incluido.
+
+   El asistente usa `dte_validar`, te muestra el resumen y llama `dte_emitir` sólo cuando tú lo
+   confirmas.
+
+   </TabItem>
+   </Tabs>
+
+</Steps>
+
+## Respuesta
+
+`201 Created` con el `Documento` procesado por el MH:
+
+```json
+{
+  "id": "…",
+  "codigoGeneracion": "0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4",
+  "numeroControl": "DTE-01-M001P001-000000000000001",
+  "tipoDte": "01",
+  "ambiente": "00",
+  "estado": "procesado",
+  "fechaEmision": "2026-11-12",
+  "horaEmision": "01:38:12",
+  "receptorNombre": null,
+  "receptorDocumento": null,
+  "total": 22.6,
+  "selloRecibido": "20265EE94C1B2C4CBB56F56121E37F5AC8CA7D27",
+  "origen": "api",
+  "error": null,
+  "creado": 1794469092559,
+  "urlConsulta": "https://admin.factura.gob.sv/…"
+}
+```
+
+Si el MH no responde, recibes `202 Accepted` con estado `contingencia`: el documento ya está firmado
+y es válido; se transmite después (ve [Contingencia](/guias/contingencia/)).
+
+## Entrega el documento
+
+Al receptor se le entregan el **JSON oficial** y su **representación gráfica** (PDF):
+
+<Tabs syncKey="via">
+<TabItem label="curl">
+
+```bash
+curl -o factura.json https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/json \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+curl -o factura.pdf https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/pdf \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY"
+```
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+openfactura dte json 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 -o factura.json
+openfactura dte pdf 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 -o factura.pdf
+```
+
+</TabItem>
+<TabItem label="MCP">
+
+`dte_obtener` con el `codigoGeneracion` devuelve el estado, el sello y la respuesta del MH. Para los
+archivos usa la CLI o la API.
+
+</TabItem>
+</Tabs>
+
+## Siguientes pasos
+
+- [Emitir cada tipo de documento](/guias/emitir/)
+- [Idempotencia](/guias/idempotencia/): reintentar sin emitir dos veces.
+- [Ambientes](/ambientes/): pasar a producción.

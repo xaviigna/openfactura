@@ -1,0 +1,38 @@
+---
+title: Branding and email
+description: Available in Open Factura Cloud. Your logo on the PDF and documents emailed to your recipients.
+sidebar:
+  badge:
+    text: Cloud
+    variant: tip
+---
+
+## Email to the recipient
+
+When Hacienda stamps a **production** document and the recipient has an email address, we send it
+from `facturas@openfactura.co` under your company's name, with the PDF and the official JSON (signed
+and stamped) attached. Replies go to your company's email. If a send fails, it is retried.
+
+| Method and route | Description |
+|---|---|
+| `POST /api/v1/ext/correo/dte/:codigo` | Sends (or resends) a document. Optional body `{ "para": "otro@correo.com" }`; defaults to the recipient. |
+| `GET /api/v1/ext/correo/dte/:codigo` | A document's sends: `para`, `origen` (`auto`\|`manual`), `estado`, `intentos`. |
+
+In the MCP: `dte_enviar_correo`.
+
+## Branding
+
+| Method and route | Permission | Description |
+|---|---|---|
+| `GET /api/v1/ext/marca` | `emisor:read` | `logo` (data URL), `correoRespuesta`, `ocultarOpenFactura`, `puedeOcultar`. |
+| `PUT /api/v1/ext/marca/logo` | `emisor:write` | `{ "base64": "…" }`: PNG or JPG up to 200 KB. It appears on the PDF from the API, the MCP, and the email. |
+| `DELETE /api/v1/ext/marca/logo` | `emisor:write` | Removes the logo. |
+| `PUT /api/v1/ext/marca` | `emisor:write` | `{ "correoRespuesta": "facturacion@tuempresa.com" \| null, "ocultarOpenFactura": true }`. |
+
+`ocultarOpenFactura` (the email goes out under your name only, without "via Open Factura") is
+included in the **Pro** and **Platform** plans; on any other plan it responds `402 plan_requerido`.
+With Plataforma, each customer configures their own branding in their space.
+
+Every endpoint is in the [Open Factura Cloud reference](/api-cloud/) (in Spanish).
+
+These features are exclusive to the managed version and are not part of the open-source code.

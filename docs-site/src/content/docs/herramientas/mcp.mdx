@@ -1,0 +1,131 @@
+---
+title: Servidor MCP
+description: Conecta Claude, Cursor, VS Code, Codex, Gemini o cualquier cliente MCP a Open Factura, de forma remota o local por stdio.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+
+Open Factura expone sus operaciones como herramientas [MCP](https://modelcontextprotocol.io) para que
+un asistente de IA consulte, valide y emita documentos. Cada herramienta exige el mismo permiso que
+su ruta REST, así que **la clave de API decide qué puede hacer el asistente**. Empieza siempre con una
+clave `of_test_…`.
+
+## Dos formas de conectarse
+
+| Forma            | Dónde                                | Úsala cuando                                         |
+| ---------------- | ------------------------------------ | ---------------------------------------------------- |
+| **Remota**       | `https://openfactura.co/mcp`         | Tu cliente puede enviar un encabezado HTTP fijo      |
+| **Local (stdio)** | `npx -y @openfactura/cli mcp`       | Tu cliente no envía encabezados (p. ej. Claude Desktop) |
+
+El servidor remoto es Streamable HTTP sin estado y sólo acepta claves de API (no la cookie del
+panel). El local expone las mismas herramientas y las ejecuta llamando a la API REST con tu clave.
+
+## Conecta cualquier agente con un comando
+
+Funciona con cualquier cliente MCP. La CLI escribe la configuración de Claude Code, Claude Desktop,
+Cursor, VS Code, Codex, Gemini CLI, Windsurf, Zed, Cline y Goose:
+
+```bash
+npx @openfactura/cli login
+npx @openfactura/cli mcp install --todos     # o un agente: cursor, codex, vscode…
+```
+
+La configuración manual de cada agente está en [Conecta tu agente](/herramientas/agentes/). Ejemplos
+con Claude:
+
+<Tabs>
+<TabItem label="Claude Code (remoto)">
+
+```bash
+claude mcp add --transport http openfactura https://openfactura.co/mcp \
+  --header "Authorization: Bearer of_test_..."
+```
+
+</TabItem>
+<TabItem label="Claude Code (stdio)">
+
+```bash
+claude mcp add openfactura \
+  --env OPENFACTURA_API_KEY=of_test_... \
+  --env OPENFACTURA_URL=https://app.openfactura.co \
+  -- npx -y @openfactura/cli mcp
+```
+
+</TabItem>
+<TabItem label="Claude Desktop">
+
+En `claude_desktop_config.json` (o en un `.mcp.json` de proyecto):
+
+```json
+{
+  "mcpServers": {
+    "openfactura": {
+      "command": "npx",
+      "args": ["-y", "@openfactura/cli", "mcp"],
+      "env": {
+        "OPENFACTURA_API_KEY": "of_test_...",
+        "OPENFACTURA_URL": "https://app.openfactura.co"
+      }
+    }
+  }
+}
+```
+
+Si ya ejecutaste `openfactura login` en ese equipo puedes omitir `env`.
+
+</TabItem>
+</Tabs>
+
+## Herramientas
+
+| Herramienta                       | Qué hace                                        | Permiso          |
+| --------------------------------- | ----------------------------------------------- | ---------------- |
+| `emisor_obtener`                  | Emisor, ambiente activo, puntos de venta        | `emisor:read`    |
+| `catalogo_buscar`                 | Busca en catálogos del MH (CAT-xxx)             | —                |
+| `clientes_buscar`                 | Busca clientes guardados                        | `clientes:read`  |
+| `cliente_crear`                   | Guarda un cliente                               | `clientes:write` |
+| `productos_buscar`                | Busca productos                                 | `productos:read` |
+| `producto_crear`                  | Guarda un producto (precio sin IVA)             | `productos:write` |
+| `dte_validar`                     | Valida sin emitir; devuelve problemas y total   | `dte:emit`       |
+| `dte_emitir`                      | Emite (requiere `idempotencyKey`)               | `dte:emit`       |
+| `dte_listar`                      | Lista documentos del ambiente activo            | `dte:read`       |
+| `dte_obtener`                     | Estado, sello, respuesta del MH y eventos       | `dte:read`       |
+| `dte_invalidar`                   | Invalida un documento o un evento               | `dte:invalidate` |
+| `dte_retorno`                     | Evento de retorno (requiere `idempotencyKey`)   | `dte:emit`       |
+| `operaciones_especiales_informar` | Evento 17 (requiere `idempotencyKey`)           | `dte:emit`       |
+| `eventos_listar`                  | Lista eventos de retorno y operaciones especiales | `dte:read`     |
+| `evento_obtener`                  | Un evento con su JSON y la respuesta del MH     | `dte:read`       |
+| `webhooks_listar`                 | Tus webhooks y sus eventos                      | `webhooks:manage` |
+| `webhook_crear`                   | Crea un webhook (el secreto sólo aparece aquí)  | `webhooks:manage` |
+| `webhook_eliminar`                | Borra un webhook                                | `webhooks:manage` |
+| `webhook_probar`                  | Envía un evento de prueba firmado               | `webhooks:manage` |
+| `uso_obtener`                     | DTE emitidos y procesados por periodo           | `dte:read`       |
+| `registros_listar`                | Peticiones recientes a la API (para depurar)    | `registros:read` |
+
+### Sólo en Open Factura Cloud
+
+| Herramienta | Para qué | Permiso |
+|---|---|---|
+| `dte_enviar_correo`               | Envía un DTE sellado por correo con PDF y JSON  | `dte:emit`       |
+| `certificacion_estado`            | Avance de las pruebas mínimas                   | `dte:read`       |
+| `certificacion_avanzar`           | Siguiente tanda de pruebas mínimas              | `dte:emit` y `dte:invalidate` |
+| `plataforma_clientes_listar`      | Tus clientes, su estado y qué les falta         | Clave habilitada para [Plataforma](/cloud/plataforma/) |
+| `plataforma_cliente_crear`        | Agrega un cliente (con datos prellenados)       | Clave habilitada para Plataforma |
+| `plataforma_cliente_enlace`       | Su enlace de alta                               | Clave habilitada para Plataforma |
+| `plataforma_cliente_clave_crear`  | Una clave de API en el espacio del cliente      | Clave habilitada para Plataforma |
+
+## Cómo debe trabajar el asistente
+
+1. `emisor_obtener` para saber el ambiente. En `01`, avisarte que emitirá **en producción**.
+2. Buscar receptor y productos; no adivinar NIT, NRC ni actividad económica.
+3. `dte_validar` y corregir los problemas.
+4. Mostrarte el resumen (tipo, receptor, líneas, total, ambiente) y esperar un "sí" explícito.
+5. `dte_emitir` con una `idempotencyKey`, y reutilizarla si reintenta.
+
+Las [habilidades para agentes](/herramientas/habilidades/) enseñan exactamente este flujo.
+
+<Aside type="caution">
+Con una clave `of_live_…`, `dte_emitir`, `dte_retorno`, `operaciones_especiales_informar` y
+`dte_invalidar` tienen efecto fiscal. No hay confirmación de la CLI: la das tú al aprobar la llamada
+en tu cliente MCP.
+</Aside>

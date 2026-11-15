@@ -1,0 +1,44 @@
+---
+title: Environments
+description: The Ministry of Finance's test (00) and production (01) environments, and how to move from one to the other.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components'
+
+The MH has two environments, and Open Factura keeps them separate end to end:
+
+| Environment | Code | API key     | Fiscal value |
+| ----------- | ---- | ----------- | ------------ |
+| Test        | `00` | `of_test_…` | None         |
+| Production  | `01` | `of_live_…` | Legal        |
+
+- **The key prefix decides the environment.** A test key never touches production, and vice versa.
+- The dashboard uses the environment saved on the issuer (**Company & Tax Authority → Tax details → Environment**).
+- MH credentials (API password and certificate) are **different in each environment**: test ones
+  don't work in production.
+- Each key sees only the documents and events of its environment. Idempotency keys are also
+  independent per environment.
+- PDFs from the test environment warn that the document has no legal value.
+
+If you operate on a document from another environment, the API responds `409 ambiente_distinto`.
+
+## Going to production
+
+<Steps>
+
+1. Complete the minimum tests Hacienda requires and obtain your authorization as an issuer (see
+   [Becoming an issuer with Hacienda](/en/hacienda/ser-emisor/)).
+2. In Hacienda's issuer portal (Sitio Emisores DTE), production environment, generate the production
+   certificate and API password.
+3. Under **Company & Tax Authority → MH credentials**, upload them for environment `01`
+   (`PUT /api/v1/emisor/credenciales/01`).
+4. For the dashboard, switch the issuer's environment to production. For integrations, create an
+   `of_live_…` key with the minimum permissions.
+5. Issue a first real document and check its stamp and its `urlConsulta`.
+
+</Steps>
+
+<Aside type="caution">
+With an `of_live_…` key, every issuance has fiscal effect and consumes a control number. The CLI asks
+for confirmation in production; an MCP assistant must ask you for an explicit "yes" before issuing.
+</Aside>

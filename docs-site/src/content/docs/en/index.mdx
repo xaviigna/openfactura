@@ -1,0 +1,86 @@
+---
+title: Introduction
+description: Open Factura is an open-source platform for issuing El Salvador's Electronic Tax Documents (DTE) from your system, your terminal, or your AI assistant.
+---
+
+import { Aside, Card, CardGrid, LinkCard } from '@astrojs/starlight/components'
+
+Open Factura issues **Electronic Tax Documents (DTE)** with El Salvador's Ministry of Finance
+(Ministerio de Hacienda, MH) under the Compliance Regulation 2.0 (Normativa de Cumplimiento 2.0). You
+send JSON; Open Factura calculates the taxes, assigns the control number, signs, transmits, and
+returns the document with its reception stamp, its official JSON, and its PDF.
+
+The API is open source: use it in the cloud (`openfactura.co`), dashboard included, or deploy it to
+your own Cloudflare account ([self-hosting](/en/autoalojamiento/)).
+
+<Aside>
+The API speaks Spanish: endpoints, field names, error codes, permissions, and CLI commands
+(`tipoDte`, `dte_rechazado`, `openfactura dte emitir`…) are the real contract and appear here
+untranslated. The API reference is in Spanish, like the API's field names.
+</Aside>
+
+## Before you begin
+
+- An account at [app.openfactura.co](https://app.openfactura.co) with an organization.
+- A registered issuer and its credentials for the MH test environment (API password and `.crt`
+  certificate).
+- A test API key (`of_test_…`).
+
+Not authorized by Hacienda yet? Read [Becoming an issuer with Hacienda](/en/hacienda/ser-emisor/).
+
+## Three ways to connect
+
+All three use the same services, the same permissions, and the same API key.
+
+<CardGrid>
+  <Card title="REST API" icon="seti:json">
+    JSON over HTTPS at `https://app.openfactura.co/api/v1`, described with OpenAPI 3.1.
+  </Card>
+  <Card title="MCP" icon="puzzle">
+    Tools for Claude, Cursor, and other assistants, remote at `/mcp` or local over stdio.
+  </Card>
+  <Card title="CLI" icon="seti:shell">
+    `openfactura dte emitir factura.json` from the terminal or a CI pipeline.
+  </Card>
+</CardGrid>
+
+## Start here
+
+<CardGrid>
+  <LinkCard
+    title="Quickstart"
+    description="From a new account to your first test invoice in minutes."
+    href="/en/inicio-rapido/"
+  />
+  <LinkCard
+    title="Issue documents"
+    description="Invoices, tax credit invoices, notes, exports, excluded subjects, and more."
+    href="/en/guias/emitir/"
+  />
+  <LinkCard
+    title="Connect an assistant (MCP)"
+    description="Let Claude validate, confirm, and issue for you."
+    href="/en/herramientas/mcp/"
+  />
+  <LinkCard
+    title="API reference"
+    description="Every route, parameter, response, and error code (in Spanish)."
+    href="/api/"
+  />
+</CardGrid>
+
+## Explore
+
+<CardGrid>
+  <LinkCard title="Authentication and keys" href="/en/autenticacion/" />
+  <LinkCard title="Environments: test and production" href="/en/ambientes/" />
+  <LinkCard title="Idempotency" href="/en/guias/idempotencia/" />
+  <LinkCard title="Contingency" href="/en/guias/contingencia/" />
+  <LinkCard title="Invalidation" href="/en/guias/invalidacion/" />
+  <LinkCard title="Return event" href="/en/guias/retorno/" />
+  <LinkCard title="CLI" href="/en/herramientas/cli/" />
+  <LinkCard title="Agent skills" href="/en/herramientas/habilidades/" />
+  <LinkCard title="SDK @openfactura/dte" href="/en/herramientas/sdk/" />
+  <LinkCard title="Self-hosting" href="/en/autoalojamiento/" />
+  <LinkCard title="Errors" href="/en/errores/" />
+</CardGrid>

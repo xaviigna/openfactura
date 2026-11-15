@@ -1,0 +1,56 @@
+---
+title: Errors
+description: The common error format and what to do with each code.
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+Every error has the same shape:
+
+```json
+{ "error": { "code": "dte_invalido", "message": "…", "details": {} } }
+```
+
+Always branch on `code`, never on the text of `message` (which is in Spanish). Codes are a public
+contract and are never renamed.
+
+## Codes
+
+| HTTP | `code`                         | What happened                                                             | What to do                                                                                      |
+| ---- | ------------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 400  | `datos_invalidos`              | Invalid body or parameters; `details` = `[{ ruta, mensaje }]`             | Fix each path and retry.                                                                        |
+| 400  | `dte_invalido`                 | The DTE doesn't match the MH schema; `details.problemas` = `[{ ruta, mensaje, regla }]`. Nothing was issued | Fix and validate again.                                       |
+| 401  | `no_autenticado`               | No session, or the key is invalid, revoked, or expired                    | Check the key or create another.                                                                |
+| 402  | `plan_requerido`               | The account's plan doesn't include the operation (cloud only)             | Upgrade your plan; no control number was consumed.                                              |
+| 403  | `sin_permiso`                  | The `details.permiso` permission is missing                               | Use a key with that permission.                                                                 |
+| 403  | `origen_no_permitido`          | Cookie-authenticated request from another origin                          | Use the dashboard or an API key.                                                                |
+| 404  | `no_encontrado`                | The resource doesn't exist in your organization                           | Check the id or the code.                                                                       |
+| 409  | `sin_organizacion`, `sin_organizacion_activa` | The session has no active organization                     | Create or activate an organization.                                                             |
+| 409  | `emisor_no_configurado`, `credenciales_incompletas`, `sin_punto_venta` | Configuration is missing          | Complete it in the dashboard (**Issuer**).                                                      |
+| 409  | `nit_bloqueado`                | The issuer's NIT can't be changed after documents have been issued        | Create another organization for another NIT.                                                    |
+| 409  | `estado_invalido`              | The document isn't in a status that allows the operation                  | Fetch the document.                                                                             |
+| 409  | `ambiente_distinto`            | The document or event belongs to another environment                      | Use the key for the right environment.                                                          |
+| 409  | `retorno_excedido`             | The return exceeds what is left of the document                           | `details.disponible` says how much is left.                                                     |
+| 409  | `retorno_vigente`              | The document has an active return                                         | Invalidate the return first (`details.codigoGeneracion`).                                       |
+| 409  | `idempotencia_distinta`        | That `Idempotency-Key` was already used with a different body             | A different key for a different document; the same body for the same one.                       |
+| 409  | `idempotencia_en_curso`        | The first attempt is still in progress                                    | Wait and retry with the same key.                                                               |
+| 409  | `cliente_repetido`, `producto_repetido`, `codigo_repetido` | A record with that document or code already exists | Update the existing one.                                                                   |
+| 409  | `sin_archivo`                  | The document is still pending and has no file yet                         | Check again in a few minutes.                                                                   |
+| 409  | `simulador_inactivo`           | Test credentials requested from a server without the simulator            | Upload real MH credentials.                                                                     |
+| 422  | `dte_rechazado`                | The MH rejected the document; the control number is left as rejected      | Show `details.mh.observaciones`, fix, and issue a new one with another `Idempotency-Key`.       |
+| 422  | `invalidacion_rechazada`       | The MH rejected the invalidation (often, past the deadline)               | Check `details.mh` and the [deadlines](/en/guias/invalidacion/).                                |
+| 422  | `contingencia_rechazada`       | The MH rejected the contingency event                                     | Check `details.mh`.                                                                             |
+| 422  | `evento_rechazado`             | The MH rejected a return or special operations event                      | Fix and resend with another `Idempotency-Key`.                                                  |
+| 429  | `limite_excedido`              | Too many requests                                                         | Wait `Retry-After` seconds.                                                                     |
+| 429  | `limite_plan`                  | The plan limit was reached, e.g. DTEs per month (cloud only)              | Upgrade your plan or wait for the next period; no control number was consumed.                  |
+| 500  | `error_interno`                | Unexpected server error                                                   | Retry; if it persists, report it.                                                               |
+| 502  | `mh_credenciales_rechazadas`   | The MH didn't accept the API password or the certificate                  | Check **Company & Tax Authority → MH credentials**.                                                              |
+| 502  | `mh_no_disponible`             | Couldn't reach the MH; no control number was consumed                     | Retry with the same `Idempotency-Key`.                                                          |
+| 502  | `emision_fallida`              | Signing failed; the document was left `rechazado` without being transmitted | Check the certificate and issue again.                                                        |
+| 502  | `emision_incierta`             | The outcome couldn't be confirmed; the document stays `pendiente`         | **Don't issue another one.** Check `details.codigoGeneracion`; it reconciles with the MH on its own. |
+
+In `details.mh` the MH reports `{ codigo, mensaje, observaciones[] }`.
+
+<Aside>
+The full list of codes is also in the `Error` schema of the [API reference](/api/) (in Spanish).
+</Aside>

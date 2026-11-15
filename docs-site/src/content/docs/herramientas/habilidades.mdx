@@ -1,0 +1,31 @@
+---
+title: Habilidades para agentes
+description: Instala las habilidades de Open Factura (skills.sh) para que Claude Code, Cursor, Codex y otros agentes facturen con cuidado.
+---
+
+Las habilidades son instrucciones empaquetadas (MIT) que enseñan a un agente de programación o
+asistente cómo usar Open Factura: qué preguntar, qué validar y cuándo pedir confirmación. Se
+distribuyen por [skills.sh](https://skills.sh/xaviigna/openfactura).
+
+```bash
+npx skills add xaviigna/openfactura                                # las cuatro
+npx skills add xaviigna/openfactura --skill openfactura-facturar   # sólo una
+```
+
+| Habilidad              | Qué enseña                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| `openfactura-conectar` | Conectar el MCP o la CLI, elegir una clave `of_test_`/`of_live_` y permisos mínimos         |
+| `openfactura-facturar` | Validar, confirmar y emitir; qué tipo de DTE corresponde; IVA en los precios; retornos       |
+| `openfactura-errores`  | Qué hacer con cada código de error, contingencia, emisión incierta e invalidación con plazos |
+| `openfactura-webhooks` | Configurar webhooks, implementar el endpoint que los recibe y verificar la firma |
+
+## Reglas que aplican los agentes
+
+- Validar antes de emitir y corregir cada problema.
+- Confirmar contigo el resumen (tipo, receptor, líneas, total y ambiente) antes de emitir.
+- No calcular impuestos: mostrar el total que devuelve Open Factura.
+- Una `idempotencyKey` por intento, reutilizada en los reintentos.
+- No adivinar datos fiscales: buscarlos en clientes guardados o preguntarlos.
+- Decidir por el `code` del error, nunca por el texto del mensaje.
+
+Las habilidades funcionan junto con el [servidor MCP](/herramientas/mcp/) o la [CLI](/herramientas/cli/).

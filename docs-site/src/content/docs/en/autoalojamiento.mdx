@@ -1,0 +1,118 @@
+---
+title: Self-hosting
+description: Run the Open Factura API on your machine with the MH simulator, or deploy it to your own Cloudflare account.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components'
+
+Open Factura is open source ([AGPL-3.0](https://github.com/xaviigna/openfactura/blob/main/LICENSE)
+for the server; MIT for the SDK, the CLI, and the skills). It runs as a single Cloudflare Worker with
+a D1 database: REST API, MCP, webhooks, and reconciliation.
+
+<Aside type="note" title="No dashboard">
+  The self-hosted version has no web dashboard: you manage it with the API, the CLI, or your agent.
+  The dashboard, guided onboarding, and automatic certification tests are part of
+  [Open Factura Cloud](https://openfactura.co).
+</Aside>
+
+## On your machine
+
+Requirements: [Bun](https://bun.sh) 1.2+ and Node 20+.
+
+```bash
+git clone https://github.com/xaviigna/openfactura && cd openfactura
+bun install
+cp server/.dev.vars.example server/.dev.vars     # fill in the secrets (openssl rand -base64 32/48)
+echo "MH_SIMULADO=1" >> server/.dev.vars         # MH simulator: issue without Hacienda credentials
+echo "WEBHOOKS_LOCAL=1" >> server/.dev.vars      # webhooks to http://localhost (development only)
+bun run build
+cd server && bun run db:migrate:local && cd ..
+bun run dev                                      # API and MCP on :8788
+```
+
+Create your organization and a test key, and connect the simulator:
+
+```bash
+export OPENFACTURA_URL=http://localhost:8788
+export OPENFACTURA_ADMIN_TOKEN=<the ADMIN_TOKEN from server/.dev.vars>
+npx @openfactura/cli alta "Mi Empresa"           # prints the organization id
+curl -X PUT $OPENFACTURA_URL/api/v1/emisor -H "Authorization: Bearer $OPENFACTURA_ADMIN_TOKEN" \
+  -H "X-Organizacion: <id>" -H 'Content-Type: application/json' -d @emisor.json
+curl -X POST $OPENFACTURA_URL/api/v1/emisor/credenciales-prueba \
+  -H "Authorization: Bearer $OPENFACTURA_ADMIN_TOKEN" -H "X-Organizacion: <id>"
+npx @openfactura/cli dte emitir factura.json      # {"tipoDte":"01","datos":{"items":[…]}}
+```
+
+In the examples throughout these docs, replace `https://app.openfactura.co` (and
+`https://openfactura.co/mcp`) with `http://localhost:8788` (and `http://localhost:8788/mcp`).
+
+## On your Cloudflare account
+
+<Aside type="caution">
+The Workers free plan limits CPU to 10 ms per request. Signing (RSA) and generating the PDF exceed
+that limit: use the Workers paid plan.
+</Aside>
+
+<Steps>
+
+1. **Database.**
+
+   ```bash
+   cd server
+   bunx wrangler d1 create openfactura
+   ```
+
+   Copy the `database_id` into `server/wrangler.jsonc` and apply the migrations with
+   `bun run db:migrate:remote`.
+
+2. **Configuration.** In `server/wrangler.jsonc`, change `vars.APP_URL` to your public URL. Then the
+   secrets:
+
+   ```bash
+   openssl rand -base64 32 | bunx wrangler secret put BETTER_AUTH_SECRET
+   openssl rand -base64 32 | bunx wrangler secret put CRED_KEK_V1
+   openssl rand -base64 48 | tee admin-token.txt | bunx wrangler secret put ADMIN_TOKEN
+   ```
+
+   `ADMIN_TOKEN` is your operator credential: it creates organizations and manages the issuer, its
+   MH credentials, and the API keys. Treat it like a password.
+
+   `CRED_KEK_V1` encrypts the MH credentials of every issuer. **Keep a copy outside Cloudflare.**
+   Don't set `WEBHOOKS_LOCAL` in production.
+
+3. **Deploy.**
+
+   ```bash
+   cd .. && bun run deploy
+   ```
+
+4. **First use.** `npx @openfactura/cli alta "Mi Empresa" --url https://YOUR-DOMAIN`, then with
+   `ADMIN_TOKEN` + `X-Organizacion`: `PUT /api/v1/emisor`, `PUT /api/v1/emisor/credenciales/00`
+   (API password, `.crt` certificate, and its password), and `POST /api/v1/emisor/probar`. Step by
+   step in [`docs/self-hosting.md`](https://github.com/xaviigna/openfactura/blob/main/docs/self-hosting.md)
+   (in Spanish).
+
+</Steps>
+
+## Variables
+
+| Name                      | Type   | Description                                                          |
+| ------------------------- | ------ | -------------------------------------------------------------------- |
+| `APP_URL`                 | var    | Public URL of the service                                            |
+| `BETTER_AUTH_SECRET`      | secret | Session signing                                                      |
+| `ADMIN_TOKEN`             | secret | Operator credential (32+ characters); without it there is no administration |
+| `CRED_KEK_V1` (`V2`, …)   | secret | AES-256 master key, 32 bytes in base64                               |
+| `LIMITE_CLAVE_POR_MINUTO` | var    | Requests per minute per API key (120)                                |
+| `TRUSTED_ORIGINS`         | var    | Additional trusted origins, comma-separated                          |
+| `MH_BASE_URL`             | var    | Overrides the MH URL (testing only)                                  |
+| `MH_SIMULADO`             | var    | `1` enables `POST /emisor/credenciales-prueba` (MH simulator, environment `00`) |
+| `WEBHOOKS_LOCAL`          | var    | `1` allows webhooks to `http://localhost` (development only)         |
+
+## Rotating the master key
+
+1. `bunx wrangler secret put CRED_KEK_V2` with a new key. New values are encrypted with V2; older
+   ones are still decrypted with V1.
+2. Save each issuer's credentials again.
+3. Once no value starts with `v1.`, delete `CRED_KEK_V1`.
+
+Your installation's OpenAPI document is at `https://YOUR-DOMAIN/api/v1/openapi.json`.

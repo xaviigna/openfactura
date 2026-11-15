@@ -1,0 +1,32 @@
+---
+title: Agent skills
+description: Install the Open Factura skills (skills.sh) so Claude Code, Cursor, Codex, and other agents invoice carefully.
+---
+
+Skills are packaged instructions (MIT) that teach a coding agent or assistant how to use Open
+Factura: what to ask, what to validate, and when to ask for confirmation. They are distributed
+through [skills.sh](https://skills.sh/xaviigna/openfactura).
+
+```bash
+npx skills add xaviigna/openfactura                                # all four
+npx skills add xaviigna/openfactura --skill openfactura-facturar   # just one
+```
+
+| Skill                  | What it teaches                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| `openfactura-conectar` | Connecting the MCP or the CLI, choosing an `of_test_`/`of_live_` key and minimum permissions |
+| `openfactura-facturar` | Validating, confirming, and issuing; which DTE type applies; VAT in prices; returns          |
+| `openfactura-errores`  | What to do with each error code, contingency, uncertain issuance, and invalidation deadlines |
+| `openfactura-webhooks` | Configuring webhooks, implementing the endpoint that receives them, and verifying the signature |
+
+## Rules the agents follow
+
+- Validate before issuing and fix every problem.
+- Confirm the summary with you (type, recipient, lines, total, and environment) before issuing.
+- Don't calculate taxes: show the total Open Factura returns.
+- One `idempotencyKey` per attempt, reused on retries.
+- Don't guess tax details: look them up in saved customers or ask.
+- Branch on the error's `code`, never on the message text.
+
+The skills work together with the [MCP server](/en/herramientas/mcp/) or the
+[CLI](/en/herramientas/cli/).

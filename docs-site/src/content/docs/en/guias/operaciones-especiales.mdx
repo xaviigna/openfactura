@@ -1,0 +1,66 @@
+---
+title: Special operations
+description: Report simplified invoices and internal control receipts each period with event 17.
+---
+
+import { TabItem, Tabs } from '@astrojs/starlight/components'
+
+The **Special Operations Event (Evento de Operaciones Especiales, 17)** reports to the MH, per
+period, documents that are not DTEs:
+
+- **Simplified sales invoices** (`tipoDocumento: "02"`): always by ranges `docDel`–`docAl`.
+- **Internal control receipts** (`tipoDocumento: "97"`): one by one (`numDocumento` +
+  `fechaEmision`) or by ranges. The two forms can't be mixed.
+
+It requires `dte:emit` and supports [`Idempotency-Key`](/en/guias/idempotencia/). Prices go **without
+VAT**, on simplified invoices too.
+
+## Body
+
+```json
+{
+  "tipoDocumento": "02",
+  "fecha": "2026-10-31",
+  "items": [
+    { "descripcion": "Facturas simplificadas", "docDel": "1", "docAl": "25", "precioUni": 10 }
+  ]
+}
+```
+
+- `fecha` (YYYY-MM-DD) defines the reported period. Defaults to today; never a future date.
+- Each item: `descripcion`, `precioUni` and, depending on the case, `cantidad`, `numDocumento`,
+  `docDel`, `docAl`, `fechaEmision`, `tipoVenta`, `codigoGeneracionRef`. Up to 2000 items.
+- **Voided** documents go in a separate event, all with `codigoGeneracionRef`: the code of the event
+  where they were reported as active.
+
+## Send
+
+<Tabs syncKey="via">
+<TabItem label="curl">
+
+```bash
+curl https://app.openfactura.co/api/v1/eventos/operaciones-especiales \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: simplificadas-2026-10" \
+  -d @simplificadas.json
+```
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+openfactura eventos operaciones-especiales simplificadas.json
+```
+
+</TabItem>
+<TabItem label="MCP">
+
+`operaciones_especiales_informar` with `tipoDocumento`, `fecha`, `items`, and `idempotencyKey`.
+
+</TabItem>
+</Tabs>
+
+Response: `201` with the `Evento` (`tipo: "operaciones_especiales"`, `tipoEvento: "17"`). If the MH
+rejects it: `422 evento_rechazado`. List the ones you sent with
+`GET /eventos?tipo=operaciones_especiales`.

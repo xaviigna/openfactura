@@ -1,0 +1,150 @@
+---
+title: Webhooks
+description: Receive a signed notification on your server when a document or event changes status.
+---
+Open Factura notifies your system when a document changes status, so you don't have to poll.
+Configure webhooks in the dashboard (**Developers → Webhooks**), with the API, with
+`openfactura webhooks`, or with the MCP tools. They require the `webhooks:manage` permission.
+
+## Routes (`webhooks:manage`)
+
+- `GET /webhooks` → `[{ id, url, descripcion, eventos[], activo, creado, actualizado }]` (never the
+  secret)
+- `POST /webhooks` — `{ url, eventos: [...], descripcion?, activo? }` → the above plus `secreto`
+  (`whsec_…`, this one time only). Up to 10 per organization (`409 limite_webhooks`).
+- `PATCH /webhooks/:id` — any of `{ url, descripcion, eventos, activo }`
+- `DELETE /webhooks/:id` → `{ eliminado: true }`; also deletes its delivery history
+- `POST /webhooks/:id/rotar-secreto` → the webhook with a new `secreto`; the previous one stops
+  signing immediately
+- `POST /webhooks/:id/probar` → sends a `webhook.prueba` event right away and responds
+  `{ entregado, status, error, entrega }`. It is not retried.
+- `GET /webhooks/:id/entregas` → the 50 most recent:
+  `[{ id, webhookId, evento, estado: 'pendiente'|'entregado'|'fallido', intentos, ultimoStatus, ultimoError, proximoIntento, creado, entregado }]`
+- `POST /webhooks/entregas/:id/reenviar` → resends the same body now with a new signature and resets
+  its retries
+
+Creating, changing, deleting, and rotating are recorded in the audit log (only the URL's host, never
+the secret).
+
+## Events
+
+| Event                              | When                                                                                                  | `datos`                                                                   |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `dte.procesado`                    | The MH stamped a document: on issuance, on transmitting a contingency, or on reconciling a pending one | Document (like `GET /dte/:codigo` without `dte`, `respuestaMh`, or `eventos`) |
+| `dte.rechazado`                    | The MH rejected a document (on issuance or on transmitting the contingency), or reconciliation discarded it | Document                                                            |
+| `dte.contingencia`                 | The MH didn't respond and the document was signed in contingency                                      | Document                                                                  |
+| `dte.invalidado`                   | A document was invalidated                                                                            | Document + `invalidacion`                                                 |
+| `retorno.procesado`                | The MH stamped a return event (18)                                                                    | Event (like `GET /eventos/:codigo` without `dte`)                         |
+| `retorno.invalidado` | A return event was invalidated | Event + `invalidacion` |
+| `operaciones_especiales.procesado` | The MH stamped a special operations event (17)                                                        | Event                                                                     |
+| `operaciones_especiales.invalidado` | A special operations event was invalidated | Event + `invalidacion` |
+
+In `*.invalidado` events, `invalidacion` carries the `codigoGeneracion` and `selloRecibido` of the
+invalidation event (16): its file (`GET /eventos/:codigo/json`) and its PDF are delivered to the recipient
+(Normativa 2.0, rule 6).
+
+`webhook.prueba` is only sent with `POST /webhooks/:id/probar`. Event names are a public contract and
+don't change.
+
+## Body
+
+```json
+{
+  "id": "1f0c…",
+  "evento": "dte.procesado",
+  "creado": "2026-11-12T16:04:05.123Z",
+  "ambiente": "00",
+  "organizacion": "org_…",
+  "datos": {
+    "codigoGeneracion": "C25227C9-…",
+    "numeroControl": "DTE-01-M001P001-000000000000001",
+    "tipoDte": "01",
+    "estado": "procesado",
+    "selloRecibido": "2026…",
+    "total": 22.6,
+    "…": "…"
+  }
+}
+```
+
+`id` is the delivery id (same as the `OpenFactura-Delivery` header): use it to discard duplicates,
+because a delivery can arrive more than once. `ambiente` lets you ignore test ones (`00`). The body
+never carries the DTE's JSON or any MH credential data: if you need the full document, fetch it with
+`GET /dte/:codigo`.
+
+## Headers
+
+```
+POST <your URL>
+Content-Type: application/json
+User-Agent: OpenFactura-Webhooks/1
+OpenFactura-Event: dte.procesado
+OpenFactura-Delivery: 1f0c…
+OpenFactura-Signature: t=1794500645,v1=5d41402abc4b2a76b9719d911017c592…
+```
+
+`v1` is the HMAC-SHA256, in hexadecimal, of the text `"<t>.<raw body>"` with the full secret
+(including `whsec_`) as the key. `t` is the send time in Unix seconds.
+
+## Verify the signature (Node 18+, Workers, Deno, or Bun, with WebCrypto)
+
+```ts
+const codificar = (texto: string) => new TextEncoder().encode(texto)
+
+/** Returns true if the request comes from Open Factura and is less than 5 minutes old. */
+export async function verificarFirma(cuerpoCrudo: string, cabecera: string, secreto: string) {
+  const partes = Object.fromEntries(
+    cabecera.split(',').map((p) => p.split('=') as [string, string]),
+  )
+  const t = Number(partes.t)
+  const v1 = partes.v1 ?? ''
+  if (!Number.isInteger(t) || Math.abs(Date.now() / 1000 - t) > 300) return false
+  if (!/^[0-9a-f]{64}$/.test(v1)) return false
+  const llave = await crypto.subtle.importKey(
+    'raw',
+    codificar(secreto),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify'],
+  )
+  const firma = Uint8Array.from(v1.match(/../g) ?? [], (h) => Number.parseInt(h, 16))
+  // `verify` compares in constant time.
+  return crypto.subtle.verify('HMAC', llave, firma, codificar(`${t}.${cuerpoCrudo}`))
+}
+
+// Example with a standard handler (Hono, Workers, Next.js route handlers…):
+export async function POST(peticion: Request) {
+  const cuerpo = await peticion.text() // the RAW body, before JSON.parse
+  const firma = peticion.headers.get('OpenFactura-Signature') ?? ''
+  if (!(await verificarFirma(cuerpo, firma, process.env.OPENFACTURA_WEBHOOK_SECRET!))) {
+    return new Response('invalid signature', { status: 400 })
+  }
+  const aviso = JSON.parse(cuerpo)
+  // … enqueue the work and respond fast; ignore `aviso.id` if you already processed it.
+  return new Response(null, { status: 204 })
+}
+```
+
+## Delivery and retries
+
+- Any 2xx response within 10 s counts as delivered. Redirects are not followed and count as a
+  failure.
+- The first attempt goes out right after the operation, without delaying the API response. An
+  operation that changes many documents at once (e.g. a large contingency) attempts the first 10
+  immediately and leaves the rest to the cron.
+- If it fails, it is retried from the cron (every 5 minutes) with increasing backoff: 1 min, 5 min,
+  30 min, 2 h, 6 h, 12 h, and 24 h. After 8 attempts (almost two days) the delivery becomes
+  `fallido`; you can resend it manually with `POST /webhooks/entregas/:id/reenviar`.
+- Deactivating a webhook stops its retries (pending deliveries become `fallido`).
+- Each cron run sends at most 20 deliveries.
+
+## Security
+
+- Only `https://` URLs with a public domain name. `localhost`, `*.localhost`, `*.local`,
+  `*.internal`, private, loopback, link-local, and reserved IPs (IPv4 and IPv6, in any notation),
+  names without a domain, and URLs with a username or password are rejected. In development,
+  `WEBHOOKS_LOCAL=1` additionally allows `http://localhost`.
+- The secret is stored encrypted (AES-256-GCM with the master key) and is only shown when created or
+  rotated. If it leaks, rotate it.
+- Your server's response body is neither read nor stored; the history only keeps the HTTP status and
+  a short reason.

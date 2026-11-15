@@ -1,0 +1,82 @@
+---
+title: Evento de retorno
+description: Devoluciones, reembolsos y envases sobre una Factura, Factura de Exportación o Sujeto Excluido, sin invalidar el documento.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+
+El **Evento de Retorno (18)** registra la devolución de bienes, un reembolso o la devolución de
+envases sobre una **Factura (01)**, **Factura de Exportación (11)** o **Sujeto Excluido (14)**
+procesados. El documento original sigue vigente.
+
+- Requiere el permiso `dte:emit` y admite [`Idempotency-Key`](/guias/idempotencia/).
+- `precioUni` va como en el documento original: en Factura (01) **con** IVA; en 11 y 14 sin IVA.
+- Receptor, terceros y datos de exportación se copian del documento. Las retenciones se aplican si el
+  documento las tuvo.
+- Plazo: **3 meses** desde la fecha del documento (2 años para Factura y Exportación de las
+  actividades 21001, 21008, 46482, 46484, 46491 y 47721).
+- La suma de los retornos no puede superar el documento: `409 retorno_excedido` con
+  `details.disponible`.
+- Si el cliente cambia el producto, además emite un documento nuevo por la nueva venta.
+
+## Registrar un retorno
+
+<Tabs syncKey="via">
+<TabItem label="curl">
+
+```bash
+curl https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/retorno \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: devolucion-1042" \
+  -d '{ "items": [{ "descripcion": "Silla", "cantidad": 1, "precioUni": 22.6 }] }'
+```
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+echo '{ "items": [{ "descripcion": "Silla", "cantidad": 1, "precioUni": 22.6 }] }' \
+  | openfactura dte retorno 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 -
+```
+
+</TabItem>
+<TabItem label="MCP">
+
+`dte_retorno` con el `codigoGeneracion` del documento, `idempotencyKey` e `items`.
+
+</TabItem>
+</Tabs>
+
+Campos de cada ítem: `descripcion`, `cantidad`, `precioUni` y, opcionales, `tipoItem`, `codigo`,
+`uniMedida`, `descuento`, `tipoVenta`, `seguro` y `flete`.
+
+Respuesta: `201` con el `Evento`:
+
+```json
+{
+  "id": "…",
+  "tipo": "retorno",
+  "tipoEvento": "18",
+  "codigoGeneracion": "…",
+  "ambiente": "00",
+  "estado": "procesado",
+  "selloRecibido": "…",
+  "documentoId": "…",
+  "creado": 1794469092559
+}
+```
+
+Si el MH rechaza el evento: `422 evento_rechazado` con `details.mh`.
+
+## Consultar y entregar
+
+- `GET /eventos?tipo=retorno` — los 50 más recientes del ambiente activo.
+- `GET /eventos/{codigo}` — el evento con su JSON y la respuesta del MH.
+- `GET /eventos/{codigo}/json` y `GET /eventos/{codigo}/pdf` — archivo y representación gráfica para
+  el receptor.
+
+<Aside>
+Un documento con un retorno vigente no se puede invalidar hasta invalidar antes el retorno (ve
+[Invalidación](/guias/invalidacion/#invalidar-un-evento)).
+</Aside>

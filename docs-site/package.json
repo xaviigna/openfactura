@@ -1,0 +1,18 @@
+{
+  "name": "docs-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "dev": "bun --bun astro dev",
+    "build": "bun --bun astro build",
+    "preview": "bun --bun astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.42.11",
+    "astro": "^7.4.11",
+    "github-slugger": "^2.0.0",
+    "starlight-openapi": "^0.27.1"
+  }
+}

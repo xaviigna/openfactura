@@ -1,0 +1,244 @@
+---
+title: Connect your agent
+description: Connect Claude Code, Claude Desktop, Cursor, VS Code, Windsurf, Codex, Gemini CLI, or Zed to the Open Factura MCP server.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+import InstalarMcp from '../../../../components/InstalarMcp.astro'
+
+The Open Factura MCP server works with any [MCP](https://modelcontextprotocol.io) client. There are
+two ways to connect it:
+
+- **Remote (HTTP):** `https://openfactura.co/mcp` with the header
+  `Authorization: Bearer of_test_…`. Nothing to install.
+- **Local (stdio):** `npx -y @openfactura/cli mcp`. It uses the key you saved with
+  `openfactura login` (or the `OPENFACTURA_API_KEY` and `OPENFACTURA_URL` variables). Use it for
+  clients that don't send headers.
+
+While you're testing, use an `of_test_…` key: nothing you issue has fiscal value. The key decides
+what the agent can do; see [Authentication and keys](/en/autenticacion/) and the available tools in
+[MCP server](/en/herramientas/mcp/).
+
+## The fastest way
+
+```bash
+npx @openfactura/cli login --url https://app.openfactura.co   # prompts for the key without echoing it
+npx @openfactura/cli mcp install cursor                   # one agent
+npx @openfactura/cli mcp install --todos                  # every agent it finds on your machine
+npx @openfactura/cli mcp install cursor --imprimir        # only prints the configuration
+```
+
+Supported agents: `claude-code`, `claude-desktop`, `cursor`, `vscode`, `windsurf`, `codex`, `gemini`,
+`zed`, `cline`, and `goose`. `npx @openfactura/cli mcp agentes` shows which ones it detects on your
+machine. Before writing, the CLI saves a backup copy of the configuration file, and it never removes
+the other servers you already have.
+
+## Manual configuration
+
+Replace `of_test_...` with your key. After editing a file, restart the agent or reload its MCP
+servers.
+
+<Tabs syncKey="agente">
+<TabItem label="Claude Code">
+
+Remote:
+
+```bash
+claude mcp add --transport http openfactura https://openfactura.co/mcp \
+  --header "Authorization: Bearer of_test_..."
+```
+
+Local (stdio), with the key from `openfactura login`:
+
+```bash
+claude mcp add --transport stdio openfactura -- npx -y @openfactura/cli mcp
+```
+
+Add `--scope user` to have it in all your projects or `--scope project` to share it in the
+repository's `.mcp.json`. More details in the
+[Claude Code documentation](https://code.claude.com/docs/en/mcp).
+
+</TabItem>
+<TabItem label="Claude Desktop">
+
+Claude Desktop uses the local server. Open **Settings → Developer → Edit Config**, or edit
+`claude_desktop_config.json`:
+
+| System  | File                                                               |
+| ------- | ------------------------------------------------------------------ |
+| macOS   | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json`                      |
+| Linux   | `~/.config/Claude/claude_desktop_config.json`                      |
+
+```json
+{
+  "mcpServers": {
+    "openfactura": {
+      "command": "npx",
+      "args": ["-y", "@openfactura/cli", "mcp"],
+      "env": {
+        "OPENFACTURA_API_KEY": "of_test_...",
+        "OPENFACTURA_URL": "https://app.openfactura.co"
+      }
+    }
+  }
+}
+```
+
+If you already ran `openfactura login` on that machine, you can omit `env`. Quit Claude Desktop
+completely and open it again.
+
+</TabItem>
+<TabItem label="Cursor">
+
+In one click (then replace `of_test_TU_CLAVE` with your key in `mcp.json`):
+
+<InstalarMcp agente="cursor" />
+
+Or by hand, in `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (just one):
+
+```json
+{
+  "mcpServers": {
+    "openfactura": {
+      "url": "https://openfactura.co/mcp",
+      "headers": { "Authorization": "Bearer ${env:OPENFACTURA_API_KEY}" }
+    }
+  }
+}
+```
+
+Cursor replaces `${env:OPENFACTURA_API_KEY}` with that environment variable, so the key doesn't end
+up in the file. You can also write the key directly. See the
+[Cursor documentation](https://cursor.com/docs/context/mcp).
+
+</TabItem>
+<TabItem label="VS Code">
+
+In one click (then replace `of_test_TU_CLAVE` with your key in `mcp.json`):
+
+<InstalarMcp agente="vscode" />
+
+Or by hand, in your project's `.vscode/mcp.json` (or in your user profile's `mcp.json`). With
+`inputs`, VS Code asks for the key the first time and stores it securely:
+
+```json
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "openfactura-key",
+      "description": "Open Factura API key (of_test_…)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "openfactura": {
+      "type": "http",
+      "url": "https://openfactura.co/mcp",
+      "headers": { "Authorization": "Bearer ${input:openfactura-key}" }
+    }
+  }
+}
+```
+
+See the [VS Code MCP configuration reference](https://code.visualstudio.com/docs/agents/reference/mcp-configuration).
+
+</TabItem>
+<TabItem label="Windsurf">
+
+Open the `mcp_config.json` file from Cascade's MCP panel and add:
+
+```json
+{
+  "mcpServers": {
+    "openfactura": {
+      "serverUrl": "https://openfactura.co/mcp",
+      "headers": { "Authorization": "Bearer ${env:OPENFACTURA_API_KEY}" }
+    }
+  }
+}
+```
+
+The file's location changed between versions (`~/.codeium/windsurf/mcp_config.json` in earlier ones);
+check the [Windsurf documentation](https://docs.windsurf.com/windsurf/cascade/mcp).
+
+</TabItem>
+<TabItem label="Codex CLI">
+
+In `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.openfactura]
+url = "https://openfactura.co/mcp"
+bearer_token_env_var = "OPENFACTURA_API_KEY"
+```
+
+Codex sends the contents of `OPENFACTURA_API_KEY` as `Authorization: Bearer …`. For the local
+server:
+
+```bash
+codex mcp add openfactura -- npx -y @openfactura/cli mcp
+```
+
+See the [Codex documentation](https://developers.openai.com/codex/mcp).
+
+</TabItem>
+<TabItem label="Gemini CLI">
+
+```bash
+gemini mcp add --transport http --header "Authorization: Bearer of_test_..." \
+  openfactura https://openfactura.co/mcp
+```
+
+Or in `~/.gemini/settings.json` (all projects) or `.gemini/settings.json` (just one):
+
+```json
+{
+  "mcpServers": {
+    "openfactura": {
+      "httpUrl": "https://openfactura.co/mcp",
+      "headers": { "Authorization": "Bearer of_test_..." }
+    }
+  }
+}
+```
+
+Use `httpUrl` (Streamable HTTP), not `url`, which in Gemini CLI means SSE. See the
+[Gemini CLI documentation](https://geminicli.com/docs/tools/mcp-server/).
+
+</TabItem>
+<TabItem label="Zed">
+
+Open your settings with the `zed: open settings file` action and add:
+
+```json
+{
+  "context_servers": {
+    "openfactura": {
+      "url": "https://openfactura.co/mcp",
+      "headers": { "Authorization": "Bearer of_test_..." }
+    }
+  }
+}
+```
+
+See the [Zed documentation](https://zed.dev/docs/ai/mcp).
+
+</TabItem>
+</Tabs>
+
+## ChatGPT and claude.ai (web)
+
+ChatGPT and claude.ai in the browser connect to MCP servers through connectors that require OAuth.
+The Open Factura server still only accepts API keys; OAuth sign-in is coming soon. In the meantime,
+use Claude Code, Claude Desktop, Cursor, VS Code, or another agent on this page.
+
+## Teach your agent to invoice
+
+The [agent skills](/en/herramientas/habilidades/) teach it to validate before issuing, to confirm
+with you, and to handle errors:
+
+```bash
+npx skills add xaviigna/openfactura
+```

@@ -1,0 +1,40 @@
+---
+title: Límites de peticiones
+description: Cuántas peticiones admite cada clave, los encabezados RateLimit y cómo reintentar tras un 429.
+---
+
+| Qué                                   | Límite                          |
+| ------------------------------------- | ------------------------------- |
+| Cada clave de API                     | 120 peticiones por minuto       |
+| Cada sesión del panel                 | 600 peticiones por minuto       |
+| Intentos con claves inválidas, por IP | 30 por minuto                   |
+| Rutas de sesión (`/api/auth/*`)       | Límite por IP                   |
+| Tamaño del cuerpo                     | 512 KB                          |
+
+En una instalación propia, el límite por clave se cambia con la variable `LIMITE_CLAVE_POR_MINUTO`.
+
+## Encabezados
+
+Toda respuesta autenticada con clave de API trae:
+
+```http
+RateLimit-Limit: 120
+RateLimit-Remaining: 117
+RateLimit-Reset: 42
+```
+
+`RateLimit-Reset` son los segundos que faltan para reiniciar la ventana.
+
+## Al exceder el límite
+
+`429 limite_excedido` con el encabezado `Retry-After` (segundos) y `details.reintentarEn`:
+
+```json
+{ "error": { "code": "limite_excedido", "message": "…", "details": { "reintentarEn": 18 } } }
+```
+
+Espera `Retry-After` segundos y reintenta. Si era una emisión, usa la **misma**
+[`Idempotency-Key`](/guias/idempotencia/). La CLI termina con código de salida `4` y muestra el
+`Retry-After`.
+
+Un cuerpo de más de 512 KB recibe `413` con el código `datos_invalidos`.

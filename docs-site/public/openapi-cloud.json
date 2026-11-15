@@ -1,0 +1,1524 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Open Factura Cloud",
+    "version": "1.0.0",
+    "description": "Lo que suma la versión administrada a la API de siempre: Plataforma (integra a tus clientes), Marca, Correo y Certificación. Mismo formato de errores que la API del núcleo."
+  },
+  "servers": [
+    {
+      "url": "https://app.openfactura.co"
+    }
+  ],
+  "security": [
+    {
+      "clave": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Plataforma",
+      "description": "Un desarrollador, muchos clientes: cada uno en su espacio aislado. Con una clave tuya habilitada para Plataforma (panel → Clientes → Acceso por API)."
+    },
+    {
+      "name": "Marca"
+    },
+    {
+      "name": "Correo"
+    },
+    {
+      "name": "Certificación"
+    }
+  ],
+  "paths": {
+    "/cloud/plataforma/clientes": {
+      "post": {
+        "operationId": "plataforma_cliente_crear",
+        "tags": ["Plataforma"],
+        "summary": "Crear un cliente",
+        "description": "Crea un cliente pendiente con su propio espacio (organización aislada). Lo que ya sabes de él (`datos`) llega prellenado a su alta.",
+        "responses": {
+          "201": {
+            "description": "Cliente creado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientePlataforma"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nombre"],
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 120,
+                    "example": "Casa Barista"
+                  },
+                  "externalId": {
+                    "type": ["string", "null"],
+                    "maxLength": 120,
+                    "description": "Tu propio id del cliente; único en tu cuenta.",
+                    "example": "cliente-482"
+                  },
+                  "datos": {
+                    "$ref": "#/components/schemas/DatosCliente"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "plataforma_clientes_listar",
+        "tags": ["Plataforma"],
+        "summary": "Listar clientes",
+        "description": "Tus clientes con su estado, qué tan listos están para emitir (`preparacion`) y qué les falta (`falta`).",
+        "responses": {
+          "200": {
+            "description": "Clientes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientePlataforma"
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        },
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["pendiente", "activo", "desactivado"]
+            },
+            "description": "Filtra por estado."
+          },
+          {
+            "name": "externalId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Busca por tu id."
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}": {
+      "get": {
+        "operationId": "plataforma_cliente_obtener",
+        "tags": ["Plataforma"],
+        "summary": "Obtener un cliente",
+        "description": "Un cliente con su estado y preparación.",
+        "responses": {
+          "200": {
+            "description": "Cliente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientePlataforma"
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "plataforma_cliente_eliminar",
+        "tags": ["Plataforma"],
+        "summary": "Eliminar o desactivar un cliente",
+        "description": "Pendiente: se elimina con su espacio. Activo: se desactiva; pierdes el acceso, se revocan tus claves y webhooks en su espacio, y sus datos siguen siendo suyos.",
+        "responses": {
+          "200": {
+            "description": "Hecho."
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/enlace": {
+      "post": {
+        "operationId": "plataforma_cliente_enlace",
+        "tags": ["Plataforma"],
+        "summary": "Crear el enlace de alta",
+        "description": "Enlace de un solo uso para que el cliente active su cuenta (queda como dueño). Uno nuevo invalida al anterior.",
+        "responses": {
+          "201": {
+            "description": "Enlace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "example": "https://app.openfactura.co/cloud/alta/9fK…"
+                    },
+                    "expira": {
+                      "type": "integer",
+                      "description": "ms desde 1970"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expiraEnHoras": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 168,
+                    "default": 72
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/empresa": {
+      "get": {
+        "operationId": "plataforma_cliente_empresa",
+        "tags": ["Plataforma"],
+        "summary": "Ver su empresa ante Hacienda",
+        "description": "Datos fiscales del cliente y qué credenciales del MH cargó. Nunca devuelve las credenciales.",
+        "responses": {
+          "200": {
+            "description": "Empresa, o null si aún no la registra.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/EmpresaCliente"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/uso": {
+      "get": {
+        "operationId": "plataforma_cliente_uso",
+        "tags": ["Plataforma"],
+        "summary": "DTE del mes",
+        "description": "DTE de producción del cliente cubiertos por tu plan en un mes.",
+        "responses": {
+          "200": {
+            "description": "Uso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "periodo": {
+                      "type": "string",
+                      "example": "2026-11"
+                    },
+                    "dte": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          },
+          {
+            "name": "periodo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+            },
+            "description": "AAAA-MM; por defecto el mes en curso."
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/claves": {
+      "post": {
+        "operationId": "plataforma_cliente_clave_crear",
+        "tags": ["Plataforma"],
+        "summary": "Crear una clave para el cliente",
+        "description": "Clave de API en el espacio del cliente: emite a su nombre y sólo ve sus datos. La clave completa sólo aparece en esta respuesta. Una clave de pruebas tuya sólo crea claves de pruebas.",
+        "responses": {
+          "201": {
+            "description": "Clave creada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaveCreada"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaveEntrada"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "plataforma_cliente_claves",
+        "tags": ["Plataforma"],
+        "summary": "Listar sus claves",
+        "description": "Las claves que creaste para el cliente (sin el secreto).",
+        "responses": {
+          "200": {
+            "description": "Claves.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Clave"
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/claves/{clave}": {
+      "delete": {
+        "operationId": "plataforma_cliente_clave_revocar",
+        "tags": ["Plataforma"],
+        "summary": "Revocar una de sus claves",
+        "description": "Revoca una clave que creaste para el cliente.",
+        "responses": {
+          "200": {
+            "description": "Revocada."
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          },
+          {
+            "name": "clave",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id de la clave"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/webhooks": {
+      "post": {
+        "operationId": "plataforma_cliente_webhook_crear",
+        "tags": ["Plataforma"],
+        "summary": "Crear un webhook para el cliente",
+        "description": "Vive en el espacio del cliente y recibe sólo sus eventos (sin `cliente`). Tus webhooks de cuenta ya reciben los de todos tus clientes con `cliente`. El secreto sólo aparece aquí.",
+        "responses": {
+          "201": {
+            "description": "Webhook creado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreado"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookEntrada"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "plataforma_cliente_webhooks",
+        "tags": ["Plataforma"],
+        "summary": "Listar sus webhooks",
+        "description": "Los webhooks que creaste para el cliente.",
+        "responses": {
+          "200": {
+            "description": "Webhooks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Webhook"
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/webhooks/{webhook}": {
+      "delete": {
+        "operationId": "plataforma_cliente_webhook_eliminar",
+        "tags": ["Plataforma"],
+        "summary": "Borrar uno de sus webhooks",
+        "description": "Borra un webhook que creaste para el cliente.",
+        "responses": {
+          "200": {
+            "description": "Borrado."
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          },
+          {
+            "name": "webhook",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del webhook"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ext/marca": {
+      "get": {
+        "operationId": "marca_obtener",
+        "tags": ["Marca"],
+        "summary": "Ver la marca",
+        "description": "Logo (data URL), correo de respuesta y si se oculta «Open Factura». Permiso `emisor:read`.",
+        "responses": {
+          "200": {
+            "description": "Marca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Marca"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        }
+      },
+      "put": {
+        "operationId": "marca_actualizar",
+        "tags": ["Marca"],
+        "summary": "Cambiar correo de respuesta u «Ocultar Open Factura»",
+        "description": "`ocultarOpenFactura` está incluido en Pro y Platform (si no, 402). Permiso `emisor:write`.",
+        "responses": {
+          "200": {
+            "description": "Marca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Marca"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "correoRespuesta": {
+                    "type": ["string", "null"],
+                    "format": "email"
+                  },
+                  "ocultarOpenFactura": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ext/marca/logo": {
+      "put": {
+        "operationId": "marca_logo_subir",
+        "tags": ["Marca"],
+        "summary": "Subir el logo",
+        "description": "PNG o JPG de hasta 200 KB, en base64. Sale en el PDF de la API, del MCP y del correo. Permiso `emisor:write`.",
+        "responses": {
+          "200": {
+            "description": "Marca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Marca"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["base64"],
+                "properties": {
+                  "base64": {
+                    "type": "string",
+                    "description": "Base64 (o data URL) del PNG/JPG"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "marca_logo_quitar",
+        "tags": ["Marca"],
+        "summary": "Quitar el logo",
+        "description": "Permiso `emisor:write`.",
+        "responses": {
+          "200": {
+            "description": "Marca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Marca"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        }
+      }
+    },
+    "/api/v1/ext/correo/dte/{codigo}": {
+      "post": {
+        "operationId": "dte_enviar_correo",
+        "tags": ["Correo"],
+        "summary": "Enviar un DTE por correo",
+        "description": "Envía (o reenvía) un DTE sellado con su PDF y su JSON oficial. Por defecto al receptor. Los de producción se envían solos al sellarse. Permiso `dte:emit`.",
+        "responses": {
+          "200": {
+            "description": "Envío.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envio"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "para": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Otra dirección; por defecto el receptor."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Código de generación del DTE"
+          }
+        ]
+      },
+      "get": {
+        "operationId": "dte_envios_listar",
+        "tags": ["Correo"],
+        "summary": "Ver los envíos de un DTE",
+        "description": "Permiso `dte:read`.",
+        "responses": {
+          "200": {
+            "description": "Envíos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Envio"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        },
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Código de generación del DTE"
+          }
+        ]
+      }
+    },
+    "/api/v1/ext/certificacion": {
+      "get": {
+        "operationId": "certificacion_estado",
+        "tags": ["Certificación"],
+        "summary": "Avance de las pruebas mínimas",
+        "description": "Estado, requisitos y avance por tipo. Permiso `dte:read`.",
+        "responses": {
+          "200": {
+            "description": "Certificación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Certificacion"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        }
+      }
+    },
+    "/api/v1/ext/certificacion/iniciar": {
+      "post": {
+        "operationId": "certificacion_iniciar",
+        "tags": ["Certificación"],
+        "summary": "Iniciar o retomar la certificación",
+        "description": "Receptor de los Créditos Fiscales de prueba: `openfactura` (Open Factura, se agrega a tus Clientes) o el id de un cliente contribuyente; Hacienda no acepta el propio emisor. Permisos `dte:emit` y `dte:invalidate`.",
+        "responses": {
+          "200": {
+            "description": "Certificación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Certificacion"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "clienteCcfId": {
+                    "type": ["string", "null"],
+                    "example": "openfactura"
+                  },
+                  "desdeCero": {
+                    "type": "boolean"
+                  },
+                  "alcance": {
+                    "type": "string",
+                    "enum": ["minimo", "completo"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ext/certificacion/avanzar": {
+      "post": {
+        "operationId": "certificacion_avanzar",
+        "tags": ["Certificación"],
+        "summary": "Emitir la siguiente tanda",
+        "description": "Hasta 5 pruebas por llamada, en el ambiente de pruebas. Llama de nuevo mientras `estado` sea `en_curso`. Permisos `dte:emit` y `dte:invalidate`.",
+        "responses": {
+          "200": {
+            "description": "Certificación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Certificacion"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "clave": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Clave de API (`of_test_…` / `of_live_…`)."
+      },
+      "plataforma": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Clave de API tuya habilitada para Plataforma."
+      }
+    },
+    "schemas": {
+      "DatosCliente": {
+        "type": ["object", "null"],
+        "description": "Lo que ya sabes del cliente; prellena su alta.",
+        "properties": {
+          "nit": {
+            "type": "string",
+            "example": "0614-290786-102-3"
+          },
+          "nrc": {
+            "type": "string",
+            "example": "123456-7"
+          },
+          "razonSocial": {
+            "type": "string"
+          },
+          "nombreComercial": {
+            "type": "string"
+          },
+          "correo": {
+            "type": "string",
+            "format": "email"
+          },
+          "telefono": {
+            "type": "string"
+          }
+        }
+      },
+      "ClientePlataforma": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": ["string", "null"]
+          },
+          "estado": {
+            "type": "string",
+            "enum": ["pendiente", "activo", "desactivado"]
+          },
+          "datos": {
+            "$ref": "#/components/schemas/DatosCliente"
+          },
+          "organizationId": {
+            "type": ["string", "null"],
+            "description": "Su espacio (existe desde que lo creas)."
+          },
+          "preparacion": {
+            "type": ["string", "null"],
+            "enum": ["conectado", "pruebas", "produccion", null]
+          },
+          "falta": {
+            "type": ["string", "null"],
+            "example": "Sus credenciales de producción"
+          },
+          "enlaceExpira": {
+            "type": ["integer", "null"]
+          },
+          "aceptado": {
+            "type": ["integer", "null"]
+          },
+          "creado": {
+            "type": "integer"
+          }
+        }
+      },
+      "EmpresaCliente": {
+        "type": "object",
+        "properties": {
+          "nit": {
+            "type": "string"
+          },
+          "nrc": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "nombreComercial": {
+            "type": ["string", "null"]
+          },
+          "actividad": {
+            "type": "string"
+          },
+          "direccion": {
+            "type": "string"
+          },
+          "telefono": {
+            "type": "string"
+          },
+          "correo": {
+            "type": "string"
+          },
+          "ambiente": {
+            "type": "string",
+            "enum": ["00", "01"]
+          },
+          "credenciales": {
+            "type": "object",
+            "properties": {
+              "pruebas": {
+                "type": "boolean"
+              },
+              "produccion": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ClaveEntrada": {
+        "type": "object",
+        "required": ["nombre", "modo", "scopes"],
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "POS Casa Barista"
+          },
+          "modo": {
+            "type": "string",
+            "enum": ["test", "live"]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["dte:emit", "dte:read"]
+          },
+          "expiraEnDias": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "maximum": 3650
+          }
+        }
+      },
+      "Clave": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "prefijo": {
+            "type": "string"
+          },
+          "modo": {
+            "type": "string",
+            "enum": ["test", "live"]
+          },
+          "estado": {
+            "type": "string"
+          },
+          "creado": {
+            "type": "integer"
+          }
+        }
+      },
+      "ClaveCreada": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Clave"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "clave": {
+                "type": "string",
+                "description": "Sólo aparece aquí.",
+                "example": "of_live_…"
+              }
+            }
+          }
+        ]
+      },
+      "WebhookEntrada": {
+        "type": "object",
+        "required": ["url", "eventos"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://pos.casabarista.sv/webhooks/openfactura"
+          },
+          "descripcion": {
+            "type": ["string", "null"]
+          },
+          "eventos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["dte.procesado", "dte.rechazado"]
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": ["string", "null"]
+          },
+          "eventos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WebhookCreado": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Webhook"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "secreto": {
+                "type": "string",
+                "description": "Sólo aparece aquí.",
+                "example": "whsec_…"
+              }
+            }
+          }
+        ]
+      },
+      "Marca": {
+        "type": "object",
+        "properties": {
+          "logo": {
+            "type": ["object", "null"],
+            "properties": {
+              "tipo": {
+                "type": "string",
+                "enum": ["png", "jpg"]
+              },
+              "url": {
+                "type": "string",
+                "description": "data URL"
+              }
+            }
+          },
+          "correoRespuesta": {
+            "type": ["string", "null"]
+          },
+          "ocultarOpenFactura": {
+            "type": "boolean"
+          },
+          "puedeOcultar": {
+            "type": "boolean",
+            "description": "Tu plan lo incluye (Pro y Platform)."
+          }
+        }
+      },
+      "Envio": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "para": {
+            "type": "string"
+          },
+          "origen": {
+            "type": "string",
+            "enum": ["auto", "manual"]
+          },
+          "estado": {
+            "type": "string",
+            "enum": ["pendiente", "enviado", "fallido"]
+          },
+          "intentos": {
+            "type": "integer"
+          },
+          "creado": {
+            "type": "integer"
+          }
+        }
+      },
+      "Certificacion": {
+        "type": "object",
+        "properties": {
+          "estado": {
+            "type": "string",
+            "enum": ["sin_iniciar", "en_curso", "detenida", "completa"]
+          },
+          "clienteCcfId": {
+            "type": ["string", "null"]
+          },
+          "requisitos": {
+            "type": "object"
+          },
+          "avance": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "ultimoError": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "plan_requerido"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {}
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "E400": {
+        "description": "Datos inválidos",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E401": {
+        "description": "Falta la clave o la sesión",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E402": {
+        "description": "Tu plan no lo incluye (`plan_requerido`)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E403": {
+        "description": "Sin permiso o clave no habilitada para Plataforma (`clave_sin_plataforma`)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E404": {
+        "description": "No existe o no es tuyo",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E409": {
+        "description": "Conflicto (p. ej. `cliente_no_pendiente`, `external_id_repetido`)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E429": {
+        "description": "Límite de empresas del plan (`limite_plan`)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

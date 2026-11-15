@@ -1,0 +1,55 @@
+---
+title: Node SDK (API)
+description: '@openfactura/node: the Open Factura API, typed, with idempotency, retries, webhook verification, and Plataforma.'
+---
+
+`@openfactura/node` calls the API for you: every operation typed (generated from the same
+specification as the [reference](/api/)), with no dependencies. It runs on Node 20+, Bun, Deno,
+Cloudflare Workers, and the browser.
+
+```bash
+npm install @openfactura/node
+```
+
+```ts
+import { OpenFactura, OpenFacturaError } from '@openfactura/node'
+
+const of = new OpenFactura({ apiKey: process.env.OPENFACTURA_API_KEY! })
+
+try {
+  const doc = await of.dte.emitir({ tipoDte: '01', datos })
+  console.log(doc.estado, doc.selloRecibido)
+} catch (e) {
+  if (e instanceof OpenFacturaError && e.code === 'dte_rechazado') console.log(e.details)
+}
+```
+
+**Idempotency and retries.** Every issuance carries an idempotency key (pass your own with
+`{ idempotencyKey: 'venta-10931' }`). On a 429, a 5xx, or a network failure, the SDK retries with the
+same key, so it never issues twice. Anything that isn't safe to repeat is not retried.
+
+## Verify webhooks
+
+```ts
+import { verificarWebhook } from '@openfactura/node'
+
+const evento = await verificarWebhook(cuerpoCrudo, firmaDelEncabezado, secreto)
+```
+
+Pass the **raw** body (before `JSON.parse`) and the `OpenFactura-Signature` header. It throws
+`FirmaInvalida` if the signature doesn't match or the delivery is more than 5 minutes old.
+
+## Plataforma
+
+With [Plataforma](/en/cloud/plataforma/) (Open Factura Cloud):
+
+```ts
+const cliente = await of.plataforma.clientes.crear({ nombre: 'Casa Barista', externalId: 'cb-1' })
+const { url } = await of.plataforma.clientes.enlace(cliente.id)
+const { clave } = await of.plataforma.clientes.claves.crear(cliente.id, {
+  nombre: 'POS', modo: 'test', scopes: ['dte:emit', 'dte:read'],
+})
+await of.comoCliente(clave).dte.emitir({ tipoDte: '01', datos }) // in THEIR space
+```
+
+Store each customer's key in your database: it is shown only once.

@@ -1,0 +1,76 @@
+---
+title: Ser emisor ante Hacienda
+description: El recorrido para emitir DTE con valor legal en El Salvador, de la solicitud de pruebas a la autorización en producción.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components'
+
+<Aside type="caution">
+Este es un resumen para desarrolladores, no asesoría legal ni tributaria. Fue elaborado a partir de
+los manuales del Ministerio de Hacienda; ante cualquier diferencia prevalecen los documentos oficiales
+publicados en [factura.gob.sv](https://factura.gob.sv).
+</Aside>
+
+Open Factura se integra con el **Sistema de Transmisión** del MH: tu software (en este caso, Open
+Factura) envía los documentos por API. La alternativa, el Sistema de Facturación, es el portal gratuito
+de Hacienda para quienes emiten 500 documentos mensuales o menos en promedio.
+
+## El recorrido
+
+<Steps>
+
+1. **Requisitos previos.** Usuario de los servicios en línea de la DGII (NIT y contraseña) y la lista
+   de documentos que vas a emitir: todos los que tu operación requiere. Los eventos de invalidación y
+   contingencia son obligatorios en el Sistema de Transmisión.
+
+2. **Solicitud de ingreso al ambiente de pruebas.** En factura.gob.sv → Ingresar → Solicitud de
+   Ingreso, elige **Sistema de Transmisión** y registra un contacto. Desde que ingresas tienes **2 meses**
+   para completar las pruebas, un solo plazo para todos los documentos.
+
+3. **Acreditamiento en pruebas.** En el Sitio Emisores DTE (ambiente para pruebas) personaliza las
+   claves del certificado y la **contraseña de API**, y descarga el certificado `.crt`. El usuario de
+   la API es tu NIT. Cárgalos en Open Factura: **Empresa y Hacienda → Credenciales del MH**, ambiente `00`.
+
+4. **Pruebas mínimas.** Transmite con éxito (con sello) la cantidad mínima de cada documento que vayas
+   a emitir, más 5 eventos de invalidación y 5 de contingencia (y de retorno y operaciones
+   especiales, si los usarás). El Sitio Emisores DTE muestra el avance.
+
+   Open Factura emite por ti las de Factura, Crédito Fiscal, invalidación y contingencia: ve
+   [Certificación](/guias/certificacion/).
+
+5. **Autorización.** En el Sitio Emisores DTE → Solicitar Autorización, elige los documentos que ya
+   cumplieron las pruebas y presenta la solicitud. La autorización llega por correo.
+
+6. **Acreditamiento en producción.** Repite el acreditamiento en el ambiente productivo: el
+   certificado y la contraseña de API de producción son distintos. Cárgalos en Open Factura para el
+   ambiente `01` y cambia a producción (ve [Ambientes](/ambientes/)).
+
+</Steps>
+
+Tienes hasta un mes desde el día siguiente a la autorización para empezar a emitir.
+
+## Pruebas mínimas por documento
+
+| Documento                    | Mínimo | Documento                       | Mínimo |
+| ---------------------------- | ------ | ------------------------------- | ------ |
+| Factura (01)                 | 90     | Comprobante de Retención (07)   | 50     |
+| Crédito Fiscal (03)          | 75     | Factura de Exportación (11)     | 90     |
+| Nota de Remisión (04)        | 50     | Sujeto Excluido (14)            | 25     |
+| Nota de Crédito (05)         | 50     | Invalidación                    | 5      |
+| Nota de Débito (06)          | 25     | Contingencia                    | 5      |
+| Retorno                      | 5      | Operaciones especiales          | 5      |
+
+Sólo cuentan los documentos que obtuvieron sello de recepción, y sólo hay que probar los tipos que
+solicitarás.
+
+## Qué cambia en producción
+
+| Elemento                         | Pruebas        | Producción                   |
+| -------------------------------- | -------------- | ---------------------------- |
+| Ambiente                         | `00`           | `01`                         |
+| Certificado y contraseña de API  | Los de pruebas | Los del ambiente productivo  |
+| Clave de Open Factura            | `of_test_…`    | `of_live_…`                  |
+| Leyenda "sin valor legal" en el PDF | Sí          | No                           |
+
+El resumen completo, con las fuentes de cada paso, está en
+[`docs/ser-emisor.md`](https://github.com/xaviigna/openfactura/blob/main/docs/ser-emisor.md).

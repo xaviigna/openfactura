@@ -1,0 +1,78 @@
+---
+title: Becoming an issuer with Hacienda
+description: The path to issuing legally valid DTEs in El Salvador, from the test request to production authorization.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components'
+
+<Aside type="caution">
+This is a summary for developers, not legal or tax advice. It was written from the Ministry of
+Finance's manuals; if anything differs, the official documents published at
+[factura.gob.sv](https://factura.gob.sv) prevail.
+</Aside>
+
+Open Factura integrates with the MH's **Transmission System** (Sistema de Transmisión): your software
+(in this case, Open Factura) sends the documents through an API. The alternative, the Invoicing
+System (Sistema de Facturación), is Hacienda's free portal for those who issue 500 documents a month
+or fewer on average.
+
+## The path
+
+<Steps>
+
+1. **Prerequisites.** A user for the DGII's online services (NIT and password) and the list of
+   documents you are going to issue: every one your operation requires. Invalidation and contingency
+   events are mandatory on the Transmission System.
+
+2. **Request access to the test environment.** At factura.gob.sv → Ingresar → Solicitud de Ingreso,
+   choose **Sistema de Transmisión** and register a contact. From the moment you get in, you have
+   **2 months** to complete the tests, a single window for all documents.
+
+3. **Test accreditation.** In Hacienda's issuer portal (Sitio Emisores DTE, test environment), set
+   the certificate's keys and the **API password**, and download the `.crt` certificate. The API
+   user is your NIT. Upload them to Open Factura: **Company & Tax Authority → MH credentials**, environment `00`.
+
+4. **Minimum tests.** Successfully transmit (with a stamp) the minimum quantity of each document you
+   are going to issue, plus 5 invalidation events and 5 contingency events (and return and special
+   operations events, if you'll use them). The Sitio Emisores DTE shows your progress.
+
+   Open Factura issues the Invoice, Tax Credit Invoice, invalidation, and contingency tests for you:
+   see [Certification tests](/en/guias/certificacion/).
+
+5. **Authorization.** In the Sitio Emisores DTE → Solicitar Autorización, choose the documents that
+   have completed their tests and submit the request. The authorization arrives by email.
+
+6. **Production accreditation.** Repeat the accreditation in the production environment: the
+   production certificate and API password are different. Upload them to Open Factura for
+   environment `01` and switch to production (see [Environments](/en/ambientes/)).
+
+</Steps>
+
+You have up to one month from the day after the authorization to start issuing.
+
+## Minimum tests per document
+
+| Document                     | Minimum | Document                        | Minimum |
+| ---------------------------- | ------- | ------------------------------- | ------- |
+| Invoice (01)                 | 90      | Withholding Receipt (07)        | 50      |
+| Tax Credit Invoice (03)      | 75      | Export Invoice (11)             | 90      |
+| Delivery Note (04)           | 50      | Excluded Subject Invoice (14)   | 25      |
+| Credit Note (05)             | 50      | Invalidation                    | 5       |
+| Debit Note (06)              | 25      | Contingency                     | 5       |
+| Return                       | 5       | Special operations              | 5       |
+
+Only documents that obtained a reception stamp count, and you only need to test the types you will
+request.
+
+## What changes in production
+
+| Item                             | Test           | Production                       |
+| -------------------------------- | -------------- | -------------------------------- |
+| Environment                      | `00`           | `01`                             |
+| Certificate and API password     | The test ones  | The production environment's     |
+| Open Factura key                 | `of_test_…`    | `of_live_…`                      |
+| "No legal value" notice on the PDF | Yes          | No                               |
+
+The full summary, with the sources for each step, is in
+[`docs/ser-emisor.md`](https://github.com/xaviigna/openfactura/blob/main/docs/ser-emisor.md) (in
+Spanish).

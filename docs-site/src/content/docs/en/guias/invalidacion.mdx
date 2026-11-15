@@ -1,0 +1,77 @@
+---
+title: Invalidation
+description: Voiding a processed DTE or event, with its types, deadlines, and the right order when a return exists.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+
+<Aside type="caution">
+Invalidation is **irreversible** and has fiscal effect. It requires the `dte:invalidate` permission.
+</Aside>
+
+## Before invalidating
+
+1. Fetch the document (`GET /dte/{codigo}`) and confirm it is `procesado`: only those can be
+   invalidated; otherwise, `409 estado_invalido`.
+2. If it has an active **return event**, the API responds `409 retorno_vigente` with
+   `details.codigoGeneracion`: invalidate that return first.
+3. Check the deadline:
+   - Invoice (01), Export Invoice (11), and Excluded Subject Invoice (14): **3 months** from the
+     stamp.
+   - All others (Tax Credit Invoice 03, notes 05/06, etc.): until the **10th business day of the
+     month following** issuance. This includes Settlement Receipt (08), Settlement Accounting
+     Document (09), and Donation Receipt (15).
+   - Past the deadline, the MH rejects it (`422 invalidacion_rechazada`). For an expired CCF, the
+     usual route is a Credit Note (05).
+
+## Voiding type
+
+| `tipoAnulacion` | When                                             | Requires                                         |
+| --------------- | ------------------------------------------------ | ------------------------------------------------ |
+| `1`             | Error in the information                         | `codigoGeneracionReemplazo` (issue the correct one first) |
+| `2`             | Rescinding the operation (the sale didn't happen) | —                                               |
+| `3`             | Other                                            | `motivoAnulacion` and `codigoGeneracionReemplazo` |
+
+Credit Notes (05), Settlement Receipts (08), and events take no replacement document: they are
+invalidated and the correct one is issued afterwards, so `codigoGeneracionReemplazo` is ignored.
+
+Optional: `solicitante` (defaults to the document's recipient) and `responsable` (defaults to the one
+configured on the issuer), each `{ nombre, tipoDocumento, numDocumento }`.
+
+## Invalidate
+
+<Tabs syncKey="via">
+<TabItem label="curl">
+
+```bash
+curl https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/invalidar \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "tipoAnulacion": 2, "motivoAnulacion": "Operación rescindida" }'
+```
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+openfactura dte invalidar 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 --tipo 2 --motivo "Operación rescindida"
+openfactura dte invalidar <codigo> --tipo 1 --reemplazo <code-of-the-dte-that-corrects-it>
+```
+
+</TabItem>
+<TabItem label="MCP">
+
+`dte_invalidar` with `codigoGeneracion`, `tipoAnulacion` and, where applicable, `motivoAnulacion` and
+`codigoGeneracionReemplazo`. The assistant must summarize the operation and ask you for an explicit
+"yes".
+
+</TabItem>
+</Tabs>
+
+The response is the document, now in status `invalidado`.
+
+## Invalidate an event
+
+The same route invalidates a return or special operations event when given its generation code. It
+then responds `{ "invalidado": true, "tipo": "retorno", "codigoGeneracion": "…" }`. A return can be
+invalidated within 4 days of its stamp.

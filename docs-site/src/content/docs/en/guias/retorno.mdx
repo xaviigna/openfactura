@@ -1,0 +1,82 @@
+---
+title: Return event
+description: Returns, refunds, and containers on an Invoice, Export Invoice, or Excluded Subject Invoice, without invalidating the document.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+
+The **Return Event (Evento de Retorno, 18)** records a return of goods, a refund, or a return of
+containers on a processed **Invoice (01)**, **Export Invoice (11)**, or **Excluded Subject Invoice
+(14)**. The original document remains in force.
+
+- It requires the `dte:emit` permission and supports [`Idempotency-Key`](/en/guias/idempotencia/).
+- `precioUni` goes as on the original document: on an Invoice (01) **with** VAT; on 11 and 14 without
+  VAT.
+- Recipient, third parties, and export data are copied from the document. Withholdings are applied if
+  the document had them.
+- Deadline: **3 months** from the document's date (2 years for Invoices and Export Invoices of
+  activities 21001, 21008, 46482, 46484, 46491, and 47721).
+- The sum of returns can't exceed the document: `409 retorno_excedido` with `details.disponible`.
+- If the customer exchanges the product, also issue a new document for the new sale.
+
+## Register a return
+
+<Tabs syncKey="via">
+<TabItem label="curl">
+
+```bash
+curl https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/retorno \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: devolucion-1042" \
+  -d '{ "items": [{ "descripcion": "Silla", "cantidad": 1, "precioUni": 22.6 }] }'
+```
+
+</TabItem>
+<TabItem label="CLI">
+
+```bash
+echo '{ "items": [{ "descripcion": "Silla", "cantidad": 1, "precioUni": 22.6 }] }' \
+  | openfactura dte retorno 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 -
+```
+
+</TabItem>
+<TabItem label="MCP">
+
+`dte_retorno` with the document's `codigoGeneracion`, `idempotencyKey`, and `items`.
+
+</TabItem>
+</Tabs>
+
+Fields of each item: `descripcion`, `cantidad`, `precioUni` and, optionally, `tipoItem`, `codigo`,
+`uniMedida`, `descuento`, `tipoVenta`, `seguro`, and `flete`.
+
+Response: `201` with the `Evento`:
+
+```json
+{
+  "id": "…",
+  "tipo": "retorno",
+  "tipoEvento": "18",
+  "codigoGeneracion": "…",
+  "ambiente": "00",
+  "estado": "procesado",
+  "selloRecibido": "…",
+  "documentoId": "…",
+  "creado": 1794469092559
+}
+```
+
+If the MH rejects the event: `422 evento_rechazado` with `details.mh`.
+
+## Query and deliver
+
+- `GET /eventos?tipo=retorno` — the 50 most recent in the active environment.
+- `GET /eventos/{codigo}` — the event with its JSON and the MH response.
+- `GET /eventos/{codigo}/json` and `GET /eventos/{codigo}/pdf` — the file and the graphic
+  representation for the recipient.
+
+<Aside>
+A document with an active return can't be invalidated until the return is invalidated first (see
+[Invalidation](/en/guias/invalidacion/#invalidate-an-event)).
+</Aside>

@@ -1,0 +1,4179 @@
+{
+ "CAT-001": {
+  "id": "CAT-001",
+  "nombre": "Ambiente de destino",
+  "valores": [
+   {
+    "codigo": "00",
+    "valor": "Modo prueba"
+   },
+   {
+    "codigo": "01",
+    "valor": "Modo producción"
+   }
+  ]
+ },
+ "CAT-002": {
+  "id": "CAT-002",
+  "nombre": "Tipo de Documento / Evento",
+  "valores": [
+   {
+    "codigo": "01",
+    "valor": "Factura"
+   },
+   {
+    "codigo": "03",
+    "valor": "Comprobante de crédito fiscal"
+   },
+   {
+    "codigo": "04",
+    "valor": "Nota de remisión"
+   },
+   {
+    "codigo": "05",
+    "valor": "Nota de crédito"
+   },
+   {
+    "codigo": "06",
+    "valor": "Nota de débito"
+   },
+   {
+    "codigo": "07",
+    "valor": "Comprobante de retención"
+   },
+   {
+    "codigo": "08",
+    "valor": "Comprobante de liquidación"
+   },
+   {
+    "codigo": "09",
+    "valor": "Documento contable de liquidación"
+   },
+   {
+    "codigo": "11",
+    "valor": "Facturas de exportación"
+   },
+   {
+    "codigo": "14",
+    "valor": "Factura de sujeto excluido"
+   },
+   {
+    "codigo": "15",
+    "valor": "Comprobante de donación"
+   },
+   {
+    "codigo": "17",
+    "valor": "Evento de Operaciones Especiales"
+   },
+   {
+    "codigo": "18",
+    "valor": "Evento de Retorno"
+   }
+  ]
+ },
+ "CAT-003": {
+  "id": "CAT-003",
+  "nombre": "Modelo de Facturación",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Modelo Facturación previo"
+   },
+   {
+    "codigo": "2",
+    "valor": "Modelo Facturación diferido"
+   }
+  ]
+ },
+ "CAT-004": {
+  "id": "CAT-004",
+  "nombre": "Tipo de Transmisión",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Transmisión normal"
+   },
+   {
+    "codigo": "2",
+    "valor": "Transmisión por contingencia"
+   }
+  ]
+ },
+ "CAT-005": {
+  "id": "CAT-005",
+  "nombre": "Tipo de Contingencia",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "No disponibilidad de sistema del MH"
+   },
+   {
+    "codigo": "2",
+    "valor": "No disponibilidad de sistema del emisor"
+   },
+   {
+    "codigo": "3",
+    "valor": "Falla en el suministro de servicio de Internet del Emisor"
+   },
+   {
+    "codigo": "4",
+    "valor": "Falla en el suministro de servicio de energía eléctrica del emisor que impida la transmisión de los DTE"
+   },
+   {
+    "codigo": "5",
+    "valor": "Otro (deberá digitar un máximo de 500 caracteres explicando el motivo)"
+   }
+  ]
+ },
+ "CAT-006": {
+  "id": "CAT-006",
+  "nombre": "Retención IVA MH",
+  "valores": [
+   {
+    "codigo": "22",
+    "valor": "Retención IVA 1%"
+   },
+   {
+    "codigo": "C4",
+    "valor": "Retención IVA 13%"
+   },
+   {
+    "codigo": "C9",
+    "valor": "Otras retenciones IVA casos especiales"
+   }
+  ]
+ },
+ "CAT-007": {
+  "id": "CAT-007",
+  "nombre": "Tipo de Generación del Documento",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Físico"
+   },
+   {
+    "codigo": "2",
+    "valor": "Electrónico"
+   }
+  ]
+ },
+ "CAT-008": {
+  "id": "CAT-008",
+  "nombre": "Distrito",
+  "valores": [
+   {
+    "codigo": "00",
+    "valor": "Otro (Para extranjeros)",
+    "departamento": "00"
+   },
+   {
+    "codigo": "01",
+    "valor": "AHUACHAPÁN",
+    "departamento": "01"
+   },
+   {
+    "codigo": "02",
+    "valor": "APANECA",
+    "departamento": "01"
+   },
+   {
+    "codigo": "03",
+    "valor": "ATIQUIZAYA",
+    "departamento": "01"
+   },
+   {
+    "codigo": "04",
+    "valor": "CONCEPCIÓN DE ATACO",
+    "departamento": "01"
+   },
+   {
+    "codigo": "05",
+    "valor": "EL REFUGIO",
+    "departamento": "01"
+   },
+   {
+    "codigo": "06",
+    "valor": "GUAYMANGO",
+    "departamento": "01"
+   },
+   {
+    "codigo": "07",
+    "valor": "JUJUTLA",
+    "departamento": "01"
+   },
+   {
+    "codigo": "08",
+    "valor": "SAN FRANCISCO MENÉNDEZ",
+    "departamento": "01"
+   },
+   {
+    "codigo": "09",
+    "valor": "SAN LORENZO",
+    "departamento": "01"
+   },
+   {
+    "codigo": "10",
+    "valor": "SAN PEDRO PUXTLA",
+    "departamento": "01"
+   },
+   {
+    "codigo": "11",
+    "valor": "TACUBA",
+    "departamento": "01"
+   },
+   {
+    "codigo": "12",
+    "valor": "TURÍN",
+    "departamento": "01"
+   },
+   {
+    "codigo": "01",
+    "valor": "CANDELARIA DE LA FRONTERA",
+    "departamento": "02"
+   },
+   {
+    "codigo": "02",
+    "valor": "COATEPEQUE",
+    "departamento": "02"
+   },
+   {
+    "codigo": "03",
+    "valor": "CHALCHUAPA",
+    "departamento": "02"
+   },
+   {
+    "codigo": "04",
+    "valor": "EL CONGO",
+    "departamento": "02"
+   },
+   {
+    "codigo": "05",
+    "valor": "EL PORVENIR",
+    "departamento": "02"
+   },
+   {
+    "codigo": "06",
+    "valor": "MASAHUAT",
+    "departamento": "02"
+   },
+   {
+    "codigo": "07",
+    "valor": "METAPÁN",
+    "departamento": "02"
+   },
+   {
+    "codigo": "08",
+    "valor": "SAN ANTONIO PAJONAL",
+    "departamento": "02"
+   },
+   {
+    "codigo": "09",
+    "valor": "SAN SEBASTIÁN SALITRILLO",
+    "departamento": "02"
+   },
+   {
+    "codigo": "10",
+    "valor": "SANTA ANA",
+    "departamento": "02"
+   },
+   {
+    "codigo": "11",
+    "valor": "STA ROSA GUACHI",
+    "departamento": "02"
+   },
+   {
+    "codigo": "12",
+    "valor": "STGO D LA FRONT",
+    "departamento": "02"
+   },
+   {
+    "codigo": "13",
+    "valor": "TEXISTEPEQUE",
+    "departamento": "02"
+   },
+   {
+    "codigo": "01",
+    "valor": "ACAJUTLA",
+    "departamento": "03"
+   },
+   {
+    "codigo": "02",
+    "valor": "ARMENIA",
+    "departamento": "03"
+   },
+   {
+    "codigo": "03",
+    "valor": "CALUCO",
+    "departamento": "03"
+   },
+   {
+    "codigo": "04",
+    "valor": "CUISNAHUAT",
+    "departamento": "03"
+   },
+   {
+    "codigo": "05",
+    "valor": "STA I ISHUATAN",
+    "departamento": "03"
+   },
+   {
+    "codigo": "06",
+    "valor": "IZALCO",
+    "departamento": "03"
+   },
+   {
+    "codigo": "07",
+    "valor": "JUAYÚA",
+    "departamento": "03"
+   },
+   {
+    "codigo": "08",
+    "valor": "NAHUIZALCO",
+    "departamento": "03"
+   },
+   {
+    "codigo": "09",
+    "valor": "NAHULINGO",
+    "departamento": "03"
+   },
+   {
+    "codigo": "10",
+    "valor": "SALCOATITÁN",
+    "departamento": "03"
+   },
+   {
+    "codigo": "11",
+    "valor": "SAN ANTONIO DEL MONTE",
+    "departamento": "03"
+   },
+   {
+    "codigo": "12",
+    "valor": "SAN JULIÁN",
+    "departamento": "03"
+   },
+   {
+    "codigo": "13",
+    "valor": "STA C MASAHUAT",
+    "departamento": "03"
+   },
+   {
+    "codigo": "14",
+    "valor": "SANTO DOMINGO GUZMÁN",
+    "departamento": "03"
+   },
+   {
+    "codigo": "15",
+    "valor": "SONSONATE",
+    "departamento": "03"
+   },
+   {
+    "codigo": "16",
+    "valor": "SONZACATE",
+    "departamento": "03"
+   },
+   {
+    "codigo": "01",
+    "valor": "AGUA CALIENTE",
+    "departamento": "04"
+   },
+   {
+    "codigo": "02",
+    "valor": "ARCATAO",
+    "departamento": "04"
+   },
+   {
+    "codigo": "03",
+    "valor": "AZACUALPA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "04",
+    "valor": "CITALÁ",
+    "departamento": "04"
+   },
+   {
+    "codigo": "05",
+    "valor": "COMALAPA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "06",
+    "valor": "CONCEPCIÓN QUEZALTEPEQUE",
+    "departamento": "04"
+   },
+   {
+    "codigo": "07",
+    "valor": "CHALATENANGO",
+    "departamento": "04"
+   },
+   {
+    "codigo": "08",
+    "valor": "DULCE NOM MARÍA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "09",
+    "valor": "EL CARRIZAL",
+    "departamento": "04"
+   },
+   {
+    "codigo": "10",
+    "valor": "EL PARAÍSO",
+    "departamento": "04"
+   },
+   {
+    "codigo": "11",
+    "valor": "LA LAGUNA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "12",
+    "valor": "LA PALMA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "13",
+    "valor": "LA REINA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "14",
+    "valor": "LAS VUELTAS",
+    "departamento": "04"
+   },
+   {
+    "codigo": "15",
+    "valor": "NOMBRE DE JESUS",
+    "departamento": "04"
+   },
+   {
+    "codigo": "16",
+    "valor": "NVA CONCEPCIÓN",
+    "departamento": "04"
+   },
+   {
+    "codigo": "17",
+    "valor": "NUEVA TRINIDAD",
+    "departamento": "04"
+   },
+   {
+    "codigo": "18",
+    "valor": "OJOS DE AGUA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "19",
+    "valor": "POTONICO",
+    "departamento": "04"
+   },
+   {
+    "codigo": "20",
+    "valor": "SAN ANT LA CRUZ",
+    "departamento": "04"
+   },
+   {
+    "codigo": "21",
+    "valor": "SAN ANT RANCHOS",
+    "departamento": "04"
+   },
+   {
+    "codigo": "22",
+    "valor": "SAN FERNANDO",
+    "departamento": "04"
+   },
+   {
+    "codigo": "23",
+    "valor": "SAN FRANCISCO LEMPA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "24",
+    "valor": "SAN FRANCISCO MORAZÁN",
+    "departamento": "04"
+   },
+   {
+    "codigo": "25",
+    "valor": "SAN IGNACIO",
+    "departamento": "04"
+   },
+   {
+    "codigo": "26",
+    "valor": "SAN I LABRADOR",
+    "departamento": "04"
+   },
+   {
+    "codigo": "27",
+    "valor": "SAN J CANCASQUE",
+    "departamento": "04"
+   },
+   {
+    "codigo": "28",
+    "valor": "SAN JOSE FLORES",
+    "departamento": "04"
+   },
+   {
+    "codigo": "29",
+    "valor": "SAN LUIS CARMEN",
+    "departamento": "04"
+   },
+   {
+    "codigo": "30",
+    "valor": "SN MIG MERCEDES",
+    "departamento": "04"
+   },
+   {
+    "codigo": "31",
+    "valor": "SAN RAFAEL",
+    "departamento": "04"
+   },
+   {
+    "codigo": "32",
+    "valor": "SANTA RITA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "33",
+    "valor": "TEJUTLA",
+    "departamento": "04"
+   },
+   {
+    "codigo": "01",
+    "valor": "ANTGO CUSCATLÁN",
+    "departamento": "05"
+   },
+   {
+    "codigo": "02",
+    "valor": "CIUDAD ARCE",
+    "departamento": "05"
+   },
+   {
+    "codigo": "03",
+    "valor": "COLON",
+    "departamento": "05"
+   },
+   {
+    "codigo": "04",
+    "valor": "COMASAGUA",
+    "departamento": "05"
+   },
+   {
+    "codigo": "05",
+    "valor": "CHILTIUPAN",
+    "departamento": "05"
+   },
+   {
+    "codigo": "06",
+    "valor": "HUIZÚCAR",
+    "departamento": "05"
+   },
+   {
+    "codigo": "07",
+    "valor": "JAYAQUE",
+    "departamento": "05"
+   },
+   {
+    "codigo": "08",
+    "valor": "JICALAPA",
+    "departamento": "05"
+   },
+   {
+    "codigo": "09",
+    "valor": "LA LIBERTAD",
+    "departamento": "05"
+   },
+   {
+    "codigo": "10",
+    "valor": "NUEVO CUSCATLÁN",
+    "departamento": "05"
+   },
+   {
+    "codigo": "11",
+    "valor": "SANTA TECLA",
+    "departamento": "05"
+   },
+   {
+    "codigo": "12",
+    "valor": "QUEZALTEPEQUE",
+    "departamento": "05"
+   },
+   {
+    "codigo": "13",
+    "valor": "SACACOYO",
+    "departamento": "05"
+   },
+   {
+    "codigo": "14",
+    "valor": "SN J VILLANUEVA",
+    "departamento": "05"
+   },
+   {
+    "codigo": "15",
+    "valor": "SAN JUAN OPICO",
+    "departamento": "05"
+   },
+   {
+    "codigo": "16",
+    "valor": "SAN MATÍAS",
+    "departamento": "05"
+   },
+   {
+    "codigo": "17",
+    "valor": "SAN P TACACHICO",
+    "departamento": "05"
+   },
+   {
+    "codigo": "18",
+    "valor": "TAMANIQUE",
+    "departamento": "05"
+   },
+   {
+    "codigo": "19",
+    "valor": "TALNIQUE",
+    "departamento": "05"
+   },
+   {
+    "codigo": "20",
+    "valor": "TEOTEPEQUE",
+    "departamento": "05"
+   },
+   {
+    "codigo": "21",
+    "valor": "TEPECOYO",
+    "departamento": "05"
+   },
+   {
+    "codigo": "22",
+    "valor": "ZARAGOZA",
+    "departamento": "05"
+   },
+   {
+    "codigo": "01",
+    "valor": "AGUILARES",
+    "departamento": "06"
+   },
+   {
+    "codigo": "02",
+    "valor": "APOPA",
+    "departamento": "06"
+   },
+   {
+    "codigo": "03",
+    "valor": "AYUTUXTEPEQUE",
+    "departamento": "06"
+   },
+   {
+    "codigo": "04",
+    "valor": "CUSCATANCINGO",
+    "departamento": "06"
+   },
+   {
+    "codigo": "05",
+    "valor": "EL PAISNAL",
+    "departamento": "06"
+   },
+   {
+    "codigo": "06",
+    "valor": "GUAZAPA",
+    "departamento": "06"
+   },
+   {
+    "codigo": "07",
+    "valor": "ILOPANGO",
+    "departamento": "06"
+   },
+   {
+    "codigo": "08",
+    "valor": "MEJICANOS",
+    "departamento": "06"
+   },
+   {
+    "codigo": "09",
+    "valor": "NEJAPA",
+    "departamento": "06"
+   },
+   {
+    "codigo": "10",
+    "valor": "PANCHIMALCO",
+    "departamento": "06"
+   },
+   {
+    "codigo": "11",
+    "valor": "ROSARIO DE MORA",
+    "departamento": "06"
+   },
+   {
+    "codigo": "12",
+    "valor": "SAN MARCOS",
+    "departamento": "06"
+   },
+   {
+    "codigo": "13",
+    "valor": "SAN MARTIN",
+    "departamento": "06"
+   },
+   {
+    "codigo": "14",
+    "valor": "SAN SALVADOR",
+    "departamento": "06"
+   },
+   {
+    "codigo": "15",
+    "valor": "STG TEXACUANGOS",
+    "departamento": "06"
+   },
+   {
+    "codigo": "16",
+    "valor": "SANTO TOMAS",
+    "departamento": "06"
+   },
+   {
+    "codigo": "17",
+    "valor": "SOYAPANGO",
+    "departamento": "06"
+   },
+   {
+    "codigo": "18",
+    "valor": "TONACATEPEQUE",
+    "departamento": "06"
+   },
+   {
+    "codigo": "19",
+    "valor": "CIUDAD DELGADO",
+    "departamento": "06"
+   },
+   {
+    "codigo": "01",
+    "valor": "CANDELARIA",
+    "departamento": "07"
+   },
+   {
+    "codigo": "02",
+    "valor": "COJUTEPEQUE",
+    "departamento": "07"
+   },
+   {
+    "codigo": "03",
+    "valor": "EL CARMEN",
+    "departamento": "07"
+   },
+   {
+    "codigo": "04",
+    "valor": "EL ROSARIO",
+    "departamento": "07"
+   },
+   {
+    "codigo": "05",
+    "valor": "MONTE SAN JUAN",
+    "departamento": "07"
+   },
+   {
+    "codigo": "06",
+    "valor": "ORAT CONCEPCIÓN",
+    "departamento": "07"
+   },
+   {
+    "codigo": "07",
+    "valor": "SAN B PERULAPIA",
+    "departamento": "07"
+   },
+   {
+    "codigo": "08",
+    "valor": "SAN CRISTÓBAL",
+    "departamento": "07"
+   },
+   {
+    "codigo": "09",
+    "valor": "SAN J GUAYABAL",
+    "departamento": "07"
+   },
+   {
+    "codigo": "10",
+    "valor": "SAN P PERULAPÁN",
+    "departamento": "07"
+   },
+   {
+    "codigo": "11",
+    "valor": "SAN RAF CEDROS",
+    "departamento": "07"
+   },
+   {
+    "codigo": "12",
+    "valor": "SAN RAMON",
+    "departamento": "07"
+   },
+   {
+    "codigo": "13",
+    "valor": "STA C ANALQUITO",
+    "departamento": "07"
+   },
+   {
+    "codigo": "14",
+    "valor": "STA C MICHAPA",
+    "departamento": "07"
+   },
+   {
+    "codigo": "15",
+    "valor": "SUCHITOTO",
+    "departamento": "07"
+   },
+   {
+    "codigo": "16",
+    "valor": "TENANCINGO",
+    "departamento": "07"
+   },
+   {
+    "codigo": "01",
+    "valor": "CUYULTITÁN",
+    "departamento": "08"
+   },
+   {
+    "codigo": "02",
+    "valor": "EL ROSARIO",
+    "departamento": "08"
+   },
+   {
+    "codigo": "03",
+    "valor": "JERUSALÉN",
+    "departamento": "08"
+   },
+   {
+    "codigo": "04",
+    "valor": "MERCED LA CEIBA",
+    "departamento": "08"
+   },
+   {
+    "codigo": "05",
+    "valor": "OLOCUILTA",
+    "departamento": "08"
+   },
+   {
+    "codigo": "06",
+    "valor": "PARAÍSO OSORIO",
+    "departamento": "08"
+   },
+   {
+    "codigo": "07",
+    "valor": "SN ANT MASAHUAT",
+    "departamento": "08"
+   },
+   {
+    "codigo": "08",
+    "valor": "SAN EMIGDIO",
+    "departamento": "08"
+   },
+   {
+    "codigo": "09",
+    "valor": "SN FCO CHINAMEC",
+    "departamento": "08"
+   },
+   {
+    "codigo": "10",
+    "valor": "SAN J NONUALCO",
+    "departamento": "08"
+   },
+   {
+    "codigo": "11",
+    "valor": "SAN JUAN TALPA",
+    "departamento": "08"
+   },
+   {
+    "codigo": "12",
+    "valor": "SAN JUAN TEPEZONTES",
+    "departamento": "08"
+   },
+   {
+    "codigo": "13",
+    "valor": "SAN LUIS TALPA",
+    "departamento": "08"
+   },
+   {
+    "codigo": "14",
+    "valor": "SAN MIGUEL TEPEZONTES",
+    "departamento": "08"
+   },
+   {
+    "codigo": "15",
+    "valor": "SAN PEDRO MASAHUAT",
+    "departamento": "08"
+   },
+   {
+    "codigo": "16",
+    "valor": "SAN PEDRO NONUALCO",
+    "departamento": "08"
+   },
+   {
+    "codigo": "17",
+    "valor": "SAN R OBRAJUELO",
+    "departamento": "08"
+   },
+   {
+    "codigo": "18",
+    "valor": "STA MA OSTUMA",
+    "departamento": "08"
+   },
+   {
+    "codigo": "19",
+    "valor": "STGO NONUALCO",
+    "departamento": "08"
+   },
+   {
+    "codigo": "20",
+    "valor": "TAPALHUACA",
+    "departamento": "08"
+   },
+   {
+    "codigo": "21",
+    "valor": "ZACATECOLUCA",
+    "departamento": "08"
+   },
+   {
+    "codigo": "22",
+    "valor": "SN LUIS LA HERR",
+    "departamento": "08"
+   },
+   {
+    "codigo": "01",
+    "valor": "CINQUERA",
+    "departamento": "09"
+   },
+   {
+    "codigo": "02",
+    "valor": "GUACOTECTI",
+    "departamento": "09"
+   },
+   {
+    "codigo": "03",
+    "valor": "ILOBASCO",
+    "departamento": "09"
+   },
+   {
+    "codigo": "04",
+    "valor": "JUTIAPA",
+    "departamento": "09"
+   },
+   {
+    "codigo": "05",
+    "valor": "SAN ISIDRO",
+    "departamento": "09"
+   },
+   {
+    "codigo": "06",
+    "valor": "SENSUNTEPEQUE",
+    "departamento": "09"
+   },
+   {
+    "codigo": "07",
+    "valor": "TEJUTEPEQUE",
+    "departamento": "09"
+   },
+   {
+    "codigo": "08",
+    "valor": "VICTORIA",
+    "departamento": "09"
+   },
+   {
+    "codigo": "09",
+    "valor": "DOLORES",
+    "departamento": "09"
+   },
+   {
+    "codigo": "01",
+    "valor": "APASTEPEQUE",
+    "departamento": "10"
+   },
+   {
+    "codigo": "02",
+    "valor": "GUADALUPE",
+    "departamento": "10"
+   },
+   {
+    "codigo": "03",
+    "valor": "SAN CAY ISTEPEQ",
+    "departamento": "10"
+   },
+   {
+    "codigo": "04",
+    "valor": "SANTA CLARA",
+    "departamento": "10"
+   },
+   {
+    "codigo": "05",
+    "valor": "SANTO DOMINGO",
+    "departamento": "10"
+   },
+   {
+    "codigo": "06",
+    "valor": "SN EST CATARINA",
+    "departamento": "10"
+   },
+   {
+    "codigo": "07",
+    "valor": "SAN ILDEFONSO",
+    "departamento": "10"
+   },
+   {
+    "codigo": "08",
+    "valor": "SAN LORENZO",
+    "departamento": "10"
+   },
+   {
+    "codigo": "09",
+    "valor": "SAN SEBASTIÁN",
+    "departamento": "10"
+   },
+   {
+    "codigo": "10",
+    "valor": "SAN VICENTE",
+    "departamento": "10"
+   },
+   {
+    "codigo": "11",
+    "valor": "TECOLUCA",
+    "departamento": "10"
+   },
+   {
+    "codigo": "12",
+    "valor": "TEPETITÁN",
+    "departamento": "10"
+   },
+   {
+    "codigo": "13",
+    "valor": "VERAPAZ",
+    "departamento": "10"
+   },
+   {
+    "codigo": "01",
+    "valor": "ALEGRÍA",
+    "departamento": "11"
+   },
+   {
+    "codigo": "02",
+    "valor": "BERLÍN",
+    "departamento": "11"
+   },
+   {
+    "codigo": "03",
+    "valor": "CALIFORNIA",
+    "departamento": "11"
+   },
+   {
+    "codigo": "04",
+    "valor": "CONCEP BATRES",
+    "departamento": "11"
+   },
+   {
+    "codigo": "05",
+    "valor": "EL TRIUNFO",
+    "departamento": "11"
+   },
+   {
+    "codigo": "06",
+    "valor": "EREGUAYQUÍN",
+    "departamento": "11"
+   },
+   {
+    "codigo": "07",
+    "valor": "ESTANZUELAS",
+    "departamento": "11"
+   },
+   {
+    "codigo": "08",
+    "valor": "JIQUILISCO",
+    "departamento": "11"
+   },
+   {
+    "codigo": "09",
+    "valor": "JUCUAPA",
+    "departamento": "11"
+   },
+   {
+    "codigo": "10",
+    "valor": "JUCUARÁN",
+    "departamento": "11"
+   },
+   {
+    "codigo": "11",
+    "valor": "MERCEDES UMAÑA",
+    "departamento": "11"
+   },
+   {
+    "codigo": "12",
+    "valor": "NUEVA GRANADA",
+    "departamento": "11"
+   },
+   {
+    "codigo": "13",
+    "valor": "OZATLÁN",
+    "departamento": "11"
+   },
+   {
+    "codigo": "14",
+    "valor": "PTO EL TRIUNFO",
+    "departamento": "11"
+   },
+   {
+    "codigo": "15",
+    "valor": "SAN AGUSTÍN",
+    "departamento": "11"
+   },
+   {
+    "codigo": "16",
+    "valor": "SN BUENAVENTURA",
+    "departamento": "11"
+   },
+   {
+    "codigo": "17",
+    "valor": "SAN DIONISIO",
+    "departamento": "11"
+   },
+   {
+    "codigo": "18",
+    "valor": "SANTA ELENA",
+    "departamento": "11"
+   },
+   {
+    "codigo": "19",
+    "valor": "SAN FCO JAVIER",
+    "departamento": "11"
+   },
+   {
+    "codigo": "20",
+    "valor": "SANTA MARÍA",
+    "departamento": "11"
+   },
+   {
+    "codigo": "21",
+    "valor": "STGO DE MARÍA",
+    "departamento": "11"
+   },
+   {
+    "codigo": "22",
+    "valor": "TECAPÁN",
+    "departamento": "11"
+   },
+   {
+    "codigo": "23",
+    "valor": "USULUTÁN",
+    "departamento": "11"
+   },
+   {
+    "codigo": "01",
+    "valor": "CAROLINA",
+    "departamento": "12"
+   },
+   {
+    "codigo": "02",
+    "valor": "CIUDAD BARRIOS",
+    "departamento": "12"
+   },
+   {
+    "codigo": "03",
+    "valor": "COMACARÁN",
+    "departamento": "12"
+   },
+   {
+    "codigo": "04",
+    "valor": "CHAPELTIQUE",
+    "departamento": "12"
+   },
+   {
+    "codigo": "05",
+    "valor": "CHINAMECA",
+    "departamento": "12"
+   },
+   {
+    "codigo": "06",
+    "valor": "CHIRILAGUA",
+    "departamento": "12"
+   },
+   {
+    "codigo": "07",
+    "valor": "EL TRANSITO",
+    "departamento": "12"
+   },
+   {
+    "codigo": "08",
+    "valor": "LOLOTIQUE",
+    "departamento": "12"
+   },
+   {
+    "codigo": "09",
+    "valor": "MONCAGUA",
+    "departamento": "12"
+   },
+   {
+    "codigo": "10",
+    "valor": "NUEVA GUADALUPE",
+    "departamento": "12"
+   },
+   {
+    "codigo": "11",
+    "valor": "NVO EDÉN S JUAN",
+    "departamento": "12"
+   },
+   {
+    "codigo": "12",
+    "valor": "QUELEPA",
+    "departamento": "12"
+   },
+   {
+    "codigo": "13",
+    "valor": "SAN ANT D MOSCO",
+    "departamento": "12"
+   },
+   {
+    "codigo": "14",
+    "valor": "SAN GERARDO",
+    "departamento": "12"
+   },
+   {
+    "codigo": "15",
+    "valor": "SAN JORGE",
+    "departamento": "12"
+   },
+   {
+    "codigo": "16",
+    "valor": "SAN LUIS REINA",
+    "departamento": "12"
+   },
+   {
+    "codigo": "17",
+    "valor": "SAN MIGUEL",
+    "departamento": "12"
+   },
+   {
+    "codigo": "18",
+    "valor": "SAN RAF ORIENTE",
+    "departamento": "12"
+   },
+   {
+    "codigo": "19",
+    "valor": "SESORI",
+    "departamento": "12"
+   },
+   {
+    "codigo": "20",
+    "valor": "ULUAZAPA",
+    "departamento": "12"
+   },
+   {
+    "codigo": "01",
+    "valor": "ARAMBALA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "02",
+    "valor": "CACAOPERA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "03",
+    "valor": "CORINTO",
+    "departamento": "13"
+   },
+   {
+    "codigo": "04",
+    "valor": "CHILANGA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "05",
+    "valor": "DELIC DE CONCEP",
+    "departamento": "13"
+   },
+   {
+    "codigo": "06",
+    "valor": "EL DIVISADERO",
+    "departamento": "13"
+   },
+   {
+    "codigo": "07",
+    "valor": "EL ROSARIO",
+    "departamento": "13"
+   },
+   {
+    "codigo": "08",
+    "valor": "GUALOCOCTI",
+    "departamento": "13"
+   },
+   {
+    "codigo": "09",
+    "valor": "GUATAJIAGUA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "10",
+    "valor": "JOATECA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "11",
+    "valor": "JOCOAITIQUE",
+    "departamento": "13"
+   },
+   {
+    "codigo": "12",
+    "valor": "JOCORO",
+    "departamento": "13"
+   },
+   {
+    "codigo": "13",
+    "valor": "LOLOTIQUILLO",
+    "departamento": "13"
+   },
+   {
+    "codigo": "14",
+    "valor": "MEANGUERA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "15",
+    "valor": "OSICALA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "16",
+    "valor": "PERQUÍN",
+    "departamento": "13"
+   },
+   {
+    "codigo": "17",
+    "valor": "SAN CARLOS",
+    "departamento": "13"
+   },
+   {
+    "codigo": "18",
+    "valor": "SAN FERNANDO",
+    "departamento": "13"
+   },
+   {
+    "codigo": "19",
+    "valor": "SAN FCO GOTERA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "20",
+    "valor": "SAN ISIDRO",
+    "departamento": "13"
+   },
+   {
+    "codigo": "21",
+    "valor": "SAN SIMÓN",
+    "departamento": "13"
+   },
+   {
+    "codigo": "22",
+    "valor": "SENSEMBRA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "23",
+    "valor": "SOCIEDAD",
+    "departamento": "13"
+   },
+   {
+    "codigo": "24",
+    "valor": "TOROLA",
+    "departamento": "13"
+   },
+   {
+    "codigo": "25",
+    "valor": "YAMABAL",
+    "departamento": "13"
+   },
+   {
+    "codigo": "26",
+    "valor": "YOLOAIQUÍN",
+    "departamento": "13"
+   },
+   {
+    "codigo": "01",
+    "valor": "ANAMOROS",
+    "departamento": "14"
+   },
+   {
+    "codigo": "02",
+    "valor": "BOLÍVAR",
+    "departamento": "14"
+   },
+   {
+    "codigo": "03",
+    "valor": "CONCEP DE OTE",
+    "departamento": "14"
+   },
+   {
+    "codigo": "04",
+    "valor": "CONCHAGUA",
+    "departamento": "14"
+   },
+   {
+    "codigo": "05",
+    "valor": "EL CARMEN",
+    "departamento": "14"
+   },
+   {
+    "codigo": "06",
+    "valor": "EL SAUCE",
+    "departamento": "14"
+   },
+   {
+    "codigo": "07",
+    "valor": "INTIPUCÁ",
+    "departamento": "14"
+   },
+   {
+    "codigo": "08",
+    "valor": "LA UNIÓN",
+    "departamento": "14"
+   },
+   {
+    "codigo": "09",
+    "valor": "LISLIQUE",
+    "departamento": "14"
+   },
+   {
+    "codigo": "10",
+    "valor": "MEANG DEL GOLFO",
+    "departamento": "14"
+   },
+   {
+    "codigo": "11",
+    "valor": "NUEVA ESPARTA",
+    "departamento": "14"
+   },
+   {
+    "codigo": "12",
+    "valor": "PASAQUINA",
+    "departamento": "14"
+   },
+   {
+    "codigo": "13",
+    "valor": "POLORÓS",
+    "departamento": "14"
+   },
+   {
+    "codigo": "14",
+    "valor": "SAN ALEJO",
+    "departamento": "14"
+   },
+   {
+    "codigo": "15",
+    "valor": "SAN JOSE",
+    "departamento": "14"
+   },
+   {
+    "codigo": "16",
+    "valor": "SANTA ROSA LIMA",
+    "departamento": "14"
+   },
+   {
+    "codigo": "17",
+    "valor": "YAYANTIQUE",
+    "departamento": "14"
+   },
+   {
+    "codigo": "18",
+    "valor": "YUCUAIQUÍN",
+    "departamento": "14"
+   }
+  ]
+ },
+ "CAT-009": {
+  "id": "CAT-009",
+  "nombre": "Tipo de establecimiento",
+  "valores": [
+   {
+    "codigo": "01",
+    "valor": "Sucursal"
+   },
+   {
+    "codigo": "02",
+    "valor": "Casa Matriz"
+   },
+   {
+    "codigo": "04",
+    "valor": "Bodega"
+   },
+   {
+    "codigo": "07",
+    "valor": "Patio"
+   }
+  ]
+ },
+ "CAT-010": {
+  "id": "CAT-010",
+  "nombre": "Código tipo de Servicio (Médico)",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Cirugía"
+   },
+   {
+    "codigo": "2",
+    "valor": "Operación"
+   },
+   {
+    "codigo": "3",
+    "valor": "Tratamiento médico"
+   },
+   {
+    "codigo": "4",
+    "valor": "Cirugía instituto salvadoreño de Bienestar Magisterial"
+   },
+   {
+    "codigo": "5",
+    "valor": "Operación Instituto Salvadoreño de Bienestar Magisterial"
+   },
+   {
+    "codigo": "6",
+    "valor": "Tratamiento médico Instituto Salvadoreño de Bienestar Magisterial"
+   }
+  ]
+ },
+ "CAT-011": {
+  "id": "CAT-011",
+  "nombre": "Tipo de ítem",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Bienes"
+   },
+   {
+    "codigo": "2",
+    "valor": "Servicios"
+   },
+   {
+    "codigo": "3",
+    "valor": "Ambos (Bienes y Servicios, incluye los dos inherente a los Productos o servicios)"
+   },
+   {
+    "codigo": "4",
+    "valor": "Otros tributos por ítem"
+   }
+  ]
+ },
+ "CAT-012": {
+  "id": "CAT-012",
+  "nombre": "Departamento",
+  "valores": [
+   {
+    "codigo": "00",
+    "valor": "Otro (Para extranjeros)"
+   },
+   {
+    "codigo": "01",
+    "valor": "Ahuachapán"
+   },
+   {
+    "codigo": "02",
+    "valor": "Santa Ana"
+   },
+   {
+    "codigo": "03",
+    "valor": "Sonsonate"
+   },
+   {
+    "codigo": "04",
+    "valor": "Chalatenango"
+   },
+   {
+    "codigo": "05",
+    "valor": "La Libertad"
+   },
+   {
+    "codigo": "06",
+    "valor": "San Salvador"
+   },
+   {
+    "codigo": "07",
+    "valor": "Cuscatlán"
+   },
+   {
+    "codigo": "08",
+    "valor": "La Paz"
+   },
+   {
+    "codigo": "09",
+    "valor": "Cabañas"
+   },
+   {
+    "codigo": "10",
+    "valor": "San Vicente"
+   },
+   {
+    "codigo": "11",
+    "valor": "Usulután"
+   },
+   {
+    "codigo": "12",
+    "valor": "San Miguel"
+   },
+   {
+    "codigo": "13",
+    "valor": "Morazán"
+   },
+   {
+    "codigo": "14",
+    "valor": "La Unión"
+   }
+  ]
+ },
+ "CAT-013": {
+  "id": "CAT-013",
+  "nombre": "Municipio",
+  "valores": [
+   {
+    "codigo": "00",
+    "valor": "Otro (Para extranjeros)",
+    "departamento": "00"
+   },
+   {
+    "codigo": "13",
+    "valor": "AHUACHAPAN NORTE",
+    "departamento": "01"
+   },
+   {
+    "codigo": "14",
+    "valor": "AHUACHAPAN CENTRO",
+    "departamento": "01"
+   },
+   {
+    "codigo": "15",
+    "valor": "AHUACHAPAN SUR",
+    "departamento": "01"
+   },
+   {
+    "codigo": "14",
+    "valor": "SANTA ANA NORTE",
+    "departamento": "02"
+   },
+   {
+    "codigo": "15",
+    "valor": "SANTA ANA CENTRO",
+    "departamento": "02"
+   },
+   {
+    "codigo": "16",
+    "valor": "SANTA ANA ESTE",
+    "departamento": "02"
+   },
+   {
+    "codigo": "17",
+    "valor": "SANTA ANA OESTE",
+    "departamento": "02"
+   },
+   {
+    "codigo": "17",
+    "valor": "SONSONATE NORTE",
+    "departamento": "03"
+   },
+   {
+    "codigo": "18",
+    "valor": "SONSONATE CENTRO",
+    "departamento": "03"
+   },
+   {
+    "codigo": "19",
+    "valor": "SONSONATE ESTE",
+    "departamento": "03"
+   },
+   {
+    "codigo": "20",
+    "valor": "SONSONATE OESTE",
+    "departamento": "03"
+   },
+   {
+    "codigo": "34",
+    "valor": "CHALATENANGO NORTE",
+    "departamento": "04"
+   },
+   {
+    "codigo": "35",
+    "valor": "CHALATENANGO CENTRO",
+    "departamento": "04"
+   },
+   {
+    "codigo": "36",
+    "valor": "CHALATENANGO SUR",
+    "departamento": "04"
+   },
+   {
+    "codigo": "23",
+    "valor": "LA LIBERTAD NORTE",
+    "departamento": "05"
+   },
+   {
+    "codigo": "24",
+    "valor": "LA LIBERTAD CENTRO",
+    "departamento": "05"
+   },
+   {
+    "codigo": "25",
+    "valor": "LA LIBERTAD OESTE",
+    "departamento": "05"
+   },
+   {
+    "codigo": "26",
+    "valor": "LA LIBERTAD ESTE",
+    "departamento": "05"
+   },
+   {
+    "codigo": "27",
+    "valor": "LA LIBERTAD COSTA",
+    "departamento": "05"
+   },
+   {
+    "codigo": "28",
+    "valor": "LA LIBERTAD SUR",
+    "departamento": "05"
+   },
+   {
+    "codigo": "20",
+    "valor": "SAN SALVADOR NORTE",
+    "departamento": "06"
+   },
+   {
+    "codigo": "21",
+    "valor": "SAN SALVADOR OESTE",
+    "departamento": "06"
+   },
+   {
+    "codigo": "22",
+    "valor": "SAN SALVADOR ESTE",
+    "departamento": "06"
+   },
+   {
+    "codigo": "23",
+    "valor": "SAN SALVADOR CENTRO",
+    "departamento": "06"
+   },
+   {
+    "codigo": "24",
+    "valor": "SAN SALVADOR SUR",
+    "departamento": "06"
+   },
+   {
+    "codigo": "17",
+    "valor": "CUSCATLAN NORTE",
+    "departamento": "07"
+   },
+   {
+    "codigo": "18",
+    "valor": "CUSCATLAN SUR",
+    "departamento": "07"
+   },
+   {
+    "codigo": "23",
+    "valor": "LA PAZ OESTE",
+    "departamento": "08"
+   },
+   {
+    "codigo": "24",
+    "valor": "LA PAZ CENTRO",
+    "departamento": "08"
+   },
+   {
+    "codigo": "25",
+    "valor": "LA PAZ ESTE",
+    "departamento": "08"
+   },
+   {
+    "codigo": "10",
+    "valor": "CABAÑAS ESTE",
+    "departamento": "09"
+   },
+   {
+    "codigo": "11",
+    "valor": "CABAÑAS OESTE",
+    "departamento": "09"
+   },
+   {
+    "codigo": "14",
+    "valor": "SAN VICENTE NORTE",
+    "departamento": "10"
+   },
+   {
+    "codigo": "15",
+    "valor": "SAN VICENTE SUR",
+    "departamento": "10"
+   },
+   {
+    "codigo": "24",
+    "valor": "USULUTAN NORTE",
+    "departamento": "11"
+   },
+   {
+    "codigo": "25",
+    "valor": "USULUTAN ESTE",
+    "departamento": "11"
+   },
+   {
+    "codigo": "26",
+    "valor": "USULUTAN OESTE",
+    "departamento": "11"
+   },
+   {
+    "codigo": "21",
+    "valor": "SAN MIGUEL NORTE",
+    "departamento": "12"
+   },
+   {
+    "codigo": "22",
+    "valor": "SAN MIGUEL CENTRO",
+    "departamento": "12"
+   },
+   {
+    "codigo": "23",
+    "valor": "SAN MIGUEL OESTE",
+    "departamento": "12"
+   },
+   {
+    "codigo": "27",
+    "valor": "MORAZAN NORTE",
+    "departamento": "13"
+   },
+   {
+    "codigo": "28",
+    "valor": "MORAZAN SUR",
+    "departamento": "13"
+   },
+   {
+    "codigo": "19",
+    "valor": "LA UNION NORTE",
+    "departamento": "14"
+   },
+   {
+    "codigo": "20",
+    "valor": "LA UNION SUR",
+    "departamento": "14"
+   }
+  ]
+ },
+ "CAT-014": {
+  "id": "CAT-014",
+  "nombre": "Unidad de Medida",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "metro"
+   },
+   {
+    "codigo": "2",
+    "valor": "Yarda"
+   },
+   {
+    "codigo": "6",
+    "valor": "milímetro"
+   },
+   {
+    "codigo": "9",
+    "valor": "kilómetro cuadrado"
+   },
+   {
+    "codigo": "10",
+    "valor": "Hectárea"
+   },
+   {
+    "codigo": "13",
+    "valor": "metro cuadrado"
+   },
+   {
+    "codigo": "15",
+    "valor": "Vara cuadrada"
+   },
+   {
+    "codigo": "18",
+    "valor": "metro cúbico"
+   },
+   {
+    "codigo": "20",
+    "valor": "Barril"
+   },
+   {
+    "codigo": "22",
+    "valor": "Galón 1, 4"
+   },
+   {
+    "codigo": "23",
+    "valor": "Litro"
+   },
+   {
+    "codigo": "24",
+    "valor": "Botella"
+   },
+   {
+    "codigo": "26",
+    "valor": "Mililitro"
+   },
+   {
+    "codigo": "30",
+    "valor": "Tonelada"
+   },
+   {
+    "codigo": "32",
+    "valor": "Quintal"
+   },
+   {
+    "codigo": "33",
+    "valor": "Arroba"
+   },
+   {
+    "codigo": "34",
+    "valor": "Kilogramo"
+   },
+   {
+    "codigo": "36",
+    "valor": "Libra"
+   },
+   {
+    "codigo": "37",
+    "valor": "Onza troy"
+   },
+   {
+    "codigo": "38",
+    "valor": "Onza"
+   },
+   {
+    "codigo": "39",
+    "valor": "Gramo"
+   },
+   {
+    "codigo": "40",
+    "valor": "Miligramo"
+   },
+   {
+    "codigo": "42",
+    "valor": "Megawatt"
+   },
+   {
+    "codigo": "43",
+    "valor": "Kilowatt"
+   },
+   {
+    "codigo": "44",
+    "valor": "Watt"
+   },
+   {
+    "codigo": "45",
+    "valor": "Megavoltio-amperio"
+   },
+   {
+    "codigo": "46",
+    "valor": "Kilovoltio-amperio"
+   },
+   {
+    "codigo": "47",
+    "valor": "Voltio-amperio"
+   },
+   {
+    "codigo": "49",
+    "valor": "Gigawatt-hora"
+   },
+   {
+    "codigo": "50",
+    "valor": "Megawatt-hora"
+   },
+   {
+    "codigo": "51",
+    "valor": "Kilowatt-hora"
+   },
+   {
+    "codigo": "52",
+    "valor": "Watt-hora"
+   },
+   {
+    "codigo": "53",
+    "valor": "Kilovoltio"
+   },
+   {
+    "codigo": "54",
+    "valor": "Voltio"
+   },
+   {
+    "codigo": "55",
+    "valor": "Millar"
+   },
+   {
+    "codigo": "56",
+    "valor": "Medio millar"
+   },
+   {
+    "codigo": "57",
+    "valor": "Ciento"
+   },
+   {
+    "codigo": "58",
+    "valor": "Docena"
+   },
+   {
+    "codigo": "59",
+    "valor": "Unidad"
+   },
+   {
+    "codigo": "99",
+    "valor": "Otra"
+   }
+  ]
+ },
+ "CAT-015": {
+  "id": "CAT-015",
+  "nombre": "Tributos",
+  "valores": [
+   {
+    "codigo": "20",
+    "valor": "Impuesto al Valor Agregado 13%",
+    "seccion": 1
+   },
+   {
+    "codigo": "C3",
+    "valor": "Impuesto al Valor Agregado (exportaciones) 0%",
+    "seccion": 1
+   },
+   {
+    "codigo": "59",
+    "valor": "Turismo: por alojamiento (5%)",
+    "seccion": 1
+   },
+   {
+    "codigo": "71",
+    "valor": "Turismo: salida del país por vía aérea $7.00",
+    "seccion": 1
+   },
+   {
+    "codigo": "D1",
+    "valor": "FOVIAL ($0.20 Ctvs. por galón)",
+    "seccion": 1
+   },
+   {
+    "codigo": "C8",
+    "valor": "COTRANS ($0.10 Ctvs. por galón)",
+    "seccion": 1
+   },
+   {
+    "codigo": "D5",
+    "valor": "Otras tasas casos especiales",
+    "seccion": 1
+   },
+   {
+    "codigo": "D4",
+    "valor": "Otros impuestos casos especiales",
+    "seccion": 1
+   },
+   {
+    "codigo": "A8",
+    "valor": "Impuesto Especial al Combustible (0%, 0.5%, 1%)",
+    "seccion": 2
+   },
+   {
+    "codigo": "57",
+    "valor": "Impuesto industria de Cemento",
+    "seccion": 2
+   },
+   {
+    "codigo": "90",
+    "valor": "Impuesto especial a la primera matrícula",
+    "seccion": 2
+   },
+   {
+    "codigo": "D4",
+    "valor": "Otros impuestos casos especiales",
+    "seccion": 2
+   },
+   {
+    "codigo": "D5",
+    "valor": "Otras tasas casos especiales",
+    "seccion": 2
+   },
+   {
+    "codigo": "A6",
+    "valor": "Impuesto ad- valorem, armas de fuego, municiones explosivas y artículos similares",
+    "seccion": 2
+   },
+   {
+    "codigo": "C5",
+    "valor": "Impuesto ad- valorem por diferencial de precios de bebidas alcohólicas (8%)",
+    "seccion": 3
+   },
+   {
+    "codigo": "C6",
+    "valor": "Impuesto ad- valorem por diferencial de precios al tabaco cigarrillos (39%)",
+    "seccion": 3
+   },
+   {
+    "codigo": "C7",
+    "valor": "Impuesto ad- valorem por diferencial de precios al tabaco cigarros (100%)",
+    "seccion": 3
+   },
+   {
+    "codigo": "19",
+    "valor": "Fabricante de Bebidas Gaseosas, Isotónicas, Deportivas, Fortificantes, Energizante o Estimulante",
+    "seccion": 3
+   },
+   {
+    "codigo": "28",
+    "valor": "Importador de Bebidas Gaseosas, Isotónicas, Deportivas, Fortificantes, Energizante o Estimulante",
+    "seccion": 3
+   },
+   {
+    "codigo": "31",
+    "valor": "Detallistas o Expendedores de Bebidas Alcohólicas",
+    "seccion": 3
+   },
+   {
+    "codigo": "32",
+    "valor": "Fabricante de Cerveza",
+    "seccion": 3
+   },
+   {
+    "codigo": "33",
+    "valor": "Importador de Cerveza",
+    "seccion": 3
+   },
+   {
+    "codigo": "34",
+    "valor": "Fabricante de Productos de Tabaco",
+    "seccion": 3
+   },
+   {
+    "codigo": "35",
+    "valor": "Importador de Productos de Tabaco",
+    "seccion": 3
+   },
+   {
+    "codigo": "36",
+    "valor": "Fabricante de Armas de Fuego, Municiones y Artículos Similares",
+    "seccion": 3
+   },
+   {
+    "codigo": "37",
+    "valor": "Importador de Arma de Fuego, Munición y Artículos. Similares",
+    "seccion": 3
+   },
+   {
+    "codigo": "38",
+    "valor": "Fabricante de Explosivos",
+    "seccion": 3
+   },
+   {
+    "codigo": "39",
+    "valor": "Importador de Explosivos",
+    "seccion": 3
+   },
+   {
+    "codigo": "42",
+    "valor": "Fabricante de Productos Pirotécnicos",
+    "seccion": 3
+   },
+   {
+    "codigo": "43",
+    "valor": "Importador de Productos Pirotécnicos",
+    "seccion": 3
+   },
+   {
+    "codigo": "44",
+    "valor": "Productor de Tabaco",
+    "seccion": 3
+   },
+   {
+    "codigo": "50",
+    "valor": "Distribuidor de Bebidas Gaseosas, Isotónicas, Deportivas, Fortificantes, Energizante o Estimulante",
+    "seccion": 3
+   },
+   {
+    "codigo": "51",
+    "valor": "Bebidas Alcohólicas",
+    "seccion": 3
+   },
+   {
+    "codigo": "52",
+    "valor": "Cerveza",
+    "seccion": 3
+   },
+   {
+    "codigo": "53",
+    "valor": "Productos del Tabaco",
+    "seccion": 3
+   },
+   {
+    "codigo": "54",
+    "valor": "Bebidas Carbonatadas o Gaseosas Simples o Endulzadas",
+    "seccion": 3
+   },
+   {
+    "codigo": "55",
+    "valor": "Otros Específicos",
+    "seccion": 3
+   },
+   {
+    "codigo": "58",
+    "valor": "Alcohol",
+    "seccion": 3
+   },
+   {
+    "codigo": "77",
+    "valor": "Importador de Jugos, Néctares, Bebidas con Jugo y Refrescos",
+    "seccion": 3
+   },
+   {
+    "codigo": "78",
+    "valor": "Distribuidor de Jugos, Néctares, Bebidas con Jugo y Refrescos",
+    "seccion": 3
+   },
+   {
+    "codigo": "79",
+    "valor": "Sobre Llamadas Telefónicas Provenientes del Ext.",
+    "seccion": 3
+   },
+   {
+    "codigo": "85",
+    "valor": "Detallista de Jugos, Néctares, Bebidas con Jugo y Refrescos",
+    "seccion": 3
+   },
+   {
+    "codigo": "86",
+    "valor": "Fabricante de Preparaciones Concentradas o en Polvo para la Elaboración de Bebidas",
+    "seccion": 3
+   },
+   {
+    "codigo": "91",
+    "valor": "Fabricante de Jugos, Néctares, Bebidas con Jugo y Refrescos",
+    "seccion": 3
+   },
+   {
+    "codigo": "92",
+    "valor": "Importador de Preparaciones Concentradas o en Polvo para la Elaboración de Bebidas",
+    "seccion": 3
+   },
+   {
+    "codigo": "A1",
+    "valor": "Específicos y Ad-Valorem",
+    "seccion": 3
+   },
+   {
+    "codigo": "A5",
+    "valor": "Bebidas Gaseosas, Isotónicas, Deportivas, Fortificantes, Energizantes o Estimulantes",
+    "seccion": 3
+   },
+   {
+    "codigo": "A7",
+    "valor": "Alcohol Etílico",
+    "seccion": 3
+   },
+   {
+    "codigo": "A9",
+    "valor": "Sacos Sintéticos",
+    "seccion": 3
+   }
+  ]
+ },
+ "CAT-016": {
+  "id": "CAT-016",
+  "nombre": "Condición de la Operación",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Contado"
+   },
+   {
+    "codigo": "2",
+    "valor": "A crédito"
+   },
+   {
+    "codigo": "3",
+    "valor": "Otro"
+   }
+  ]
+ },
+ "CAT-017": {
+  "id": "CAT-017",
+  "nombre": "Forma de Pago",
+  "valores": [
+   {
+    "codigo": "01",
+    "valor": "Billetes y monedas"
+   },
+   {
+    "codigo": "02",
+    "valor": "Tarjeta Débito"
+   },
+   {
+    "codigo": "03",
+    "valor": "Tarjeta Crédito"
+   },
+   {
+    "codigo": "04",
+    "valor": "Cheque"
+   },
+   {
+    "codigo": "05",
+    "valor": "Transferencia-Depósito Bancario"
+   },
+   {
+    "codigo": "08",
+    "valor": "Dinero electrónico"
+   },
+   {
+    "codigo": "09",
+    "valor": "Monedero electrónico"
+   },
+   {
+    "codigo": "11",
+    "valor": "Bitcoin"
+   },
+   {
+    "codigo": "12",
+    "valor": "Otras Criptomonedas"
+   },
+   {
+    "codigo": "13",
+    "valor": "Cuentas por pagar del receptor"
+   },
+   {
+    "codigo": "14",
+    "valor": "Giro bancario"
+   },
+   {
+    "codigo": "99",
+    "valor": "Otros (se debe indicar el medio de pago)"
+   }
+  ]
+ },
+ "CAT-018": {
+  "id": "CAT-018",
+  "nombre": "Plazo",
+  "valores": [
+   {
+    "codigo": "01",
+    "valor": "Días"
+   },
+   {
+    "codigo": "02",
+    "valor": "Meses"
+   },
+   {
+    "codigo": "03",
+    "valor": "Años"
+   }
+  ]
+ },
+ "CAT-020": {
+  "id": "CAT-020",
+  "nombre": "País",
+  "valores": [
+   {
+    "codigo": "AF",
+    "valor": "Afganistán"
+   },
+   {
+    "codigo": "AX",
+    "valor": "Aland"
+   },
+   {
+    "codigo": "AL",
+    "valor": "Albania"
+   },
+   {
+    "codigo": "DE",
+    "valor": "Alemania"
+   },
+   {
+    "codigo": "AD",
+    "valor": "Andorra"
+   },
+   {
+    "codigo": "AO",
+    "valor": "Angola"
+   },
+   {
+    "codigo": "AI",
+    "valor": "Anguila"
+   },
+   {
+    "codigo": "AQ",
+    "valor": "Antártica"
+   },
+   {
+    "codigo": "AG",
+    "valor": "Antigua y Barbuda"
+   },
+   {
+    "codigo": "AW",
+    "valor": "Aruba"
+   },
+   {
+    "codigo": "SA",
+    "valor": "Arabia Saudita"
+   },
+   {
+    "codigo": "DZ",
+    "valor": "Argelia"
+   },
+   {
+    "codigo": "AR",
+    "valor": "Argentina"
+   },
+   {
+    "codigo": "AM",
+    "valor": "Armenia"
+   },
+   {
+    "codigo": "AU",
+    "valor": "Australia"
+   },
+   {
+    "codigo": "AT",
+    "valor": "Austria"
+   },
+   {
+    "codigo": "AZ",
+    "valor": "Azerbaiyán"
+   },
+   {
+    "codigo": "BS",
+    "valor": "Bahamas"
+   },
+   {
+    "codigo": "BH",
+    "valor": "Bahrein"
+   },
+   {
+    "codigo": "BD",
+    "valor": "Bangladesh"
+   },
+   {
+    "codigo": "BB",
+    "valor": "Barbados"
+   },
+   {
+    "codigo": "BE",
+    "valor": "Bélgica"
+   },
+   {
+    "codigo": "BZ",
+    "valor": "Belice"
+   },
+   {
+    "codigo": "BJ",
+    "valor": "Benin"
+   },
+   {
+    "codigo": "BM",
+    "valor": "Bermudas"
+   },
+   {
+    "codigo": "BY",
+    "valor": "Bielorrusia"
+   },
+   {
+    "codigo": "BO",
+    "valor": "Bolivia"
+   },
+   {
+    "codigo": "BQ",
+    "valor": "Bonaire, Sint Eustatius and Saba"
+   },
+   {
+    "codigo": "BA",
+    "valor": "Bosnia-Herzegovina"
+   },
+   {
+    "codigo": "BW",
+    "valor": "Botswana"
+   },
+   {
+    "codigo": "BR",
+    "valor": "Brasil"
+   },
+   {
+    "codigo": "BN",
+    "valor": "Brunei"
+   },
+   {
+    "codigo": "BG",
+    "valor": "Bulgaria"
+   },
+   {
+    "codigo": "BF",
+    "valor": "Burkina Faso"
+   },
+   {
+    "codigo": "BI",
+    "valor": "Burundi"
+   },
+   {
+    "codigo": "BT",
+    "valor": "Bután"
+   },
+   {
+    "codigo": "CV",
+    "valor": "Cabo Verde"
+   },
+   {
+    "codigo": "KY",
+    "valor": "Caimán, Islas"
+   },
+   {
+    "codigo": "KH",
+    "valor": "Camboya"
+   },
+   {
+    "codigo": "CM",
+    "valor": "Camerún"
+   },
+   {
+    "codigo": "CA",
+    "valor": "Canadá"
+   },
+   {
+    "codigo": "CF",
+    "valor": "Centroafricana, República"
+   },
+   {
+    "codigo": "TD",
+    "valor": "Chad"
+   },
+   {
+    "codigo": "CL",
+    "valor": "Chile"
+   },
+   {
+    "codigo": "CN",
+    "valor": "China"
+   },
+   {
+    "codigo": "CY",
+    "valor": "Chipre"
+   },
+   {
+    "codigo": "VA",
+    "valor": "Ciudad del Vaticano"
+   },
+   {
+    "codigo": "CO",
+    "valor": "Colombia"
+   },
+   {
+    "codigo": "KM",
+    "valor": "Comoras"
+   },
+   {
+    "codigo": "CG",
+    "valor": "Congo"
+   },
+   {
+    "codigo": "CI",
+    "valor": "Costa de Marfil"
+   },
+   {
+    "codigo": "CR",
+    "valor": "Costa Rica"
+   },
+   {
+    "codigo": "HR",
+    "valor": "Croacia"
+   },
+   {
+    "codigo": "CU",
+    "valor": "Cuba"
+   },
+   {
+    "codigo": "CW",
+    "valor": "Curazao"
+   },
+   {
+    "codigo": "DK",
+    "valor": "Dinamarca"
+   },
+   {
+    "codigo": "DM",
+    "valor": "Dominica"
+   },
+   {
+    "codigo": "DJ",
+    "valor": "Djiboutí"
+   },
+   {
+    "codigo": "EC",
+    "valor": "Ecuador"
+   },
+   {
+    "codigo": "EG",
+    "valor": "Egipto"
+   },
+   {
+    "codigo": "SV",
+    "valor": "El Salvador"
+   },
+   {
+    "codigo": "AE",
+    "valor": "Emiratos Árabes Unidos"
+   },
+   {
+    "codigo": "ER",
+    "valor": "Eritrea"
+   },
+   {
+    "codigo": "SK",
+    "valor": "Eslovaquia"
+   },
+   {
+    "codigo": "SI",
+    "valor": "Eslovenia"
+   },
+   {
+    "codigo": "ES",
+    "valor": "España"
+   },
+   {
+    "codigo": "US",
+    "valor": "Estados Unidos"
+   },
+   {
+    "codigo": "EE",
+    "valor": "Estonia"
+   },
+   {
+    "codigo": "ET",
+    "valor": "Etiopía"
+   },
+   {
+    "codigo": "FJ",
+    "valor": "Fiji"
+   },
+   {
+    "codigo": "PH",
+    "valor": "Filipinas"
+   },
+   {
+    "codigo": "FI",
+    "valor": "Finlandia"
+   },
+   {
+    "codigo": "FR",
+    "valor": "Francia"
+   },
+   {
+    "codigo": "GA",
+    "valor": "Gabón"
+   },
+   {
+    "codigo": "GM",
+    "valor": "Gambia"
+   },
+   {
+    "codigo": "GE",
+    "valor": "Georgia"
+   },
+   {
+    "codigo": "GH",
+    "valor": "Ghana"
+   },
+   {
+    "codigo": "GI",
+    "valor": "Gibraltar"
+   },
+   {
+    "codigo": "GD",
+    "valor": "Granada"
+   },
+   {
+    "codigo": "GR",
+    "valor": "Grecia"
+   },
+   {
+    "codigo": "GL",
+    "valor": "Groenlandia"
+   },
+   {
+    "codigo": "GP",
+    "valor": "Guadalupe"
+   },
+   {
+    "codigo": "GU",
+    "valor": "Guam"
+   },
+   {
+    "codigo": "GT",
+    "valor": "Guatemala"
+   },
+   {
+    "codigo": "GF",
+    "valor": "Guayana Francesa"
+   },
+   {
+    "codigo": "GG",
+    "valor": "Guernsey"
+   },
+   {
+    "codigo": "GN",
+    "valor": "Guinea"
+   },
+   {
+    "codigo": "GQ",
+    "valor": "Guinea Ecuatorial"
+   },
+   {
+    "codigo": "GW",
+    "valor": "Guinea-Bissau"
+   },
+   {
+    "codigo": "GY",
+    "valor": "Guyana"
+   },
+   {
+    "codigo": "HT",
+    "valor": "Haití"
+   },
+   {
+    "codigo": "HN",
+    "valor": "Honduras"
+   },
+   {
+    "codigo": "HK",
+    "valor": "Hong Kong"
+   },
+   {
+    "codigo": "HU",
+    "valor": "Hungría"
+   },
+   {
+    "codigo": "IN",
+    "valor": "India"
+   },
+   {
+    "codigo": "ID",
+    "valor": "Indonesia"
+   },
+   {
+    "codigo": "IQ",
+    "valor": "Irak"
+   },
+   {
+    "codigo": "IE",
+    "valor": "Irlanda"
+   },
+   {
+    "codigo": "BV",
+    "valor": "Isla Bouvet"
+   },
+   {
+    "codigo": "IM",
+    "valor": "Isla de Man"
+   },
+   {
+    "codigo": "NF",
+    "valor": "Isla Norfolk"
+   },
+   {
+    "codigo": "IS",
+    "valor": "Islandia"
+   },
+   {
+    "codigo": "CX",
+    "valor": "Islas Navidad"
+   },
+   {
+    "codigo": "CC",
+    "valor": "Islas Cocos"
+   },
+   {
+    "codigo": "CK",
+    "valor": "Islas Cook"
+   },
+   {
+    "codigo": "FO",
+    "valor": "Islas Faroe"
+   },
+   {
+    "codigo": "GS",
+    "valor": "Islas Georgias d. S.-Sandwich d. S."
+   },
+   {
+    "codigo": "HM",
+    "valor": "Islas Heard y McDonald"
+   },
+   {
+    "codigo": "FK",
+    "valor": "Islas Malvinas (Falkland)"
+   },
+   {
+    "codigo": "MP",
+    "valor": "Islas Marianas del Norte"
+   },
+   {
+    "codigo": "MH",
+    "valor": "Islas Marshall"
+   },
+   {
+    "codigo": "PN",
+    "valor": "Islas Pitcairn"
+   },
+   {
+    "codigo": "TC",
+    "valor": "Islas Turcas y Caicos"
+   },
+   {
+    "codigo": "UM",
+    "valor": "Islas Ultramarinas de E.E.U.U"
+   },
+   {
+    "codigo": "VI",
+    "valor": "Islas Vírgenes"
+   },
+   {
+    "codigo": "IL",
+    "valor": "Israel"
+   },
+   {
+    "codigo": "IT",
+    "valor": "Italia"
+   },
+   {
+    "codigo": "JM",
+    "valor": "Jamaica"
+   },
+   {
+    "codigo": "JP",
+    "valor": "Japón"
+   },
+   {
+    "codigo": "JE",
+    "valor": "Jersey"
+   },
+   {
+    "codigo": "JO",
+    "valor": "Jordania"
+   },
+   {
+    "codigo": "KZ",
+    "valor": "Kazajistán"
+   },
+   {
+    "codigo": "KE",
+    "valor": "Kenia"
+   },
+   {
+    "codigo": "KG",
+    "valor": "Kirguistán"
+   },
+   {
+    "codigo": "KI",
+    "valor": "Kiribati"
+   },
+   {
+    "codigo": "KW",
+    "valor": "Kuwait"
+   },
+   {
+    "codigo": "LA",
+    "valor": "Laos, República Democrática"
+   },
+   {
+    "codigo": "LS",
+    "valor": "Lesotho"
+   },
+   {
+    "codigo": "LV",
+    "valor": "Letonia"
+   },
+   {
+    "codigo": "LB",
+    "valor": "Líbano"
+   },
+   {
+    "codigo": "LR",
+    "valor": "Liberia"
+   },
+   {
+    "codigo": "LY",
+    "valor": "Libia"
+   },
+   {
+    "codigo": "LI",
+    "valor": "Liechtenstein"
+   },
+   {
+    "codigo": "LT",
+    "valor": "Lituania"
+   },
+   {
+    "codigo": "LU",
+    "valor": "Luxemburgo"
+   },
+   {
+    "codigo": "MO",
+    "valor": "Macao"
+   },
+   {
+    "codigo": "MK",
+    "valor": "Macedonia"
+   },
+   {
+    "codigo": "MG",
+    "valor": "Madagascar"
+   },
+   {
+    "codigo": "MY",
+    "valor": "Malasia"
+   },
+   {
+    "codigo": "MW",
+    "valor": "Malawi"
+   },
+   {
+    "codigo": "MV",
+    "valor": "Maldivas"
+   },
+   {
+    "codigo": "ML",
+    "valor": "Malí"
+   },
+   {
+    "codigo": "MT",
+    "valor": "Malta"
+   },
+   {
+    "codigo": "MA",
+    "valor": "Marruecos"
+   },
+   {
+    "codigo": "MQ",
+    "valor": "Martinica e.a."
+   },
+   {
+    "codigo": "MU",
+    "valor": "Mauricio"
+   },
+   {
+    "codigo": "MR",
+    "valor": "Mauritania"
+   },
+   {
+    "codigo": "YT",
+    "valor": "Mayotte"
+   },
+   {
+    "codigo": "MX",
+    "valor": "México"
+   },
+   {
+    "codigo": "FM",
+    "valor": "Micronesia"
+   },
+   {
+    "codigo": "MD",
+    "valor": "Moldavia, República de"
+   },
+   {
+    "codigo": "MC",
+    "valor": "Mónaco"
+   },
+   {
+    "codigo": "MN",
+    "valor": "Mongolia"
+   },
+   {
+    "codigo": "ME",
+    "valor": "Montenegro"
+   },
+   {
+    "codigo": "MS",
+    "valor": "Montserrat"
+   },
+   {
+    "codigo": "MZ",
+    "valor": "Mozambique"
+   },
+   {
+    "codigo": "MM",
+    "valor": "Myanmar"
+   },
+   {
+    "codigo": "NA",
+    "valor": "Namibia"
+   },
+   {
+    "codigo": "NR",
+    "valor": "Nauru"
+   },
+   {
+    "codigo": "NP",
+    "valor": "Nepal"
+   },
+   {
+    "codigo": "NI",
+    "valor": "Nicaragua"
+   },
+   {
+    "codigo": "NE",
+    "valor": "Níger"
+   },
+   {
+    "codigo": "NG",
+    "valor": "Nigeria"
+   },
+   {
+    "codigo": "NU",
+    "valor": "Niue"
+   },
+   {
+    "codigo": "NO",
+    "valor": "Noruega"
+   },
+   {
+    "codigo": "NC",
+    "valor": "Nueva Caledonia"
+   },
+   {
+    "codigo": "NZ",
+    "valor": "Nueva Zelanda"
+   },
+   {
+    "codigo": "OM",
+    "valor": "Omán"
+   },
+   {
+    "codigo": "NL",
+    "valor": "Países Bajos"
+   },
+   {
+    "codigo": "PK",
+    "valor": "Pakistán"
+   },
+   {
+    "codigo": "PW",
+    "valor": "Palaos"
+   },
+   {
+    "codigo": "PS",
+    "valor": "Palestina"
+   },
+   {
+    "codigo": "PA",
+    "valor": "Panamá"
+   },
+   {
+    "codigo": "PG",
+    "valor": "Papúa, Nueva Guinea"
+   },
+   {
+    "codigo": "PY",
+    "valor": "Paraguay"
+   },
+   {
+    "codigo": "PE",
+    "valor": "Perú"
+   },
+   {
+    "codigo": "PF",
+    "valor": "Polinesia Francesa"
+   },
+   {
+    "codigo": "PL",
+    "valor": "Polonia"
+   },
+   {
+    "codigo": "PT",
+    "valor": "Portugal"
+   },
+   {
+    "codigo": "PR",
+    "valor": "Puerto Rico"
+   },
+   {
+    "codigo": "QA",
+    "valor": "Qatar"
+   },
+   {
+    "codigo": "GB",
+    "valor": "Reino Unido"
+   },
+   {
+    "codigo": "KP",
+    "valor": "Rep. Democrática popular de Corea"
+   },
+   {
+    "codigo": "CZ",
+    "valor": "República Checa"
+   },
+   {
+    "codigo": "KR",
+    "valor": "República de Corea"
+   },
+   {
+    "codigo": "CD",
+    "valor": "República Democrática del Congo"
+   },
+   {
+    "codigo": "DO",
+    "valor": "República Dominicana"
+   },
+   {
+    "codigo": "IR",
+    "valor": "República Islámica de Irán"
+   },
+   {
+    "codigo": "RE",
+    "valor": "Reunión"
+   },
+   {
+    "codigo": "RW",
+    "valor": "Ruanda"
+   },
+   {
+    "codigo": "RO",
+    "valor": "Rumania"
+   },
+   {
+    "codigo": "RU",
+    "valor": "Rusia"
+   },
+   {
+    "codigo": "EH",
+    "valor": "Sahara Occidental"
+   },
+   {
+    "codigo": "BL",
+    "valor": "Saint Barthélemy"
+   },
+   {
+    "codigo": "MF",
+    "valor": "Saint Martin (French part)"
+   },
+   {
+    "codigo": "SB",
+    "valor": "Salomón, Islas"
+   },
+   {
+    "codigo": "WS",
+    "valor": "Samoa"
+   },
+   {
+    "codigo": "AS",
+    "valor": "Samoa Americana"
+   },
+   {
+    "codigo": "KN",
+    "valor": "San Cristóbal y Nieves"
+   },
+   {
+    "codigo": "SM",
+    "valor": "San Marino"
+   },
+   {
+    "codigo": "PM",
+    "valor": "San Pedro y Miquelón"
+   },
+   {
+    "codigo": "VC",
+    "valor": "San Vicente y las Granadinas"
+   },
+   {
+    "codigo": "SH",
+    "valor": "Santa Elena"
+   },
+   {
+    "codigo": "LC",
+    "valor": "Santa Lucía"
+   },
+   {
+    "codigo": "ST",
+    "valor": "Santo Tomé y Príncipe"
+   },
+   {
+    "codigo": "SN",
+    "valor": "Senegal"
+   },
+   {
+    "codigo": "RS",
+    "valor": "Serbia"
+   },
+   {
+    "codigo": "SC",
+    "valor": "Seychelles"
+   },
+   {
+    "codigo": "SL",
+    "valor": "Sierra Leona"
+   },
+   {
+    "codigo": "SG",
+    "valor": "Singapur"
+   },
+   {
+    "codigo": "SX",
+    "valor": "Sint Maarten (Dutch part)"
+   },
+   {
+    "codigo": "SY",
+    "valor": "Siria"
+   },
+   {
+    "codigo": "SO",
+    "valor": "Somalia"
+   },
+   {
+    "codigo": "SS",
+    "valor": "South Sudan"
+   },
+   {
+    "codigo": "LK",
+    "valor": "Sri Lanka"
+   },
+   {
+    "codigo": "ZA",
+    "valor": "Sudáfrica"
+   },
+   {
+    "codigo": "SD",
+    "valor": "Sudán"
+   },
+   {
+    "codigo": "SE",
+    "valor": "Suecia"
+   },
+   {
+    "codigo": "CH",
+    "valor": "Suiza"
+   },
+   {
+    "codigo": "SR",
+    "valor": "Surinám"
+   },
+   {
+    "codigo": "SJ",
+    "valor": "Svalbard y Jan Mayen"
+   },
+   {
+    "codigo": "SZ",
+    "valor": "Swazilandia"
+   },
+   {
+    "codigo": "TH",
+    "valor": "Tailandia"
+   },
+   {
+    "codigo": "TW",
+    "valor": "Taiwan, Provincia de China"
+   },
+   {
+    "codigo": "TZ",
+    "valor": "Tanzania, República Unida de"
+   },
+   {
+    "codigo": "TJ",
+    "valor": "Tayikistán"
+   },
+   {
+    "codigo": "IO",
+    "valor": "Territorio Británico Océano Indico"
+   },
+   {
+    "codigo": "TF",
+    "valor": "Territorios Australes Franceses"
+   },
+   {
+    "codigo": "TL",
+    "valor": "Timor Oriental"
+   },
+   {
+    "codigo": "TG",
+    "valor": "Togo"
+   },
+   {
+    "codigo": "TK",
+    "valor": "Tokelau"
+   },
+   {
+    "codigo": "TO",
+    "valor": "Tonga"
+   },
+   {
+    "codigo": "TT",
+    "valor": "Trinidad y Tobago"
+   },
+   {
+    "codigo": "TN",
+    "valor": "Túnez"
+   },
+   {
+    "codigo": "TM",
+    "valor": "Turkmenistán"
+   },
+   {
+    "codigo": "TR",
+    "valor": "Turquía"
+   },
+   {
+    "codigo": "TV",
+    "valor": "Tuvalu"
+   },
+   {
+    "codigo": "UA",
+    "valor": "Ucrania"
+   },
+   {
+    "codigo": "UG",
+    "valor": "Uganda"
+   },
+   {
+    "codigo": "UY",
+    "valor": "Uruguay"
+   },
+   {
+    "codigo": "UZ",
+    "valor": "Uzbekistán"
+   },
+   {
+    "codigo": "VU",
+    "valor": "Vanuatu"
+   },
+   {
+    "codigo": "VE",
+    "valor": "Venezuela"
+   },
+   {
+    "codigo": "VN",
+    "valor": "Vietnam"
+   },
+   {
+    "codigo": "VG",
+    "valor": "Islas Vírgenes Británicas"
+   },
+   {
+    "codigo": "WF",
+    "valor": "Wallis y Fortuna, Islas"
+   },
+   {
+    "codigo": "YE",
+    "valor": "Yemen"
+   },
+   {
+    "codigo": "ZM",
+    "valor": "Zambia"
+   },
+   {
+    "codigo": "ZW",
+    "valor": "Zimbabue"
+   }
+  ]
+ },
+ "CAT-021": {
+  "id": "CAT-021",
+  "nombre": "Documentos Asociados",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Emisor"
+   },
+   {
+    "codigo": "2",
+    "valor": "Receptor"
+   },
+   {
+    "codigo": "3",
+    "valor": "Médico (solo aplica para contribuyentes obligados a la presentación de F-958)"
+   },
+   {
+    "codigo": "4",
+    "valor": "Transporte (solo aplica para Factura de exportación)"
+   }
+  ]
+ },
+ "CAT-022": {
+  "id": "CAT-022",
+  "nombre": "Tipo de documento de identificación",
+  "valores": [
+   {
+    "codigo": "36",
+    "valor": "NIT"
+   },
+   {
+    "codigo": "13",
+    "valor": "DUI"
+   },
+   {
+    "codigo": "37",
+    "valor": "Otro"
+   },
+   {
+    "codigo": "03",
+    "valor": "Pasaporte"
+   },
+   {
+    "codigo": "02",
+    "valor": "Carnet de Residente"
+   }
+  ]
+ },
+ "CAT-023": {
+  "id": "CAT-023",
+  "nombre": "Operaciones Especiales",
+  "valores": [
+   {
+    "codigo": "02",
+    "valor": "Factura de venta simplificada"
+   },
+   {
+    "codigo": "97",
+    "valor": "Comprobantes de Control Interno"
+   }
+  ]
+ },
+ "CAT-024": {
+  "id": "CAT-024",
+  "nombre": "Motivo del evento",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Error en la Información del Documento Tributario Electrónico a invalidar."
+   },
+   {
+    "codigo": "2",
+    "valor": "Rescindir de la operación realizada."
+   },
+   {
+    "codigo": "3",
+    "valor": "Otro"
+   }
+  ]
+ },
+ "CAT-025": {
+  "id": "CAT-025",
+  "nombre": "Título a que se remiten los bienes",
+  "valores": [
+   {
+    "codigo": "01",
+    "valor": "Depósito"
+   },
+   {
+    "codigo": "02",
+    "valor": "Propiedad"
+   },
+   {
+    "codigo": "03",
+    "valor": "Consignación"
+   },
+   {
+    "codigo": "04",
+    "valor": "Traslado"
+   },
+   {
+    "codigo": "05",
+    "valor": "Otros"
+   }
+  ]
+ },
+ "CAT-026": {
+  "id": "CAT-026",
+  "nombre": "Tipo de Donación",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Efectivo"
+   },
+   {
+    "codigo": "2",
+    "valor": "Bien"
+   },
+   {
+    "codigo": "3",
+    "valor": "Servicio"
+   }
+  ]
+ },
+ "CAT-027": {
+  "id": "CAT-027",
+  "nombre": "Recinto fiscal",
+  "valores": [
+   {
+    "codigo": "01",
+    "valor": "Terrestre San Bartolo"
+   },
+   {
+    "codigo": "02",
+    "valor": "Marítima de Acajutla"
+   },
+   {
+    "codigo": "03",
+    "valor": "Aérea De Comalapa"
+   },
+   {
+    "codigo": "04",
+    "valor": "Terrestre Las Chinamas"
+   },
+   {
+    "codigo": "05",
+    "valor": "Terrestre La Hachadura"
+   },
+   {
+    "codigo": "06",
+    "valor": "Terrestre Santa Ana"
+   },
+   {
+    "codigo": "07",
+    "valor": "Terrestre San Cristóbal"
+   },
+   {
+    "codigo": "08",
+    "valor": "Terrestre Anguiatú"
+   },
+   {
+    "codigo": "09",
+    "valor": "Terrestre El Amatillo"
+   },
+   {
+    "codigo": "10",
+    "valor": "Marítima La Unión"
+   },
+   {
+    "codigo": "11",
+    "valor": "Terrestre El Poy"
+   },
+   {
+    "codigo": "12",
+    "valor": "Terrestre Metalío"
+   },
+   {
+    "codigo": "15",
+    "valor": "Fardos Postales"
+   },
+   {
+    "codigo": "16",
+    "valor": "Z.F. San Marcos"
+   },
+   {
+    "codigo": "17",
+    "valor": "Z.F. El Pedregal"
+   },
+   {
+    "codigo": "18",
+    "valor": "Z.F. San Bartolo"
+   },
+   {
+    "codigo": "20",
+    "valor": "Z.F. Exportsalva"
+   },
+   {
+    "codigo": "21",
+    "valor": "Z.F. American Park"
+   },
+   {
+    "codigo": "23",
+    "valor": "Z.F. Internacional"
+   },
+   {
+    "codigo": "24",
+    "valor": "Z.F. Diez"
+   },
+   {
+    "codigo": "26",
+    "valor": "Z.F. Miramar"
+   },
+   {
+    "codigo": "27",
+    "valor": "Z.F. Santo Tomas"
+   },
+   {
+    "codigo": "28",
+    "valor": "Z.F. Santa Tecla"
+   },
+   {
+    "codigo": "29",
+    "valor": "Z.F. Santa Ana"
+   },
+   {
+    "codigo": "30",
+    "valor": "Z.F. La Concordia"
+   },
+   {
+    "codigo": "31",
+    "valor": "Aérea Ilopango"
+   },
+   {
+    "codigo": "32",
+    "valor": "Z.F. Pipil"
+   },
+   {
+    "codigo": "33",
+    "valor": "Puerto Barillas"
+   },
+   {
+    "codigo": "34",
+    "valor": "Z.F. Calvo Conservas"
+   },
+   {
+    "codigo": "35",
+    "valor": "Feria Internacional"
+   },
+   {
+    "codigo": "36",
+    "valor": "Aduana El Papalón"
+   },
+   {
+    "codigo": "37",
+    "valor": "Z.F. Sam-Li"
+   },
+   {
+    "codigo": "38",
+    "valor": "Z.F. San José"
+   },
+   {
+    "codigo": "39",
+    "valor": "Z.F. Las Mercedes"
+   },
+   {
+    "codigo": "40",
+    "valor": "Z.F. EMCO"
+   },
+   {
+    "codigo": "41",
+    "valor": "Z.F. Gigante"
+   },
+   {
+    "codigo": "42",
+    "valor": "Z.F. NOVABES"
+   },
+   {
+    "codigo": "43",
+    "valor": "Z.F. INHDELVA"
+   },
+   {
+    "codigo": "71",
+    "valor": "Aldesa"
+   },
+   {
+    "codigo": "72",
+    "valor": "Agdosa Merliot"
+   },
+   {
+    "codigo": "73",
+    "valor": "Bodesa"
+   },
+   {
+    "codigo": "76",
+    "valor": "Delegacion DHL"
+   },
+   {
+    "codigo": "77",
+    "valor": "Transauto"
+   },
+   {
+    "codigo": "80",
+    "valor": "Nejapa"
+   },
+   {
+    "codigo": "81",
+    "valor": "Almaconsa"
+   },
+   {
+    "codigo": "83",
+    "valor": "Agdosa Apopa"
+   },
+   {
+    "codigo": "85",
+    "valor": "Gutiérrez Courier Y Cargo"
+   },
+   {
+    "codigo": "99",
+    "valor": "San Bartolo Envío Hn/Gt"
+   }
+  ]
+ },
+ "CAT-028": {
+  "id": "CAT-028",
+  "nombre": "Régimen",
+  "valores": [
+   {
+    "codigo": "1000.000",
+    "valor": "Exportación Definitiva, Régimen Común"
+   },
+   {
+    "codigo": "1040.000",
+    "valor": "Exportación Definitiva Sustitución de Mercancías, Régimen Común"
+   },
+   {
+    "codigo": "1041.020",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Provisional, Franq. Presidenciales exento de DAI"
+   },
+   {
+    "codigo": "1041.021",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Provisional, Franq. Presidenciales exento de DAI e IVA"
+   },
+   {
+    "codigo": "1048.025",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Maquinaria y Equipo LZF. DPA"
+   },
+   {
+    "codigo": "1048.031",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Distribución Internacional"
+   },
+   {
+    "codigo": "1048.032",
+    "valor": "Exportación Definitiva Proveniente. de Franquicia Definitiva, Operaciones Internacionales de Logística"
+   },
+   {
+    "codigo": "1048.033",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Centro Internacional de llamadas(Call Center)"
+   },
+   {
+    "codigo": "1048.034",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Tecnologias de Información LSI"
+   },
+   {
+    "codigo": "1048.035",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Investigación y Desarrollo LSI"
+   },
+   {
+    "codigo": "1048.036",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Reparación y Mantenimiento de Embarcaciones Marítimas LSI"
+   },
+   {
+    "codigo": "1048.037",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Reparación y Mantenimiento de Aeronaves LSI"
+   },
+   {
+    "codigo": "1048.038",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Procesos Empresariales LSI"
+   },
+   {
+    "codigo": "1048.039",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Servicios Medico-Hospitalarios LSI"
+   },
+   {
+    "codigo": "1048.040",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Servicios Financieros Internacionales LSI"
+   },
+   {
+    "codigo": "1048.043",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Reparación y Mantenimiento de Contenedores LSI"
+   },
+   {
+    "codigo": "1048.044",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Reparación de Equipos Tecnológicos LSI"
+   },
+   {
+    "codigo": "1048.054",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Atención Ancianos y Convalecientes LSI"
+   },
+   {
+    "codigo": "1048.055",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Telemedicina LSI"
+   },
+   {
+    "codigo": "1048.056",
+    "valor": "Exportación Definitiva Proveniente de Franquicia Definitiva, Cinematografía LSI"
+   },
+   {
+    "codigo": "1052.000",
+    "valor": "Exportación Definitiva de DPA con origen en Compras Locales, Régimen Común"
+   },
+   {
+    "codigo": "1054.000",
+    "valor": "Exportación Definitiva de Zona Franca con origen en Compras Locales, Régimen Común"
+   },
+   {
+    "codigo": "1100.000",
+    "valor": "Exportación Definitiva de Envíos de Socorro , Régimen Común"
+   },
+   {
+    "codigo": "1200.000",
+    "valor": "Exportación Definitiva de Envíos Postales, Régimen Común"
+   },
+   {
+    "codigo": "1300.000",
+    "valor": "Exportación Definitiva Envíos que requieren despacho urgente, Régimen Común"
+   },
+   {
+    "codigo": "1400.000",
+    "valor": "Exportación Definitiva Courier, Régimen Común"
+   },
+   {
+    "codigo": "1400.011",
+    "valor": "Exportación Definitiva Courier, Muestras Sin Valor Comercial"
+   },
+   {
+    "codigo": "1400.012",
+    "valor": "Exportación Definitiva Courier, Material Publicitario"
+   },
+   {
+    "codigo": "1400.017",
+    "valor": "Exportación Definitiva Courier, Declaración de Documentos"
+   },
+   {
+    "codigo": "1500.000",
+    "valor": "Exportación Definitiva Menaje de casa, Régimen Común"
+   },
+   {
+    "codigo": "2100.000",
+    "valor": "Exportación Temporal para Perfeccionamiento Pasivo, Régimen Común"
+   },
+   {
+    "codigo": "2100.065",
+    "valor": "Exportación Temporal para Perfeccionamiento Pasivo, De Mercado Nacional a ZF o DPA"
+   },
+   {
+    "codigo": "2200.000",
+    "valor": "Exportación Temporal con Reimportación en el mismo estado, Régimen Común"
+   },
+   {
+    "codigo": "2200.065",
+    "valor": "Exportación Temporal con Reimportación en el mismo estado, De Mercado Nacional a ZF o DPA"
+   },
+   {
+    "codigo": "2400.000",
+    "valor": "Traslados Definitivos"
+   },
+   {
+    "codigo": "3050.000",
+    "valor": "Reexportación Proveniente de Importación Temporal, Régimen Común"
+   },
+   {
+    "codigo": "3051.000",
+    "valor": "Reexportación Proveniente de Tiendas Libres, Régimen Común"
+   },
+   {
+    "codigo": "3052.000",
+    "valor": "Reexportación Proveniente de Admisión Temporal para Perfeccionamiento Activo, Régimen Común"
+   },
+   {
+    "codigo": "3053.000",
+    "valor": "Reexportación Proveniente de Admisión Temporal, Régimen Común"
+   },
+   {
+    "codigo": "3054.000",
+    "valor": "Reexportación Proveniente de Régimen de Zona Franca, Régimen Común"
+   },
+   {
+    "codigo": "3055.000",
+    "valor": "Reexportación Proveniente de Admisión Temporal para Perfeccionamiento Activo con Garantía, Régimen Común"
+   },
+   {
+    "codigo": "3056.000",
+    "valor": "Reexportación Proveniente de Admisión Temporal Distribución Internacional Parque de Servicios, Régimen Común"
+   },
+   {
+    "codigo": "3056.047",
+    "valor": "Reexportación Proveniente de Admisión Temporal Distribución Internacional Parque de Servicios, Remisión a Departamento de Subastas"
+   },
+   {
+    "codigo": "3056.057",
+    "valor": "Reexportación Proveniente de Admisión Temporal Distribución Internacional Parque de Servicios, Remisión entre Usuarios Directos del Mismo Parque de Servicios"
+   },
+   {
+    "codigo": "3056.058",
+    "valor": "Reexportación Proveniente de Admisión Temporal Distribución Internacional Parque de Servicios, Remisión entre Usuarios Directos de Diferente Parque de Servicios"
+   },
+   {
+    "codigo": "3056.072",
+    "valor": "Reexportación Proveniente de Admisión Temporal Distribución Internacional Parque de Servicios, Decreto 738 Eléctricos e Híbridos"
+   },
+   {
+    "codigo": "3056.081",
+    "valor": "Reexportación Proveniente de Admisión Temporal Distribución Internacional Parque de Servicios, Remisión entre Usuarios Directos LSI"
+   },
+   {
+    "codigo": "3056.084",
+    "valor": "Reexportación Proveniente de Admisión Temporal Distribución Internacional Parque de Servicios, De una LSI para un DPA"
+   },
+   {
+    "codigo": "3056.085",
+    "valor": "Reexportación Proveniente de Admisión Temporal Distribución Internacional Parque de Servicios, De una LSI para una ZF"
+   },
+   {
+    "codigo": "3057.000",
+    "valor": "Reexportación Proveniente de Admisión Temporal Operaciones Internacional de Logística Parque de Servicios, Régimen Común"
+   },
+   {
+    "codigo": "3057.047",
+    "valor": "Reexportación Proveniente de Admisión Temporal Operaciones Internacional de Logística Parque de Servicios, Remisión a Departamento de Subastas"
+   },
+   {
+    "codigo": "3057.057",
+    "valor": "Reexportación Proveniente de Admisión Temporal Operaciones Internacional de Logística Parque de Servicios, Remisión entre Usuarios Directos del Mismo Parque de Servicios"
+   },
+   {
+    "codigo": "3057.058",
+    "valor": "Reexportación Proveniente de Admisión Temporal Operaciones Internacional de Logística Parque de Servicios, Remisión entre Usuarios Directos de Diferente Parque de Servicios"
+   },
+   {
+    "codigo": "3057.081",
+    "valor": "Reexportación Proveniente de Admisión Temporal Operaciones Internacional de Logística Parque de Servicios, Remisión entre Usuarios Directos LSI"
+   },
+   {
+    "codigo": "3057.084",
+    "valor": "Reexportación Proveniente de Admisión Temporal Operaciones Internacional de Logística Parque de Servicios, De una LSI para un DPA"
+   },
+   {
+    "codigo": "3057.085",
+    "valor": "Reexportación Proveniente de Admisión Temporal Operaciones Internacional de Logística Parque de Servicios, De una LSI para una ZF"
+   },
+   {
+    "codigo": "3058.033",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Centro Internacional de llamadas(Call Center)"
+   },
+   {
+    "codigo": "3058.034",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Tecnologías de Información LSI"
+   },
+   {
+    "codigo": "3058.035",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Investigación y Desarrollo LSI"
+   },
+   {
+    "codigo": "3058.036",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Reparación y Mantenimiento de Embarcaciones Marítimas LSI"
+   },
+   {
+    "codigo": "3058.037",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Reparación y Mantenimiento de Aeronaves LSI"
+   },
+   {
+    "codigo": "3058.038",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Procesos Empresariales LSI"
+   },
+   {
+    "codigo": "3058.039",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Servicios Medico-Hospitalarios LSI"
+   },
+   {
+    "codigo": "3058.040",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Servicios Financieros Internacionales LSI"
+   },
+   {
+    "codigo": "3058.043",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Reparación y Mantenimiento de Contenedores LSI"
+   },
+   {
+    "codigo": "3058.044",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Reparación de Equipos Tecnológicos LSI"
+   },
+   {
+    "codigo": "3058.054",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Atención Ancianos y Convalecientes LSI"
+   },
+   {
+    "codigo": "3058.055",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Telemedicina LSI"
+   },
+   {
+    "codigo": "3058.056",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Cinematografía LSI"
+   },
+   {
+    "codigo": "3058.082",
+    "valor": "Reexportación Proveniente de Admisión Temporal Centro Servicio LSI, Remisión entre Centros de Servicios LSI"
+   },
+   {
+    "codigo": "3059.000",
+    "valor": "Reexportación Proveniente de Admisión Temporal Reparación de Equipo Tecnológico Parque de Servicios, Régimen Común"
+   },
+   {
+    "codigo": "3059.057",
+    "valor": "Reexportación Proveniente de Admisión Temporal Reparación de Equipo Tecnológico Parque de Servicios, Remisión entre Usuarios Directos del Mismo Parque de Servicios"
+   },
+   {
+    "codigo": "3059.058",
+    "valor": "Reexportación Proveniente de Admisión Temporal Reparación de Equipo Tecnológico Parque de Servicios, Remisión entre Usuarios Directos de Diferente Parque de Servicios"
+   },
+   {
+    "codigo": "3059.033",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Centro Internacional de llamadas(Call Center)"
+   },
+   {
+    "codigo": "3059.034",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Tecnologías de Información LSI"
+   },
+   {
+    "codigo": "3059.035",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Investigación y Desarrollo LSI"
+   },
+   {
+    "codigo": "3059.038",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Procesos Empresariales LSI"
+   },
+   {
+    "codigo": "3059.039",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Servicios Medico-Hospitalarios LSI"
+   },
+   {
+    "codigo": "3059.040",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Servicios Financieros Internacionales LSI"
+   },
+   {
+    "codigo": "3059.044",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Reparación de Equipos Tecnológicos LSI"
+   },
+   {
+    "codigo": "3059.047",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Remisión a Departamento de Subastas"
+   },
+   {
+    "codigo": "3059.054",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Atención Ancianos y Convalecientes LSI"
+   },
+   {
+    "codigo": "3059.055",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Telemedicina LS"
+   },
+   {
+    "codigo": "3059.056",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Cinematografía LSI"
+   },
+   {
+    "codigo": "3059.081",
+    "valor": "Reexportación Proveniente de Servicios Internacionales en Parques de Servicios, Remisión entre Usuarios Directos"
+   },
+   {
+    "codigo": "3070.000",
+    "valor": "Reexportación Proveniente de Depósito., Régimen Común"
+   },
+   {
+    "codigo": "3070.047",
+    "valor": "Reexportación Proveniente de Depósito., Remisión a Departamento de Subastas"
+   },
+   {
+    "codigo": "3070.072",
+    "valor": "Reexportación Proveniente de Depósito., Decreto 738 Eléctricos e Híbridos"
+   },
+   {
+    "codigo": "3071.000",
+    "valor": "Reexp. Prov. de Deposito."
+   },
+   {
+    "codigo": "0000.000",
+    "valor": "Tránsito Aduanero"
+   }
+  ]
+ },
+ "CAT-029": {
+  "id": "CAT-029",
+  "nombre": "Tipo de persona",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Persona Natural"
+   },
+   {
+    "codigo": "2",
+    "valor": "Persona Jurídica"
+   }
+  ]
+ },
+ "CAT-030": {
+  "id": "CAT-030",
+  "nombre": "Transporte",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "TERRESTRE"
+   },
+   {
+    "codigo": "2",
+    "valor": "AÉREO"
+   },
+   {
+    "codigo": "3",
+    "valor": "MARÍTIMO"
+   },
+   {
+    "codigo": "4",
+    "valor": "FERREO"
+   },
+   {
+    "codigo": "5",
+    "valor": "MULTIMODAL"
+   },
+   {
+    "codigo": "6",
+    "valor": "CORREO"
+   }
+  ]
+ },
+ "CAT-031": {
+  "id": "CAT-031",
+  "nombre": "INCOTERMS",
+  "valores": [
+   {
+    "codigo": "01",
+    "valor": "EXW-En fabrica"
+   },
+   {
+    "codigo": "02",
+    "valor": "FCA-Libre transportista"
+   },
+   {
+    "codigo": "03",
+    "valor": "CPT-Transporte pagado hasta"
+   },
+   {
+    "codigo": "04",
+    "valor": "CIP-Transporte y seguro pagado hasta"
+   },
+   {
+    "codigo": "05",
+    "valor": "DAP-Entrega en el lugar"
+   },
+   {
+    "codigo": "06",
+    "valor": "DPU-Entregado en el lugar descargado"
+   },
+   {
+    "codigo": "07",
+    "valor": "DDP-Entrega con impuestos pagados"
+   },
+   {
+    "codigo": "08",
+    "valor": "FAS-Libre al costado del buque"
+   },
+   {
+    "codigo": "09",
+    "valor": "FOB-Libre a bordo"
+   },
+   {
+    "codigo": "10",
+    "valor": "CFR-Costo y flete"
+   },
+   {
+    "codigo": "11",
+    "valor": "CIF- Costo seguro y flete"
+   }
+  ]
+ },
+ "CAT-032": {
+  "id": "CAT-032",
+  "nombre": "Domicilio Fiscal",
+  "valores": [
+   {
+    "codigo": "1",
+    "valor": "Domiciliado"
+   },
+   {
+    "codigo": "2",
+    "valor": "No Domiciliado"
+   }
+  ]
+ },
+ "CAT-033": {
+  "id": "CAT-033",
+  "nombre": "Tipo de Régimen",
+  "valores": [
+   {
+    "codigo": "EX-1",
+    "valor": "Exportación Definitiva"
+   },
+   {
+    "codigo": "EX-2",
+    "valor": "Exportación Temporal"
+   },
+   {
+    "codigo": "EX-3",
+    "valor": "Reexportación"
+   },
+   {
+    "codigo": "TA-1",
+    "valor": "Tránsito Aduanero"
+   }
+  ]
+ }
+}

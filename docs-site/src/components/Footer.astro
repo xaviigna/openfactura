@@ -1,0 +1,41 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro'
+import { idiomaDe } from '../lib/mcp'
+
+const ingles = idiomaDe(Astro.locals.starlightRoute?.lang) === 'en'
+---
+
+<Default />
+<p class="llms">
+  {ingles ? 'For AI assistants' : 'Para asistentes de IA'}: <a href="/llms.txt">llms.txt</a> ·
+  <a href="/llms-full.txt">llms-full.txt</a> ·
+  {
+    ingles ? (
+      <>
+        every page as Markdown by adding <code>.md</code> to its path.
+      </>
+    ) : (
+      <>
+        cada página en Markdown añadiendo <code>.md</code> a su ruta.
+      </>
+    )
+  }
+</p>
+
+<style>
+  .llms {
+    margin-top: 1.5rem;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+    text-align: center;
+  }
+  .llms a {
+    color: var(--sl-color-gray-2);
+  }
+  .llms a:hover {
+    color: var(--sl-color-text-accent);
+  }
+  .llms code {
+    font-size: inherit;
+  }
+</style>

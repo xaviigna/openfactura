@@ -1,0 +1,29 @@
+{
+  "name": "openfactura",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Facturación electrónica de El Salvador (DTE, Normativa 2.0): SDK, API, MCP y CLI.",
+  "license": "AGPL-3.0-only",
+  "packageManager": "bun@1.4.4",
+  "workspaces": [
+    "./server",
+    "./shared",
+    "./packages/*",
+    "./docs-site"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:server": "turbo dev --filter=server",
+    "build": "turbo build",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "type-check": "turbo type-check",
+    "test": "turbo test",
+    "deploy": "turbo build && cd server && wrangler deploy"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.7",
+    "turbo": "^2.6.3",
+    "typescript": "^5.9.3"
+  }
+}

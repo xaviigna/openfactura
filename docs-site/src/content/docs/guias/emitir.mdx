@@ -1,0 +1,344 @@
+---
+title: Emitir documentos
+description: Cuerpo de emisión, qué tipo de DTE corresponde a cada operación e IVA en los precios, con ejemplos de cada tipo.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+
+Todos los documentos se emiten con la misma ruta, `POST /dte`, y se validan antes con
+`POST /dte/validar`:
+
+```json
+{
+  "tipoDte": "01",
+  "datos": { "items": [{ "descripcion": "Servicio", "cantidad": 2, "precioUni": 11.3 }] },
+  "clienteId": "opcional",
+  "puntoVentaId": "opcional"
+}
+```
+
+- `tipoDte`: el tipo de documento (tabla abajo).
+- `datos`: la entrada del constructor del SDK [`@openfactura/dte`](/herramientas/sdk/) para ese tipo
+  (`FacturaInput`, `CreditoFiscalInput`, `NotaInput`…).
+- `clienteId`: si lo envías y falta `datos.receptor`, el receptor se toma del cliente guardado.
+- `puntoVentaId`: punto de venta que emite; por defecto el primero del emisor.
+
+<Aside type="tip">
+No calcules impuestos ni totales. Open Factura calcula IVA, retenciones, redondeos (cuerpo a 8
+decimales, resumen a 2) y el total en letras. Muestra siempre el `total` que devuelve la API.
+</Aside>
+
+## Flujo recomendado
+
+1. `POST /dte/validar` → `{ dte, problemas[], total, receptorNombre }`. No consume número de control.
+2. Corrige cada `problemas[]` (`ruta`, `mensaje`) y repite hasta que venga vacío.
+3. `POST /dte` con una [`Idempotency-Key`](/guias/idempotencia/).
+4. Resultado:
+   - `201` estado `procesado`, con `selloRecibido`.
+   - `202` estado `contingencia`: el MH no respondió; ver [Contingencia](/guias/contingencia/).
+   - `422 dte_rechazado`: el MH lo rechazó; `details.mh.observaciones` dice por qué.
+
+## ¿Qué documento corresponde?
+
+| Situación                                                    | `tipoDte` | Receptor                                                                  |
+| ------------------------------------------------------------ | --------- | ------------------------------------------------------------------------- |
+| Venta a consumidor final o a quien no pide crédito fiscal    | `01`      | Opcional (obligatorio desde $25,000)                                      |
+| Venta a un contribuyente inscrito en IVA que pide crédito fiscal | `03`  | NIT, NRC, nombre, actividad (`codActividad` + `descActividad`) y dirección |
+| Traslado de mercadería sin venta                             | `04`      | Identificado, con `bienTitulo`                                            |
+| Corregir a la baja un CCF ya emitido                         | `05`      | El del documento original                                                 |
+| Aumentar el valor de un CCF ya emitido                       | `06`      | El del documento original                                                 |
+| Retención de IVA a un proveedor                              | `07`      | El sujeto retenido                                                        |
+| Venta al exterior                                            | `11`      | Extranjero, con `codPais`                                                 |
+| Compra a una persona no inscrita en IVA                      | `14`      | `sujetoExcluido`                                                          |
+| Como comisionista, liquidar ventas por cuenta de un tercero  | `08`      | El mandante, con su NIT                                                   |
+| Como agente perceptor, liquidar a un afiliado                | `09`      | El afiliado: NIT, actividad y correo                                      |
+| Acreditar una donación recibida                              | `15`      | El donante                                                                |
+
+¿Una devolución sobre una Factura, Exportación o Sujeto Excluido? No se emite una nota: se registra un
+[Evento de Retorno](/guias/retorno/).
+
+## IVA en los precios
+
+- **Factura (01):** `precioUni` **incluye** IVA (13 %). Es el precio que paga el consumidor.
+- **Crédito Fiscal (03), notas (05/06) y remisión (04):** `precioUni` va **sin** IVA.
+- **Productos guardados:** su `precioUnitario` está **sin** IVA.
+
+## Campos comunes de los ítems
+
+`descripcion`, `cantidad`, `precioUni`, `tipoItem` (1 bien, 2 servicio, 3 ambos, 4 otros tributos;
+por defecto 1), `codigo`, `uniMedida` (CAT-014; 59 = unidad), `descuento` (total de la línea, no por
+unidad) y `tipoVenta` (`gravada` por defecto, `exenta` o `noSujeta`).
+
+Pago: por defecto contado en efectivo por el total. A crédito: `"condicionOperacion": 2` con
+`"credito": { "plazo": "01", "periodo": 30 }` (30 días). Otras formas de pago: `pagos` con códigos de
+CAT-017.
+
+Direcciones: `{ departamento, municipio, distrito, complemento }` con códigos de CAT-012, CAT-013 y
+CAT-008 (consulta `GET /catalogos/CAT-013?departamento=06`). NIT, DUI y NRC pueden ir con o sin
+guiones.
+
+## Ejemplos
+
+<Tabs>
+<TabItem label="01 Factura">
+
+```json
+{
+  "tipoDte": "01",
+  "datos": {
+    "items": [
+      { "descripcion": "Servicio de consultoría", "cantidad": 3, "precioUni": 56.5, "tipoItem": 2 }
+    ]
+  }
+}
+```
+
+Con `"retencionIva": true` se aplica la retención de IVA del 1 % cuando el receptor es agente de
+retención.
+
+</TabItem>
+<TabItem label="03 Crédito Fiscal">
+
+Con un cliente guardado (el receptor sale del cliente):
+
+```json
+{
+  "tipoDte": "03",
+  "clienteId": "c6de4c6c-d772-4f19-811a-5419655dcd06",
+  "datos": {
+    "items": [{ "descripcion": "Licencia anual", "cantidad": 1, "precioUni": 100, "tipoItem": 2 }]
+  }
+}
+```
+
+O con el receptor completo:
+
+```json
+{
+  "tipoDte": "03",
+  "datos": {
+    "receptor": {
+      "nit": "0614-290786-103-1",
+      "nrc": "234567-8",
+      "nombre": "CLIENTE CONTRIBUYENTE, S.A. DE C.V.",
+      "codActividad": "46900",
+      "descActividad": "Venta al por mayor de otros productos",
+      "direccion": {
+        "departamento": "06",
+        "municipio": "23",
+        "distrito": "14",
+        "complemento": "Av. Olímpica #100"
+      },
+      "correo": "compras@cliente.com.sv"
+    },
+    "items": [{ "descripcion": "Licencia anual", "cantidad": 1, "precioUni": 100, "tipoItem": 2 }]
+  }
+}
+```
+
+`percepcionIva` y `retencionIva` (`true` o un monto) aplican el 1 % cuando corresponde.
+
+</TabItem>
+<TabItem label="04 Remisión">
+
+```json
+{
+  "tipoDte": "04",
+  "clienteId": "c6de4c6c-d772-4f19-811a-5419655dcd06",
+  "datos": {
+    "bienTitulo": "04",
+    "items": [{ "descripcion": "Sillas plásticas", "cantidad": 20, "precioUni": 8 }]
+  }
+}
+```
+
+`bienTitulo` (CAT-025): `01` depósito, `02` propiedad, `03` consignación, `04` traslado, `05` otros.
+
+</TabItem>
+<TabItem label="05/06 Notas">
+
+Nota de crédito sobre un CCF electrónico (la de débito es igual con `"tipoDte": "06"`):
+
+```json
+{
+  "tipoDte": "05",
+  "clienteId": "c6de4c6c-d772-4f19-811a-5419655dcd06",
+  "datos": {
+    "documentosRelacionados": [
+      {
+        "tipoDocumento": "03",
+        "tipoGeneracion": 2,
+        "numeroDocumento": "<codigoGeneracion del CCF>",
+        "fechaEmision": "2026-11-12"
+      }
+    ],
+    "items": [{ "descripcion": "Devolución parcial", "cantidad": 1, "precioUni": 20 }]
+  }
+}
+```
+
+Con un solo documento relacionado, cada ítem lo hereda; con varios, cada ítem debe indicar su
+`numeroDocumento`.
+
+</TabItem>
+<TabItem label="07 Retención">
+
+```json
+{
+  "tipoDte": "07",
+  "clienteId": "c6de4c6c-d772-4f19-811a-5419655dcd06",
+  "datos": {
+    "items": [
+      {
+        "tipoDte": "03",
+        "tipoGeneracion": 2,
+        "numeroDocumento": "<codigoGeneracion del CCF que te emitió tu proveedor>",
+        "fechaEmision": "2026-11-10",
+        "montoSujetoGrav": 1000,
+        "codigoRetencionMH": "22",
+        "descripcion": "Compra de suministros"
+      }
+    ]
+  }
+}
+```
+
+`codigoRetencionMH` (CAT-006): `22` retención del 1 %, `C4` del 13 %, `C9` otros (indica
+`ivaRetenido`). `montoSujetoGrav` va sin IVA.
+
+</TabItem>
+<TabItem label="11 Exportación">
+
+```json
+{
+  "tipoDte": "11",
+  "datos": {
+    "receptor": {
+      "nombre": "CLIENTE DEL EXTERIOR INC.",
+      "tipoDocumento": "37",
+      "numDocumento": "99-1234567",
+      "codPais": "US",
+      "complemento": "100 Main St, Miami, FL",
+      "tipoPersona": 2,
+      "descActividad": "Comercio al por mayor"
+    },
+    "tipoItemExpor": 2,
+    "items": [{ "descripcion": "Desarrollo de software", "cantidad": 1, "precioUni": 1500, "tipoItem": 2 }]
+  }
+}
+```
+
+Para bienes indica además `recintoFiscal` (CAT-027), `tipoRegimen` (CAT-033), `regimen` (CAT-028) y,
+si aplica, `codIncoterms`, `seguro` y `flete`.
+
+</TabItem>
+<TabItem label="14 Sujeto Excluido">
+
+El emisor es quien **compra** a una persona no inscrita en IVA:
+
+```json
+{
+  "tipoDte": "14",
+  "datos": {
+    "sujetoExcluido": {
+      "tipoDocumento": "13",
+      "numDocumento": "01234567-8",
+      "nombre": "JUAN PÉREZ",
+      "direccion": {
+        "departamento": "06",
+        "municipio": "23",
+        "distrito": "14",
+        "complemento": "Colonia Escalón"
+      }
+    },
+    "items": [{ "descripcion": "Servicio de jardinería", "cantidad": 1, "precioUni": 150, "tipoItem": 2 }],
+    "retencionRenta": true
+  }
+}
+```
+
+`retencionRenta: true` aplica el 10 % de renta sobre el subtotal (o indica el monto).
+
+</TabItem>
+<TabItem label="08 Liquidación">
+
+El **comisionista** liquida al **mandante** (el receptor, con su NIT) las ventas que hizo por su cuenta en
+el periodo. Cada documento va con los montos en positivo, como figuran en él: las notas de crédito, los
+retornos y los anulados (`anulado: true`) restan solos. Las gravadas van sin IVA.
+
+```json
+{
+  "tipoDte": "08",
+  "clienteId": "<id del mandante>",
+  "datos": {
+    "documentos": [
+      { "tipoDte": "03", "numeroDocumento": "<código de generación>", "fechaEmision": "2026-11-03", "ventaGravada": 500, "ivaPercibido": 5 },
+      { "tipoDte": "05", "numeroDocumento": "<código de generación>", "fechaEmision": "2026-11-04", "ventaGravada": 100 }
+    ]
+  }
+}
+```
+
+En Factura y Retorno indica además `iva` (el "IVA 13 %" de su resumen); FOVIAL, COTRANS y otros tributos
+de la sección 1 de CAT-015 van en `tributos: [{ codigo, valor }]`.
+
+</TabItem>
+<TabItem label="09 Doc. Contable de Liquidación">
+
+El **agente perceptor** (p. ej. un procesador de pagos con tarjeta) liquida al **afiliado** las
+operaciones de un periodo. El SDK calcula el IVA, la percepción del 2 %, el IVA de la comisión y el
+líquido a pagar:
+
+```json
+{
+  "tipoDte": "09",
+  "datos": {
+    "receptor": { "nit": "0614-290786-103-1", "nombre": "COMERCIO AFILIADO, S.A. DE C.V.", "codActividad": "47190", "descActividad": "Venta al por menor", "correo": "pagos@comercio.com.sv" },
+    "periodo": { "inicio": "2026-11-01", "fin": "2026-11-07" },
+    "valorOperaciones": 1130,
+    "porcentComision": 3,
+    "entrega": { "nombre": "Ana López", "documento": "01234567-8" }
+  }
+}
+```
+
+</TabItem>
+<TabItem label="15 Donación">
+
+La entidad autorizada a recibir donaciones (**donatario**) acredita al **donante** lo que recibió. La
+resolución que la autoriza (art. 6 LISR) es obligatoria, y un donante domiciliado debe llevar
+actividad económica y dirección (Hacienda rechaza el comprobante sin ellas):
+
+```json
+{
+  "tipoDte": "15",
+  "datos": {
+    "receptor": {
+      "tipoDocumento": "13", "numDocumento": "01234567-8", "nombre": "María Gómez",
+      "codActividad": "10005", "descActividad": "Otros",
+      "direccion": { "departamento": "06", "municipio": "23", "distrito": "14", "complemento": "Colonia Escalón" }
+    },
+    "documentosAsociados": [{ "descripcion": "Resolución", "detalle": "RES-01-2026" }],
+    "items": [
+      { "tipoDonacion": 1, "descripcion": "Donación en efectivo", "valorUni": 100 },
+      { "tipoDonacion": 2, "descripcion": "Computadoras usadas", "cantidad": 3, "valorUni": 400, "depreciacion": 150 }
+    ]
+  }
+}
+```
+
+`tipoDonacion`: 1 efectivo (cantidad 1), 2 bien, 3 servicio. Las formas de pago cubren sólo lo donado en
+efectivo (por defecto, billetes y monedas).
+
+</TabItem>
+</Tabs>
+
+## Consultar
+
+- `GET /dte?tipo=&estado=&q=&desde=&hasta=&pagina=&porPagina=` lista los documentos del ambiente
+  activo. `q` busca por receptor, número de control o código de generación.
+- `GET /dte/{codigo}` devuelve el documento con su DTE, la respuesta del MH y sus eventos.
+- `GET /dte/{codigo}/json` y `GET /dte/{codigo}/pdf`: los archivos para el receptor.
+
+Estados: `pendiente` (esperando confirmación del MH) · `procesado` (válido, con sello) ·
+`contingencia` (válido, se transmite después) · `rechazado` (sin valor) · `invalidado` (anulado).

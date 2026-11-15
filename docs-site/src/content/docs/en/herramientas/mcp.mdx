@@ -1,0 +1,131 @@
+---
+title: MCP server
+description: Connect Claude, Cursor, VS Code, Codex, Gemini, or any MCP client to Open Factura, remotely or locally over stdio.
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components'
+
+Open Factura exposes its operations as [MCP](https://modelcontextprotocol.io) tools so an AI
+assistant can query, validate, and issue documents. Each tool requires the same permission as its
+REST route, so **the API key decides what the assistant can do**. Always start with an `of_test_…`
+key.
+
+## Two ways to connect
+
+| Mode              | Where                                | Use it when                                               |
+| ----------------- | ------------------------------------ | --------------------------------------------------------- |
+| **Remote**        | `https://openfactura.co/mcp`         | Your client can send a fixed HTTP header                  |
+| **Local (stdio)** | `npx -y @openfactura/cli mcp`        | Your client doesn't send headers (e.g. Claude Desktop)    |
+
+The remote server is stateless Streamable HTTP and only accepts API keys (not the dashboard cookie).
+The local one exposes the same tools and runs them by calling the REST API with your key.
+
+## Connect any agent with one command
+
+It works with any MCP client. The CLI writes the configuration for Claude Code, Claude Desktop,
+Cursor, VS Code, Codex, Gemini CLI, Windsurf, Zed, Cline, and Goose:
+
+```bash
+npx @openfactura/cli login
+npx @openfactura/cli mcp install --todos     # or a single agent: cursor, codex, vscode…
+```
+
+Manual configuration for each agent is in [Connect your agent](/en/herramientas/agentes/). Examples
+with Claude:
+
+<Tabs>
+<TabItem label="Claude Code (remote)">
+
+```bash
+claude mcp add --transport http openfactura https://openfactura.co/mcp \
+  --header "Authorization: Bearer of_test_..."
+```
+
+</TabItem>
+<TabItem label="Claude Code (stdio)">
+
+```bash
+claude mcp add openfactura \
+  --env OPENFACTURA_API_KEY=of_test_... \
+  --env OPENFACTURA_URL=https://app.openfactura.co \
+  -- npx -y @openfactura/cli mcp
+```
+
+</TabItem>
+<TabItem label="Claude Desktop">
+
+In `claude_desktop_config.json` (or in a project `.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "openfactura": {
+      "command": "npx",
+      "args": ["-y", "@openfactura/cli", "mcp"],
+      "env": {
+        "OPENFACTURA_API_KEY": "of_test_...",
+        "OPENFACTURA_URL": "https://app.openfactura.co"
+      }
+    }
+  }
+}
+```
+
+If you already ran `openfactura login` on that machine, you can omit `env`.
+
+</TabItem>
+</Tabs>
+
+## Tools
+
+| Tool                              | What it does                                    | Permission       |
+| --------------------------------- | ----------------------------------------------- | ---------------- |
+| `emisor_obtener`                  | Issuer, active environment, points of sale      | `emisor:read`    |
+| `catalogo_buscar`                 | Searches MH catalogs (CAT-xxx)                  | —                |
+| `clientes_buscar`                 | Searches saved customers                        | `clientes:read`  |
+| `cliente_crear`                   | Saves a customer                                | `clientes:write` |
+| `productos_buscar`                | Searches products                               | `productos:read` |
+| `producto_crear`                  | Saves a product (price without VAT)             | `productos:write` |
+| `dte_validar`                     | Validates without issuing; returns problems and total | `dte:emit` |
+| `dte_emitir`                      | Issues (requires `idempotencyKey`)              | `dte:emit`       |
+| `dte_listar`                      | Lists documents in the active environment       | `dte:read`       |
+| `dte_obtener`                     | Status, stamp, MH response, and events          | `dte:read`       |
+| `dte_invalidar`                   | Invalidates a document or an event              | `dte:invalidate` |
+| `dte_retorno`                     | Return event (requires `idempotencyKey`)        | `dte:emit`       |
+| `operaciones_especiales_informar` | Event 17 (requires `idempotencyKey`)            | `dte:emit`       |
+| `eventos_listar`                  | Lists return and special operations events      | `dte:read`       |
+| `evento_obtener`                  | An event with its JSON and the MH response      | `dte:read`       |
+| `webhooks_listar`                 | Your webhooks and their events                  | `webhooks:manage` |
+| `webhook_crear`                   | Creates a webhook (the secret only appears here) | `webhooks:manage` |
+| `webhook_eliminar`                | Deletes a webhook                               | `webhooks:manage` |
+| `webhook_probar`                  | Sends a signed test event                       | `webhooks:manage` |
+| `uso_obtener`                     | DTEs issued and processed per period            | `dte:read`       |
+| `registros_listar`                | Recent API requests (for debugging)             | `registros:read` |
+
+### Open Factura Cloud only
+
+| Tool | What it's for | Permission |
+|---|---|---|
+| `dte_enviar_correo`               | Emails a stamped DTE with its PDF and JSON      | `dte:emit`       |
+| `certificacion_estado`            | Progress of the minimum tests                   | `dte:read`       |
+| `certificacion_avanzar`           | Next batch of minimum tests                     | `dte:emit` and `dte:invalidate` |
+| `plataforma_clientes_listar`      | Your customers, their status, and what's missing | Key enabled for [Plataforma](/en/cloud/plataforma/) |
+| `plataforma_cliente_crear`        | Adds a customer (with prefilled data)           | Key enabled for Plataforma |
+| `plataforma_cliente_enlace`       | Their onboarding link                           | Key enabled for Plataforma |
+| `plataforma_cliente_clave_crear`  | An API key in the customer's space              | Key enabled for Plataforma |
+
+## How the assistant should work
+
+1. `emisor_obtener` to learn the environment. In `01`, warn you that it will issue **in production**.
+2. Look up the recipient and products; never guess a NIT, NRC, or economic activity.
+3. `dte_validar` and fix the problems.
+4. Show you the summary (type, recipient, lines, total, environment) and wait for an explicit "yes".
+5. `dte_emitir` with an `idempotencyKey`, and reuse it on retries.
+
+The [agent skills](/en/herramientas/habilidades/) teach exactly this flow.
+
+<Aside type="caution">
+With an `of_live_…` key, `dte_emitir`, `dte_retorno`, `operaciones_especiales_informar`, and
+`dte_invalidar` have fiscal effect. There is no CLI confirmation: you give it when you approve the
+call in your MCP client.
+</Aside>
