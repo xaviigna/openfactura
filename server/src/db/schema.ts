@@ -222,7 +222,14 @@ export const documento = sqliteTable(
   },
   (t) => [
     uniqueIndex('documento_codigo_uq').on(t.codigoGeneracion),
-    uniqueIndex('documento_org_numero_uq').on(t.organizationId, t.ambiente, t.numeroControl),
+    // El consecutivo reinicia cada ejercicio (Normativa 2.0, Anexo IV, campo 5): único por año.
+    // El año sale del prefijo numérico de `AAAA-MM-DD`; drizzle-kit rompe expresiones con comas (substr).
+    uniqueIndex('documento_org_numero_uq').on(
+      t.organizationId,
+      t.ambiente,
+      t.numeroControl,
+      sql`cast(${t.fechaEmision} as integer)`,
+    ),
     index('documento_org_fecha_idx').on(t.organizationId, t.ambiente, t.fechaEmision),
     index('documento_org_estado_idx').on(t.organizationId, t.estado),
   ],

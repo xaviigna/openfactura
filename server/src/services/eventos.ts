@@ -17,7 +17,14 @@ import { evento } from '../db'
 import { opcionesPdf } from '../extensiones'
 import { AppError, conflicto, invalido, mensajeDe, noEncontrado } from '../lib/errors'
 import { registrar } from './auditoria'
-import { archivoJson, contextoDelDocumento, errorMh, fila, guardarEvento, vistaEvento } from './dte'
+import {
+  archivoDeFila,
+  contextoDelDocumento,
+  errorMh,
+  fila,
+  guardarEvento,
+  vistaEvento,
+} from './dte'
 import { ambienteActivo, type ContextoEmision, contextoEmision } from './emisor'
 import type { Respuesta } from './idempotencia'
 import { publicar } from './webhooks'
@@ -99,7 +106,7 @@ export async function retornar(
     )
   }
   const ce = await contextoDelDocumento(ctx, f)
-  const original = await archivoJson(ctx, codigo)
+  const original = await archivoDeFila(ctx, f)
 
   let dte: Dte
   try {

@@ -1,0 +1,2 @@
+DROP INDEX `documento_org_numero_uq`;--> statement-breakpoint
+CREATE UNIQUE INDEX `documento_org_numero_uq` ON `documento` (`organization_id`,`ambiente`,`numero_control`,cast("fecha_emision" as integer));

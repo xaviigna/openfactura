@@ -1,7 +1,7 @@
 import Ajv from 'ajv'
 import { beforeAll, describe, expect, it } from 'vitest'
 import {
-  ClienteMH, ContingenciaRequeridaError, DteInvalidoError, DteRechazadoError, ESQUEMAS, construirContingencia, construirCreditoFiscal, construirFactura,
+  ClienteMH, ContingenciaRequeridaError, DteInvalidoError, DteRechazadoError, ESQUEMAS, ErrorConexionMH, ErrorMH, construirContingencia, construirCreditoFiscal, construirFactura,
   construirInvalidacion, documentoParaInvalidar, emitirDte, firmarConCertificado, firmarSinTransmitir, generarCertificadoPrueba, leerCertificadoMH, leerJws,
   limiteInvalidacion, numeroALetras, redondear, transmitirDte, transmitirEvento, validarEstructura, verificarFirma, type CertificadoMH, type Firmante
 } from '../src'
@@ -96,10 +96,114 @@ describe('emisión contra el MH simulado', () => {
     expect(mock.recibidos.size).toBe(1)
   })
 
+  it('política de reintentos: si el reenvío choca con el documento ya sellado, devuelve el sello en vez de un rechazo', async () => {
+    nuevoEntorno()
+    // El MH sella el primer envío pero la respuesta se pierde, y la consulta posterior también falla una vez.
+    mock.simularCaida(1, { procesar: true })
+    let consultasCaidas = 1
+    const inestable = new ClienteMH({
+      ambiente: '00', usuario: NIT, password: PASSWORD_API, timeoutMs: 500,
+      fetch: (async (entrada: RequestInfo | URL, init?: RequestInit) => {
+        if (String(entrada).endsWith('/consultadte') && consultasCaidas-- > 0) throw new TypeError('fetch failed (consulta caída)')
+        return mock.fetch(entrada, init)
+      }) as typeof fetch
+    })
+    const dte = factura(1)
+    const { firma } = await firmarSinTransmitir(dte, firmante)
+    const respuesta = await transmitirDte(inestable, dte, firma)
+    expect(respuesta.estado).toBe('PROCESADO')
+    expect(respuesta.selloRecibido).toBe(mock.recibidos.get(dte.identificacion.codigoGeneracion)!.sello)
+    expect(mock.recibidos.size).toBe(1)
+  })
+
+  it('un rechazo por duplicado que la consulta no confirma como sellado sigue siendo un rechazo', async () => {
+    nuevoEntorno()
+    // Número de control repetido con otro código de generación: el MH no tiene sello para este documento.
+    await emitirDte(cliente, factura(7), firmante)
+    const error = await emitirDte(cliente, factura(7), firmante).catch(e => e)
+    expect(error).toBeInstanceOf(DteRechazadoError)
+    expect(error.respuesta.descripcionMsg).toMatch(/numeroControl.*YA EXISTE/)
+    // El MH dice que el código ya existe pero la consulta no devuelve sello: no se inventa el éxito.
+    const dte = factura(8)
+    const { firma } = await firmarSinTransmitir(dte, firmante)
+    const sinSello = new ClienteMH({
+      ambiente: '00', usuario: NIT, password: PASSWORD_API, timeoutMs: 500,
+      fetch: (async (entrada: RequestInfo | URL, init?: RequestInit) => {
+        if (String(entrada).endsWith('/recepciondte')) return Response.json({ estado: 'RECHAZADO', selloRecibido: null, codigoMsg: '004', descripcionMsg: '[identificacion.codigoGeneracion] YA EXISTE UN REGISTRO CON ESE VALOR', observaciones: [] }, { status: 400 })
+        return mock.fetch(entrada, init)
+      }) as typeof fetch
+    })
+    await expect(transmitirDte(sinSello, dte, firma)).rejects.toBeInstanceOf(DteRechazadoError)
+  })
+
   it('tras 3 intentos sin respuesta pide operar en contingencia', async () => {
     nuevoEntorno()
     mock.simularCaida(3)
     await expect(emitirDte(cliente, factura(1), firmante)).rejects.toBeInstanceOf(ContingenciaRequeridaError)
+  })
+
+  // El MH caído detrás de una pasarela responde 502/503/504 con HTML: cuenta como "sin respuesta"
+  // para la política de reintentos (Manual Técnico v2, 3.3) y la contingencia (Normativa 2.0, 13.2).
+  const pasarela503 = () => new Response('<html>503 Service Unavailable</html>', { status: 503 })
+  /** Cliente cuyo `fetch` responde lo que devuelva `falso(ruta)` y delega el resto en el simulador. */
+  const clienteCon = (falso: (ruta: string, request: Request) => Response | undefined | Promise<Response | undefined>) => {
+    nuevoEntorno()
+    const rutas: string[] = []
+    const fetchFalso = (async (entrada: RequestInfo | URL, init?: RequestInit) => {
+      const request = new Request(entrada, init)
+      const ruta = new URL(request.url).pathname
+      rutas.push(ruta)
+      return (await falso(ruta, request.clone())) ?? mock.fetch(request)
+    }) as typeof fetch
+    const veces = (ruta: string) => rutas.filter(r => r === ruta).length
+    return { cliente: new ClienteMH({ ambiente: '00', usuario: NIT, password: PASSWORD_API, fetch: fetchFalso, timeoutMs: 500 }), veces }
+  }
+
+  it('MH con 503 en recepción y consulta: agota los reintentos y pide contingencia', async () => {
+    const { cliente, veces } = clienteCon(ruta => (ruta.startsWith('/fesv/') ? pasarela503() : undefined))
+    const error = await emitirDte(cliente, factura(1), firmante).catch(e => e)
+    expect(error).toBeInstanceOf(ContingenciaRequeridaError)
+    expect(error.intentos).toBe(3)
+    expect(veces('/fesv/recepciondte')).toBe(3)
+    expect(veces('/fesv/recepcion/consultadte')).toBe(3)
+    // El estado HTTP y el cuerpo quedan en la causa, para diagnóstico.
+    expect(error.cause).toBeInstanceOf(ErrorConexionMH)
+    expect(error.cause.cause).toMatchObject({ name: 'ErrorMH', status: 503, cuerpo: expect.stringContaining('503') })
+    expect(mock.recibidos.size).toBe(0)
+  })
+
+  it('MH con 503 una vez, pero sí lo recibió: la consulta recupera el sello sin reenviar', async () => {
+    let caido = true
+    const { cliente, veces } = clienteCon(async (ruta, request) => {
+      if (ruta !== '/fesv/recepciondte' || !caido) return undefined
+      caido = false
+      await mock.fetch(request) // el MH lo procesa, pero la pasarela pierde la respuesta
+      return pasarela503()
+    })
+    const { archivo } = await emitirDte(cliente, factura(1), firmante)
+    expect(archivo.selloRecibido).toBe(mock.recibidos.get(archivo.identificacion.codigoGeneracion)!.sello)
+    expect(veces('/fesv/recepciondte')).toBe(1)
+    expect(mock.recibidos.size).toBe(1)
+  })
+
+  it('un 4xx con cuerpo JSON sigue siendo un rechazo, sin reintentos', async () => {
+    const rechazo = { estado: 'RECHAZADO', selloRecibido: null, codigoMsg: '096', descripcionMsg: 'DOCUMENTO NO CUMPLE CON NORMATIVA DE CUMPLIMIENTO', observaciones: [] }
+    const { cliente, veces } = clienteCon(ruta => (ruta === '/fesv/recepciondte' ? Response.json(rechazo, { status: 400 }) : undefined))
+    const error = await emitirDte(cliente, factura(1), firmante).catch(e => e)
+    expect(error).toBeInstanceOf(DteRechazadoError)
+    expect(error.respuesta).toEqual(rechazo)
+    expect(veces('/fesv/recepciondte')).toBe(1)
+    expect(veces('/fesv/recepcion/consultadte')).toBe(0)
+  })
+
+  it('un 4xx que no es JSON sigue siendo ErrorMH, y un 5xx al autenticar es ErrorConexionMH', async () => {
+    const { cliente } = clienteCon(ruta => (ruta === '/fesv/recepciondte' ? new Response('Not Found', { status: 404 }) : undefined))
+    const error = await emitirDte(cliente, factura(1), firmante).catch(e => e)
+    expect(error).toBeInstanceOf(ErrorMH)
+    expect(error.status).toBe(404)
+    const sinAuth = clienteCon(ruta => (ruta === '/seguridad/auth' ? pasarela503() : undefined))
+    await expect(sinAuth.cliente.autenticar()).rejects.toBeInstanceOf(ErrorConexionMH)
+    await expect(emitirDte(sinAuth.cliente, factura(1), firmante)).rejects.toBeInstanceOf(ContingenciaRequeridaError)
   })
 
   it('flujo de contingencia: DTE diferido -> evento -> transmisión', async () => {

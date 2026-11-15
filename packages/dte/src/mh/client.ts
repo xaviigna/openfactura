@@ -29,7 +29,11 @@ export class ErrorMH extends Error {
   }
 }
 
-/** El MH no respondió a tiempo o hubo un fallo de red: aplica la política de reintentos. */
+/**
+ * El MH no respondió a tiempo, hubo un fallo de red o contestó con un 5xx (plataforma no disponible):
+ * aplica la política de reintentos (Manual Técnico v2, 3.3) y, agotada, la contingencia (Normativa 2.0,
+ * regla 13.2). En un 5xx, `cause` es el `ErrorMH` con el estado HTTP y el cuerpo recibidos.
+ */
 export class ErrorConexionMH extends Error {
   constructor(mensaje: string, options?: ErrorOptions) {
     super(mensaje, options)
@@ -81,9 +85,11 @@ export class ClienteMH {
       const texto = await respuesta.text()
       let cuerpo: unknown = texto
       try { cuerpo = JSON.parse(texto) } catch { /* respuesta no JSON */ }
+      // Un 5xx (502/503/504 de la pasarela, con o sin JSON) no es una respuesta del MH sobre el documento.
+      if (respuesta.status >= 500) throw new ErrorMH(`Respuesta inesperada del MH (${respuesta.status}) en ${ruta}`, respuesta.status, cuerpo)
       return { status: respuesta.status, cuerpo }
     } catch (causa) {
-      throw new ErrorConexionMH(`Sin respuesta del MH en ${ruta}`, { cause: causa })
+      throw new ErrorConexionMH(causa instanceof ErrorMH ? `El MH no está disponible (${causa.status}) en ${ruta}` : `Sin respuesta del MH en ${ruta}`, { cause: causa })
     } finally {
       clearTimeout(temporizador)
     }
@@ -115,7 +121,7 @@ export class ClienteMH {
       this.token = undefined
       respuesta = await enviar()
     }
-    if (respuesta.status >= 500 || typeof respuesta.cuerpo !== 'object' || respuesta.cuerpo === null) throw new ErrorMH(`Respuesta inesperada del MH (${respuesta.status}) en ${ruta}`, respuesta.status, respuesta.cuerpo)
+    if (typeof respuesta.cuerpo !== 'object' || respuesta.cuerpo === null) throw new ErrorMH(`Respuesta inesperada del MH (${respuesta.status}) en ${ruta}`, respuesta.status, respuesta.cuerpo)
     return respuesta
   }
 

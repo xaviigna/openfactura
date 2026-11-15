@@ -100,7 +100,8 @@ export interface ExportacionInput extends CondicionPago {
   tipoRegimen?: string | null
   /** CAT-028; null para servicios. */
   regimen?: string | null
-  items: ItemInput[]
+  /** Sin `tipoVenta`: el esquema fe-fex-v3 sólo define `ventaGravada` por ítem. */
+  items: Array<Omit<ItemInput, 'tipoVenta'>>
   /** Descuento global a ventas gravadas. */
   descuento?: number
   porcentajeDescuento?: number
@@ -118,6 +119,12 @@ export interface ExportacionInput extends CondicionPago {
 }
 
 export function construirExportacion(ctx: Contexto, input: ExportacionInput): Dte {
+  // El esquema fe-fex-v3 no tiene ventaExenta ni ventaNoSuj (ítem) ni totalExenta/totalNoSuj (resumen):
+  // un ítem exento o no sujeto saldría en 0 y fuera del total. La API recibe JSON, así que se valida aquí.
+  input.items.forEach((item, i) => {
+    const tipoVenta = (item as ItemInput).tipoVenta ?? 'gravada'
+    if (tipoVenta !== 'gravada') throw new Error(`Ítem ${i + 1}: una Factura de Exportación sólo admite ventas gravadas; omite tipoVenta (se recibió '${tipoVenta}')`)
+  })
   // Exportaciones: IVA 0% (tributo C3) en toda línea gravada.
   const lineas = calcularLineas(input.items.map(i => ({ ...i, tributos: i.tributos ?? ['C3'] })), { preciosConIva: false, ivaComoTributo: false })
   const totalGravada = r2(sumar(lineas.map(l => l.ventaGravada)))

@@ -16,34 +16,149 @@ Cloudflare con una base D1: API REST, MCP, webhooks y conciliación.
 
 ## En tu equipo
 
-Requisitos: [Bun](https://bun.sh) 1.2+ y Node 20+.
+Requisitos: [Bun](https://bun.sh) (el repositorio fija `bun@1.4.4` en `packageManager`) y Node 20+.
+
+<Steps>
+
+1. **Clona, instala y arranca el servidor.**
+
+   ```bash
+   git clone https://github.com/xaviigna/openfactura && cd openfactura
+   bun install
+   cp server/.dev.vars.example server/.dev.vars     # completa los secretos (openssl rand -base64 32/48)
+   echo "MH_SIMULADO=1" >> server/.dev.vars         # simulador del MH: emite sin credenciales de Hacienda
+   echo "WEBHOOKS_LOCAL=1" >> server/.dev.vars      # webhooks a http://localhost (sólo desarrollo)
+   bun run build
+   cd server && bun run db:migrate:local
+   bun run dev                                      # API y MCP en :8788; déjalo corriendo
+   ```
+
+   Esta terminal queda ocupada: el resto va en otra, desde la raíz del repositorio.
+
+   <Aside type="note">
+   Arranca el servidor con `bun run dev` dentro de `server/`. En la raíz, `bun run dev` también
+   levanta la documentación y el `dev` de la CLI, que termina con «Falta el comando» y detiene todo.
+   </Aside>
+
+2. **Archivos de ejemplo.** Datos inventados, pero con códigos de catálogo válidos (departamento
+   `06`, municipio `23`, distrito `14` y actividad `62010`, que pertenecen a San Salvador):
+
+   ```bash
+   mkdir -p ~/openfactura-ejemplo
+   cat > ~/openfactura-ejemplo/emisor.json <<'EOF'
+   {
+     "nit": "0614-010190-101-0",
+     "nrc": "1234567",
+     "nombre": "EMPRESA DE PRUEBA, S.A. DE C.V.",
+     "nombreComercial": "Empresa de Prueba",
+     "codActividad": "62010",
+     "descActividad": "Programación informática",
+     "departamento": "06",
+     "municipio": "23",
+     "distrito": "14",
+     "complemento": "Calle de Prueba #123, San Salvador",
+     "telefono": "22220000",
+     "correo": "facturas@empresa-de-prueba.example"
+   }
+   EOF
+   cat > ~/openfactura-ejemplo/factura.json <<'EOF'
+   {
+     "tipoDte": "01",
+     "datos": {
+       "items": [
+         { "descripcion": "Servicio de consultoría", "cantidad": 3, "precioUni": 56.5, "tipoItem": 2 }
+       ]
+     }
+   }
+   EOF
+   cat > ~/openfactura-ejemplo/ccf.json <<'EOF'
+   {
+     "tipoDte": "03",
+     "datos": {
+       "receptor": {
+         "nit": "0614-290786-103-1",
+         "nrc": "234567-8",
+         "nombre": "CLIENTE DE PRUEBA, S.A. DE C.V.",
+         "codActividad": "46900",
+         "descActividad": "Venta al por mayor de otros productos",
+         "direccion": {
+           "departamento": "06",
+           "municipio": "23",
+           "distrito": "14",
+           "complemento": "Av. Olímpica #100"
+         },
+         "correo": "compras@cliente-de-prueba.example"
+       },
+       "items": [{ "descripcion": "Licencia anual", "cantidad": 1, "precioUni": 100, "tipoItem": 2 }]
+     }
+   }
+   EOF
+   ```
+
+   En la factura (`01`) `precioUni` incluye IVA; en el CCF (`03`) va sin IVA
+   ([Emitir documentos](/guias/emitir/)). El NIT y el NRC son de mentira; el
+   NIT debe tener 14 dígitos (o 9) y el NRC de 2 a 8.
+
+3. **Crea la organización y conecta el simulador.** Desde la raíz del repositorio, en otra terminal.
+   Necesitas `jq`. La CLI recién compilada se ejecuta con `node packages/cli/dist/index.js` (es el
+   `bin` `openfactura` de `packages/cli/package.json`); la función de abajo la deja como
+   `openfactura`. `--profile local` evita pisar la sesión que tengas en `~/.config/openfactura`.
+
+   ```bash
+   REPO=$PWD
+   openfactura() { node "$REPO/packages/cli/dist/index.js" "$@"; }
+   export OPENFACTURA_PROFILE=local OPENFACTURA_URL=http://localhost:8788
+   export OPENFACTURA_ADMIN_TOKEN=$(grep '^ADMIN_TOKEN=' server/.dev.vars | cut -d= -f2-)
+
+   export ORG=$(openfactura alta "Empresa de Prueba" --json | jq -r .organizacion.id)
+   admin() { curl -sS "$OPENFACTURA_URL/api/v1$1" -H "Authorization: Bearer $OPENFACTURA_ADMIN_TOKEN" \
+     -H "X-Organizacion: $ORG" -H 'Content-Type: application/json' "${@:2}"; }
+
+   admin /emisor -X PUT -d @$HOME/openfactura-ejemplo/emisor.json   # datos del emisor
+   admin /emisor/credenciales-prueba -X POST                         # certificado y clave simulados
+   ```
+
+   `alta` crea la organización y deja una clave `of_test_…` en el perfil `local`; con
+   `OPENFACTURA_PROFILE=local` los comandos siguientes la usan. Si prefieres no compilar la CLI,
+   `npx @openfactura/cli` (la versión publicada en npm) hace lo mismo: sustituye la función
+   `openfactura` por ese comando.
+
+4. **Emite y consulta.**
+
+   ```bash
+   openfactura dte emitir ~/openfactura-ejemplo/factura.json --json | tee /tmp/dte.json | jq '{estado, total}'
+   openfactura dte get "$(jq -r .codigoGeneracion /tmp/dte.json)"
+   openfactura dte emitir ~/openfactura-ejemplo/ccf.json --json | jq '{estado, total}'
+   ```
+
+   El estado debe ser `procesado`, con `selloRecibido`; la factura suma `169.5`. Con
+   `dte pdf <codigo> -o factura.pdf` obtienes la representación gráfica.
+
+</Steps>
+
+### Establecimientos y puntos de venta
+
+Al guardar el emisor por primera vez se crean solos la casa matriz **`M001`** (tipo `02`) y su punto
+de venta **`P001`**. Con eso ya emites: el número de control sale como `DTE-01-M001P001-…`. No
+tienes que crear nada más para el recorrido de arriba.
+
+Crea los tuyos sólo si Hacienda te asignó otros. Los códigos (`M001`, `S002`, `P002`…) los asigna el
+MH: usa los de tu inscripción.
+`codMh` de un establecimiento es `M`, `B`, `S` o `P` y tres dígitos; el de un punto de venta, `P` y tres
+dígitos. Ambos exigen `emisor:write` (el operador con `ADMIN_TOKEN`; las claves de API no) y devuelven
+`201` con la lista de establecimientos y sus puntos de venta:
 
 ```bash
-git clone https://github.com/xaviigna/openfactura && cd openfactura
-bun install
-cp server/.dev.vars.example server/.dev.vars     # completa los secretos (openssl rand -base64 32/48)
-echo "MH_SIMULADO=1" >> server/.dev.vars         # simulador del MH: emite sin credenciales de Hacienda
-echo "WEBHOOKS_LOCAL=1" >> server/.dev.vars      # webhooks a http://localhost (sólo desarrollo)
-bun run build
-cd server && bun run db:migrate:local && cd ..
-bun run dev                                      # API y MCP en :8788
+# tipo: 01 sucursal/agencia, 02 casa matriz, 04 bodega, 07 patio (por defecto 01)
+admin /establecimientos -X POST -d '{"nombre":"Sucursal Centro","tipo":"01","codMh":"S001"}' \
+  | jq -r '.[] | "\(.id) \(.codMh)"'
+
+admin /puntos-venta -X POST -d '{"establecimientoId":"<id del establecimiento>","nombre":"Caja 2","codMh":"P002"}'
 ```
 
-Crea tu organización y una clave de pruebas, y conecta el simulador:
-
-```bash
-export OPENFACTURA_URL=http://localhost:8788
-export OPENFACTURA_ADMIN_TOKEN=<el ADMIN_TOKEN de server/.dev.vars>
-npx @openfactura/cli alta "Mi Empresa"           # imprime el id de la organización
-curl -X PUT $OPENFACTURA_URL/api/v1/emisor -H "Authorization: Bearer $OPENFACTURA_ADMIN_TOKEN" \
-  -H "X-Organizacion: <id>" -H 'Content-Type: application/json' -d @emisor.json
-curl -X POST $OPENFACTURA_URL/api/v1/emisor/credenciales-prueba \
-  -H "Authorization: Bearer $OPENFACTURA_ADMIN_TOKEN" -H "X-Organizacion: <id>"
-npx @openfactura/cli dte emitir factura.json      # {"tipoDte":"01","datos":{"items":[…]}}
-```
-
-En los ejemplos de esta documentación cambia `https://app.openfactura.co` (y
-`https://openfactura.co/mcp`) por `http://localhost:8788` (y `http://localhost:8788/mcp`).
+Un código repetido responde `codigo_repetido`. Para emitir desde otro punto de venta, pasa su
+`puntoVentaId` en el cuerpo de `POST /dte` (si no, se usa el primero del emisor). Los datos de dirección y teléfono que
+no indiques en el establecimiento se toman del emisor.
 
 ## En tu cuenta de Cloudflare
 

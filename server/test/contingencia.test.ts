@@ -136,6 +136,37 @@ describe('contingencia', () => {
     expect((await transmitirContingencia(ctx)).evento).toBeNull()
   })
 
+  it('un documento que el MH ya selló no queda rechazado al retransmitir la contingencia', async () => {
+    const { ctx, mock, estado } = await entorno()
+    expect((await emitir(ctx, FACTURA)).status).toBe(201)
+    estado.caido = true
+    const { codigoGeneracion } = (await emitir(ctx, FACTURA)).cuerpo as { codigoGeneracion: string }
+    estado.caido = false
+
+    // Primera vuelta: el MH sella el documento pero ni la respuesta ni la consulta llegan.
+    const fetchNormal = ctx.mhFetch!
+    ctx.mhFetch = async (input, init) => {
+      const ruta = new URL(String(input instanceof Request ? input.url : input)).pathname
+      if (ruta === '/fesv/recepcion/consultadte') throw new TypeError('fetch failed')
+      if (ruta !== '/fesv/recepciondte') return fetchNormal(input, init)
+      await fetchNormal(input, init)
+      throw new TypeError('fetch failed')
+    }
+    const primera = await transmitirContingencia(ctx)
+    expect(primera.procesados).toHaveLength(0)
+    expect(mock.recibidos.has(codigoGeneracion)).toBe(true)
+    expect((await obtener(ctx, codigoGeneracion)).estado).toBe('contingencia')
+
+    // Segunda vuelta: el MH responde «ya existe»; la consulta recupera el sello.
+    ctx.mhFetch = fetchNormal
+    const segunda = await transmitirContingencia(ctx)
+    expect(segunda.rechazados).toHaveLength(0)
+    expect(segunda.procesados).toHaveLength(1)
+    const final = await obtener(ctx, codigoGeneracion)
+    expect(final.estado).toBe('procesado')
+    expect(final.selloRecibido).toBe(mock.recibidos.get(codigoGeneracion)?.sello)
+  })
+
   it('si el MH está caído desde la autenticación también cae en contingencia', async () => {
     const { ctx, estado } = await entorno()
     estado.caido = true

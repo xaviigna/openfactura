@@ -153,6 +153,18 @@ describe('otros DTE', () => {
     expect(dte.receptor.nombrePais).toBe('Estados Unidos')
   })
 
+  it('factura de exportación: rechaza ítems exentos o no sujetos en vez de perder su monto', () => {
+    const receptor = { nombre: 'ACME Inc.', tipoDocumento: '37', numDocumento: 'US-123456', codPais: 'US', complemento: '1 Main St, Austin TX', tipoPersona: 2 as const, descActividad: 'Software' }
+    const gravado = { descripcion: 'Café oro', cantidad: 100, precioUni: 3.5 }
+    for (const tipoVenta of ['exenta', 'noSujeta'] as const) {
+      // @ts-expect-error el ítem de exportación no declara tipoVenta; la API lo recibe como JSON
+      expect(() => construirExportacion(ctx(), { receptor, tipoItemExpor: 2, items: [gravado, { ...gravado, tipoVenta }] })).toThrow(/Ítem 2: .*Factura de Exportación/)
+    }
+    // 'gravada' explícito llega de clientes que siempre envían el campo: se acepta.
+    const dte = construirExportacion(ctx(), { receptor, tipoItemExpor: 2, items: [{ ...gravado, tipoVenta: 'gravada' } as typeof gravado] })
+    expect(dte.resumen).toMatchObject({ totalGravada: 350, totalPagar: 350 })
+  })
+
   it('comprobante de retención (07, v2)', () => {
     const dte = construirRetencion(ctx(), {
       receptor: contribuyente,

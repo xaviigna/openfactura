@@ -95,11 +95,11 @@ servidor MCP, los webhooks y el cron de conciliación. Calcula alrededor de una 
 
 ### Qué necesitas
 
-| Servicio                              | Para                                                               | Costo                   |
-| ------------------------------------- | ------------------------------------------------------------------ | ----------------------- |
-| Cloudflare Workers + D1               | API, MCP, base de datos                                            | Plan de pago de Workers |
-| [Bun](https://bun.sh) 1.2+ y Wrangler | Compilar y desplegar                                               | Gratis                  |
-| Credenciales de Hacienda              | Emitir de verdad: contraseña de API y certificado de firma, del MH | Gratis                  |
+| Servicio                         | Para                                                               | Costo                   |
+| -------------------------------- | ------------------------------------------------------------------ | ----------------------- |
+| Cloudflare Workers + D1          | API, MCP, base de datos                                            | Plan de pago de Workers |
+| [Bun](https://bun.sh) y Wrangler | Compilar y desplegar                                               | Gratis                  |
+| Credenciales de Hacienda         | Emitir de verdad: contraseña de API y certificado de firma, del MH | Gratis                  |
 
 ### 1. Base de datos
 
@@ -205,6 +205,8 @@ echo "MH_SIMULADO=1" >> server/.dev.vars       # emite sin credenciales de Hacie
 bun run build && (cd server && bun run db:migrate:local)
 bun run dev                                    # API y MCP en :8788
 ```
+
+Guía completa para emitir tu primer DTE en local con el simulador del MH: [Autoalojamiento](https://docs.openfactura.co/autoalojamiento/#en-tu-equipo).
 
 Antes de un pull request:
 

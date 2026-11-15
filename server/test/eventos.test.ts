@@ -111,6 +111,12 @@ describe('evento de retorno (18)', () => {
     const { cliente: soloLectura } = await nuevaClave(cliente, ['dte:read'])
     const sinPermiso = await soloLectura.json('POST', ruta, SILLA)
     expect(sinPermiso.status).toBe(403)
+
+    // Emitir el retorno no exige dte:read, aunque lea el documento original.
+    const { cliente: soloEmision } = await nuevaClave(cliente, ['dte:emit'])
+    const conPermiso = await soloEmision.json('POST', ruta, SILLA)
+    expect(conPermiso.status).toBe(201)
+    expect(conPermiso.cuerpo).toMatchObject({ tipo: 'retorno', estado: 'procesado' })
   })
 })
 

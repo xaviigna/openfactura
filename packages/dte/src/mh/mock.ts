@@ -94,13 +94,15 @@ export function crearMockMH(opciones: OpcionesMockMH): MockMH {
     const problemas = validarEstructura(dte)
     if (problemas.length) return rechazo(id.codigoGeneracion, '096', 'DOCUMENTO NO CUMPLE CON NORMATIVA DE CUMPLIMIENTO', problemas.map(p => `${p.ruta} ${p.mensaje}`))
     if (recibidos.has(id.codigoGeneracion)) return rechazo(id.codigoGeneracion, '004', '[identificacion.codigoGeneracion] YA EXISTE UN REGISTRO CON ESE VALOR')
-    if (id.numeroControl && numerosControl.has(id.numeroControl)) return rechazo(id.codigoGeneracion, '004', '[identificacion.numeroControl] YA EXISTE UN REGISTRO CON ESE VALOR')
+    // El número de control se repite cada ejercicio (Normativa 2.0, Anexo IV, campo 5): único por año.
+    const numeroAnual = id.numeroControl && `${id.fecEmi?.slice(0, 4)}:${id.numeroControl}`
+    if (numeroAnual && numerosControl.has(numeroAnual)) return rechazo(id.codigoGeneracion, '004', '[identificacion.numeroControl] YA EXISTE UN REGISTRO CON ESE VALOR')
     if (id.tipoOperacion === 2 && ![...contingencias.values()].some(c => c.detalleDTE.some((d: any) => d.codigoGeneracion === id.codigoGeneracion))) {
       return rechazo(id.codigoGeneracion, '012', '[identificacion.tipoOperacion] NO EXISTE EVENTO DE CONTINGENCIA')
     }
     const sello = nuevoSello()
     recibidos.set(id.codigoGeneracion, { dte, sello, invalidado: false })
-    if (id.numeroControl) numerosControl.add(id.numeroControl)
+    if (numeroAnual) numerosControl.add(numeroAnual)
     acotar(recibidos)
     acotar(numerosControl)
     return { version: 2, ambiente: id.ambiente, versionApp: 2, estado: 'PROCESADO', codigoGeneracion: id.codigoGeneracion, selloRecibido: sello, fhProcesamiento: fechaProceso(), clasificaMsg: '10', codigoMsg: '001', descripcionMsg: 'RECIBIDO', observaciones: [] }

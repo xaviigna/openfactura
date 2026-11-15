@@ -84,6 +84,16 @@ openfactura eventos get|json|pdf <codigo>
 
 openfactura contingencia transmitir
 
+openfactura webhooks list
+openfactura webhooks add https://pos.ejemplo.com/hooks [--eventos dte.procesado,dte.rechazado] [--descripcion "POS"]
+openfactura webhooks test <id>                # sends a webhook.prueba event (exit 1 if not delivered)
+openfactura webhooks deliveries <id>          # last 50 deliveries
+openfactura webhooks rotate <id>              # new signing secret, shown once
+openfactura webhooks remove <id>
+
+openfactura uso [--desde 2026-11-01] [--hasta 2026-11-30]   # issued, processed, and rejected per day
+openfactura registros list [--estado error] [--origen api] [--limite 50]   # requires registros:read
+
 openfactura certificacion estado              # Open Factura Cloud only
 openfactura certificacion ejecutar            # issues the minimum tests (Open Factura Cloud)
 ```
@@ -110,7 +120,7 @@ openfactura plataforma list                    # status and what's missing (→ 
 
 openfactura usar cb-1                          # from here on you act as Casa Barista
 openfactura dte emitir factura.json            # issued in THEIR space, with their numbering
-openfactura webhooks add --url https://pos.casabarista.sv/hooks
+openfactura webhooks add https://pos.casabarista.sv/hooks
 openfactura usar --yo                          # back to your own account
 
 openfactura plataforma clave cb-1 --live --yes # key for the customer's system (issues only for them)

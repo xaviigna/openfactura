@@ -169,6 +169,25 @@ describe('emisión', () => {
     expect(correlativos).toEqual(Array.from({ length: 12 }, (_, i) => i + 2))
   })
 
+  it('el correlativo reinicia cada año sin chocar con el número de control del año anterior', async () => {
+    // 31 de diciembre a las 23:00 de El Salvador (UTC-6).
+    vi.useFakeTimers({ toFake: ['Date'], now: Date.UTC(2031, 0, 1, 5) })
+    try {
+      const { cliente } = await nuevaOrganizacion({ emisor: true })
+      const anterior = await cliente.json('POST', '/api/v1/dte', FACTURA)
+      expect(anterior.cuerpo.numeroControl).toBe('DTE-01-M001P001-000000000000001')
+      vi.setSystemTime(Date.UTC(2031, 0, 1, 7))
+      const nuevo = await cliente.json('POST', '/api/v1/dte', FACTURA)
+      expect(nuevo.status).toBe(201)
+      expect(nuevo.cuerpo.numeroControl).toBe('DTE-01-M001P001-000000000000001')
+      expect(nuevo.cuerpo.codigoGeneracion).not.toBe(anterior.cuerpo.codigoGeneracion)
+      const segundo = await cliente.json('POST', '/api/v1/dte', FACTURA)
+      expect(segundo.cuerpo.numeroControl).toBe('DTE-01-M001P001-000000000000002')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('cada tipo de DTE lleva su propia serie', async () => {
     const { cliente } = await nuevaOrganizacion({ emisor: true })
     const c = await cliente.json('POST', '/api/v1/clientes', {
@@ -332,6 +351,26 @@ describe('emisión', () => {
     })
     expect(otra.status).toBe(409)
     expect(otra.cuerpo.error.code).toBe('estado_invalido')
+  })
+
+  it('una clave con sólo dte:invalidate invalida; sin ese permiso responde 403', async () => {
+    const { cliente } = await nuevaOrganizacion({ emisor: true })
+    const { cuerpo: doc } = await cliente.json('POST', '/api/v1/dte', FACTURA)
+    const ruta = `/api/v1/dte/${doc.codigoGeneracion}/invalidar`
+    const cuerpo = { tipoAnulacion: 2, motivoAnulacion: 'Operación rescindida' }
+
+    const sinPermiso = await nuevaClave(cliente, ['dte:read', 'dte:emit'])
+    const negada = await sinPermiso.cliente.json('POST', ruta, cuerpo)
+    expect(negada.status).toBe(403)
+    expect(negada.cuerpo.error.details.permiso).toBe('dte:invalidate')
+
+    const soloInvalidar = await nuevaClave(cliente, ['dte:invalidate'])
+    const r = await soloInvalidar.cliente.json('POST', ruta, cuerpo)
+    expect(r.status).toBe(200)
+    expect(r.cuerpo.estado).toBe('invalidado')
+    // Invalidar no da lectura: la consulta sigue pidiendo dte:read.
+    const lectura = await soloInvalidar.cliente.json('GET', `/api/v1/dte/${doc.codigoGeneracion}`)
+    expect(lectura.status).toBe(403)
   })
 })
 

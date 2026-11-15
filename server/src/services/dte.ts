@@ -574,9 +574,8 @@ async function archivoDe(ctx: Ctx, f: FilaDocumento) {
   return a
 }
 
-export async function obtener(ctx: Ctx, codigo: string) {
-  exigir(ctx, 'dte:read')
-  const f = await fila(ctx, codigo)
+/** Detalle de un documento ya localizado. No comprueba permisos: lo hace el servicio que la llama. */
+async function detalle(ctx: Ctx, f: FilaDocumento) {
   const [archivos, eventos] = await Promise.all([
     ctx.db.select().from(documentoArchivo).where(eq(documentoArchivo.documentoId, f.id)),
     ctx.db
@@ -601,16 +600,28 @@ export async function obtener(ctx: Ctx, codigo: string) {
   }
 }
 
-/** "Archivo DTE" que la Normativa obliga a entregar al receptor: estructura + firma + sello. */
-export async function archivoJson(ctx: Ctx, codigo: string): Promise<ArchivoDte> {
+export async function obtener(ctx: Ctx, codigo: string) {
   exigir(ctx, 'dte:read')
-  const f = await fila(ctx, codigo)
+  return detalle(ctx, await fila(ctx, codigo))
+}
+
+/**
+ * "Archivo DTE" de un documento ya localizado. No comprueba permisos: invalidar o retornar leen el
+ * original con su propio permiso (`dte:invalidate`, `dte:emit`), sin exigir además `dte:read`.
+ */
+export async function archivoDeFila(ctx: Ctx, f: FilaDocumento): Promise<ArchivoDte> {
   const a = await archivoDe(ctx, f)
   return {
     ...(JSON.parse(a.dte) as Dte),
     firmaElectronica: a.firma ?? '',
     selloRecibido: f.selloRecibido,
   }
+}
+
+/** "Archivo DTE" que la Normativa obliga a entregar al receptor: estructura + firma + sello. */
+export async function archivoJson(ctx: Ctx, codigo: string): Promise<ArchivoDte> {
+  exigir(ctx, 'dte:read')
+  return archivoDeFila(ctx, await fila(ctx, codigo))
 }
 
 export async function pdf(
@@ -815,14 +826,15 @@ export async function invalidar(ctx: Ctx, codigo: string, entrada: InvalidacionE
     )
   }
   const ce = await contextoDelDocumento(ctx, f)
-  const archivo = await archivoJson(ctx, codigo)
+  const archivo = await archivoDeFila(ctx, f)
   const invalidacion = await transmitirInvalidacion(ctx, ce, archivo, f.id, entrada)
   await guardar(ctx, f.id, { estado: 'invalidado' })
   await publicar(ctx, 'dte.invalidado', { ...vista({ ...f, estado: 'invalidado' }), invalidacion })
   await registrar(ctx, 'dte.invalidar', 'documento', f.id, {
     tipoAnulacion: entrada.tipoAnulacion,
   })
-  return obtener(ctx, f.id)
+  // El resultado de su propia acción: quien invalida lo recibe aunque no tenga `dte:read`.
+  return detalle(ctx, await fila(ctx, f.id))
 }
 
 /** Evento de retorno u operaciones especiales procesado con ese código, de esta organización. */
