@@ -86,6 +86,13 @@ export const envioDeCuenta = (env: Bindings, extensiones: readonly Extension[] =
  */
 const CONFIRMACIONES_POR_HORA = 4
 
+/**
+ * Altas por dirección y hora. Un alta con el correo de una cuenta sin confirmar la reemplaza; sin
+ * este tope, cualquiera (cambiando de IP) podría reemplazar sin fin la de otra persona e invalidar
+ * su enlace. Pasado el tope, la dueña recupera la cuenta con «Olvidé mi contraseña».
+ */
+const ALTAS_POR_HORA = 5
+
 /** Una cuenta es «nueva» para la bienvenida durante este tiempo desde que se creó. */
 const BIENVENIDA_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -213,9 +220,15 @@ export function createAuth(
           if (typeof email !== 'string' || typeof password !== 'string') return
           if (typeof name !== 'string' || !name.trim()) return
           if (password.length < opciones.emailAndPassword.minPasswordLength) return
-          const existente = await ctx.context.internalAdapter.findUserByEmail(
-            email.trim().toLowerCase(),
-          )
+          const direccion = email.trim().toLowerCase()
+          const altas = await consumir(env.DB, `alta:${direccion}`, ALTAS_POR_HORA, 3600)
+          if (!altas.permitido) {
+            throw new APIError('TOO_MANY_REQUESTS', {
+              message:
+                'Demasiados registros con este correo. Revisa tu bandeja o usa «Olvidé mi contraseña».',
+            })
+          }
+          const existente = await ctx.context.internalAdapter.findUserByEmail(direccion)
           if (!existente || existente.user.emailVerified) return
           // Sin sesiones ni equipo: una cuenta vieja (de antes de exigir la confirmación) que ya se
           // usa no se toca.
@@ -311,3 +324,55 @@ export function createAuth(
 }
 
 export type Auth = ReturnType<typeof createAuth>
+
+const ALFABETO_ID = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+
+/**
+ * Atiende `/api/auth/*`. Dos altas simultáneas con el mismo correo: Better Auth comprueba que no
+ * exista y luego inserta, sin bloqueo, y la que pierde la carrera choca con el índice único y
+ * responde 422. Con confirmación de correo, se responde igual que a un correo que ya tiene cuenta
+ * (200 sin sesión, con un usuario sintético), para no delatar el alta en curso.
+ */
+export async function atenderAuth(
+  env: Bindings,
+  extensiones: readonly Extension[] = [],
+  enSegundoPlano: (tarea: Promise<unknown>) => void,
+  peticion: Request,
+): Promise<Response> {
+  const alta =
+    peticion.method === 'POST' &&
+    new URL(peticion.url).pathname === '/api/auth/sign-up/email' &&
+    envioDeCuenta(env, extensiones) !== null
+  const copia = alta ? peticion.clone() : null
+  const respuesta = await createAuth(env, extensiones, enSegundoPlano).handler(peticion)
+  if (!copia || respuesta.status !== 422) return respuesta
+  const error = (await respuesta
+    .clone()
+    .json()
+    .catch(() => null)) as { code?: string } | null
+  if (error?.code !== 'FAILED_TO_CREATE_USER') return respuesta
+  const { email, name } = (await copia.json().catch(() => ({}))) as {
+    email?: unknown
+    name?: unknown
+  }
+  if (typeof email !== 'string') return respuesta
+  const correo = email.trim().toLowerCase()
+  const existe = await env.DB.prepare('SELECT 1 AS n FROM user WHERE email = ?1')
+    .bind(correo)
+    .first()
+  if (!existe) return respuesta
+  const ahora = new Date()
+  const azar = crypto.getRandomValues(new Uint8Array(32))
+  return Response.json({
+    token: null,
+    user: {
+      id: [...azar].map((b) => ALFABETO_ID[b % ALFABETO_ID.length]).join(''),
+      name: typeof name === 'string' ? name : '',
+      email: correo,
+      emailVerified: false,
+      image: null,
+      createdAt: ahora,
+      updatedAt: ahora,
+    },
+  })
+}

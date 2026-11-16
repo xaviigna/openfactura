@@ -28,7 +28,10 @@ crearla; el servidor guarda únicamente su SHA-256.
 
 ### Rutas de sesión (Better Auth)
 
-- `POST /api/auth/sign-up/email` `{ name, email, password }` (contraseña de 10+ caracteres)
+- `POST /api/auth/sign-up/email` `{ name, email, password }` (contraseña de 10+ caracteres). Con
+  confirmación de correo, un correo que ya tiene cuenta recibe la misma respuesta (200 sin sesión), también
+  si dos altas llegan a la vez; un alta con el correo de una cuenta sin confirmar la reemplaza. Hasta 5
+  altas por correo y hora; pasado el tope, `429` (la dueña recupera la cuenta con «Olvidé mi contraseña»).
 - `POST /api/auth/sign-in/email` `{ email, password }`
 - `POST /api/auth/sign-out`
 - `GET  /api/auth/get-session`

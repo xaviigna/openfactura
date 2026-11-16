@@ -9,6 +9,7 @@ description: How many requests each key allows, the RateLimit headers, and how t
 | Each dashboard session                | 600 requests per minute         |
 | Attempts with invalid keys, per IP    | 30 per minute                   |
 | Session routes (`/api/auth/*`)        | Per-IP limit                    |
+| Sign-ups with the same email          | 5 per hour (with confirmation)  |
 | Body size                             | 512 KB                          |
 
 On a self-hosted installation, the per-key limit is changed with the `LIMITE_CLAVE_POR_MINUTO`

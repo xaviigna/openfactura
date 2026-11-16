@@ -9,6 +9,7 @@ description: Cuántas peticiones admite cada clave, los encabezados RateLimit y 
 | Cada sesión del panel                 | 600 peticiones por minuto       |
 | Intentos con claves inválidas, por IP | 30 por minuto                   |
 | Rutas de sesión (`/api/auth/*`)       | Límite por IP                   |
+| Registros con un mismo correo         | 5 por hora (con confirmación)   |
 | Tamaño del cuerpo                     | 512 KB                          |
 
 En una instalación propia, el límite por clave se cambia con la variable `LIMITE_CLAVE_POR_MINUTO`.

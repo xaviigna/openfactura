@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { HTTPException } from 'hono/http-exception'
 import { PERMISOS } from 'shared'
-import { createAuth, envioDeCuenta } from './auth'
+import { atenderAuth, envioDeCuenta } from './auth'
 import type { Ctx } from './contexto'
 import { crearDb, documento } from './db'
 import type { Bindings } from './env'
@@ -53,13 +53,18 @@ function crearApp(extensiones: readonly Extension[]) {
 
     // Better Auth: registro, sesión, organizaciones e invitaciones.
     .on(['GET', 'POST'], '/api/auth/*', limitarPorIp('auth', 300), (c) =>
-      createAuth(c.env, c.var.extensiones, (tarea) => {
-        try {
-          c.executionCtx.waitUntil(tarea)
-        } catch {
-          // Sin contexto de ejecución (pruebas con `app.request`): la tarea corre igual.
-        }
-      }).handler(c.req.raw),
+      atenderAuth(
+        c.env,
+        c.var.extensiones ?? [],
+        (tarea) => {
+          try {
+            c.executionCtx.waitUntil(tarea)
+          } catch {
+            // Sin contexto de ejecución (pruebas con `app.request`): la tarea corre igual.
+          }
+        },
+        c.req.raw,
+      ),
     )
 
     // Formas de ingresar que ofrece esta instalación, para la pantalla de acceso. Público.
