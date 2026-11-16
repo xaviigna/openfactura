@@ -149,6 +149,10 @@ export const producto = sqliteTable(
   {
     id: id(),
     organizationId: org(),
+    /** Ambiente al que pertenece: una clave de API sólo ve y modifica el de su modo. */
+    ambiente: text('ambiente', { enum: ['00', '01'] })
+      .notNull()
+      .default('01'),
     codigo: text('codigo').notNull(),
     descripcion: text('descripcion').notNull(),
     /** Precio unitario SIN IVA. */
@@ -162,7 +166,7 @@ export const producto = sqliteTable(
       .default('gravada'),
     creado: creado(),
   },
-  (t) => [uniqueIndex('producto_org_codigo_uq').on(t.organizationId, t.codigo)],
+  (t) => [uniqueIndex('producto_org_codigo_uq').on(t.organizationId, t.ambiente, t.codigo)],
 )
 
 /** Último correlativo consumido por serie del número de control. */

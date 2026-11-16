@@ -6,7 +6,10 @@ import { sha256Hex } from '../lib/crypto'
 import { AppError, conflicto } from '../lib/errors'
 
 /** Errores posteriores a la reserva del número de control: quedan como respuesta de la clave. */
-const DEFINITIVOS = new Set(['dte_rechazado', 'emision_incierta'])
+const DEFINITIVOS = new Set(['dte_rechazado', 'emision_incierta', 'evento_incierto'])
+
+/** Errores 5xx anteriores a cualquier efecto (no se reservó número de control ni se transmitió). */
+const LIBERABLES = new Set(['emision_fallida', 'mh_credenciales_rechazadas', 'mh_no_disponible'])
 
 export interface Respuesta {
   status: ContentfulStatusCode
@@ -55,7 +58,7 @@ export async function ejecutarUnaVez(
     if (previa.status === null || previa.respuesta === null) {
       throw conflicto(
         'idempotencia_en_curso',
-        'La petición original con esa Idempotency-Key sigue en curso',
+        'La petición original con esa Idempotency-Key sigue en curso o no se pudo confirmar su resultado: consulta los documentos antes de reintentar con otra clave',
       )
     }
     return {
@@ -65,24 +68,44 @@ export async function ejecutarUnaVez(
     }
   }
 
+  let respuesta: Respuesta
   try {
-    const respuesta = await accion()
-    await ctx.db
-      .update(idempotencia)
-      .set({ status: respuesta.status, respuesta: JSON.stringify(respuesta.cuerpo) })
-      .where(filtro)
-    return { ...respuesta, repetida: false }
+    respuesta = await accion()
   } catch (error) {
-    if (error instanceof AppError && DEFINITIVOS.has(error.code)) {
-      // Ya se consumió número de control o el resultado es incierto: reintentar no debe emitir otra vez.
-      await ctx.db
-        .update(idempotencia)
-        .set({ status: error.status, respuesta: JSON.stringify(error.toJSON()) })
-        .where(filtro)
-    } else {
-      // Nada se emitió (validación, configuración o fallo inesperado): se libera la clave para reintentar.
-      await ctx.db.delete(idempotencia).where(filtro)
+    // Lo que falle al soltar o fijar la reserva no debe tapar el error original.
+    try {
+      if (error instanceof AppError && DEFINITIVOS.has(error.code)) {
+        // Ya se consumió número de control o el resultado es incierto: reintentar no debe emitir otra vez.
+        await ctx.db
+          .update(idempotencia)
+          .set({ status: error.status, respuesta: JSON.stringify(error.toJSON()) })
+          .where(filtro)
+      } else if (error instanceof AppError && (error.status < 500 || LIBERABLES.has(error.code))) {
+        // Error conocido y anterior a cualquier efecto: se libera la clave para reintentar.
+        await ctx.db.delete(idempotencia).where(filtro)
+      }
+      // Cualquier otro fallo (no clasificado, sin AppError) puede haber ocurrido después de emitir:
+      // la reserva se queda, el reintento recibe `idempotencia_en_curso` y caduca a las 24 h.
+    } catch (fallo) {
+      console.error('No se pudo actualizar la reserva de idempotencia', fallo)
     }
     throw error
   }
+
+  // La acción ya tuvo efectos fiscales. Si guardar la respuesta falla, la reserva NUNCA se libera
+  // (un reintento emitiría otro documento real): se entrega la respuesta y el reintento recibe
+  // `idempotencia_en_curso` hasta que caduque la reserva.
+  const guardada = JSON.stringify(respuesta.cuerpo)
+  for (let intento = 0; intento < 2; intento++) {
+    try {
+      await ctx.db
+        .update(idempotencia)
+        .set({ status: respuesta.status, respuesta: guardada })
+        .where(filtro)
+      break
+    } catch (fallo) {
+      if (intento === 1) console.error('No se pudo guardar la respuesta idempotente', clave, fallo)
+    }
+  }
+  return { ...respuesta, repetida: false }
 }

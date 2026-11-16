@@ -35,6 +35,7 @@ cambian de nombre.
 | 409  | `idempotencia_distinta`        | Esa `Idempotency-Key` ya se usó con otro cuerpo                           | Otra clave para otro documento; el mismo cuerpo para el mismo.                                  |
 | 409  | `idempotencia_en_curso`        | El primer intento sigue en proceso                                        | Espera y repite con la misma clave.                                                             |
 | 409  | `cliente_repetido`, `producto_repetido`, `codigo_repetido` | Ya existe un registro con ese documento o código | Actualiza el existente.                                                                         |
+| 409  | `clientes_solo_produccion`     | Los clientes guardados sólo existen en producción (clave o ambiente de pruebas) | En pruebas, envía el receptor en `datos.receptor`.                                       |
 | 409  | `sin_archivo`                  | El documento sigue pendiente y aún no tiene archivo                       | Consulta de nuevo en unos minutos.                                                              |
 | 409  | `simulador_inactivo`           | Credenciales de prueba pedidas a un servidor sin simulador                | Carga credenciales reales del MH.                                                              |
 | 422  | `dte_rechazado`                | El MH rechazó el documento; el número de control queda como rechazado     | Muestra `details.mh.observaciones`, corrige y emite uno nuevo con otra `Idempotency-Key`.       |
@@ -48,6 +49,7 @@ cambian de nombre.
 | 502  | `mh_no_disponible`             | No se pudo hablar con el MH; no se consumió número de control             | Reintenta con la misma `Idempotency-Key`.                                                       |
 | 502  | `emision_fallida`              | No se pudo firmar; el documento quedó `rechazado` sin transmitirse        | Revisa el certificado y emite de nuevo.                                                         |
 | 502  | `emision_incierta`             | No se pudo confirmar el resultado; el documento queda `pendiente`         | **No emitas otro.** Consulta `details.codigoGeneracion`; se concilia solo con el MH.             |
+| 502  | `evento_incierto`              | No se pudo confirmar si el MH recibió el retorno u operaciones especiales | **No lo envíes otra vez.** Verifica en el MH `details.codigoGeneracion`; reenvía con otra `Idempotency-Key` sólo si no llegó. |
 
 En `details.mh` el MH informa `{ codigo, mensaje, observaciones[] }`.
 

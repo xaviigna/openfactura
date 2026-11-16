@@ -1,6 +1,24 @@
 import { env } from 'cloudflare:test'
 import { describe, expect, it, vi } from 'vitest'
-import { Cliente, EMISOR, FACTURA, nuevaClave, nuevaOrganizacion } from './ayudas'
+import { Cliente, cambiarAmbiente, EMISOR, FACTURA, nuevaClave, nuevaOrganizacion } from './ayudas'
+
+/** Contribuyente receptor tal como viaja en `datos.receptor` (NIT y NRC sin guiones). */
+const RECEPTOR = {
+  tipoDocumento: '36',
+  numDocumento: '06142907861031',
+  nit: '06142907861031',
+  nrc: '2345678',
+  codActividad: '46900',
+  descActividad: 'Venta al por mayor de otros productos',
+  direccion: {
+    departamento: '06',
+    municipio: '23',
+    distrito: '14',
+    complemento: 'Av. Olímpica #100',
+  },
+  telefono: '22445566',
+  correo: 'compras@cliente.com.sv',
+}
 
 describe('sesión y organización', () => {
   it('rechaza peticiones sin sesión ni clave', async () => {
@@ -190,26 +208,12 @@ describe('emisión', () => {
 
   it('cada tipo de DTE lleva su propia serie', async () => {
     const { cliente } = await nuevaOrganizacion({ emisor: true })
-    const c = await cliente.json('POST', '/api/v1/clientes', {
-      tipoDocumento: '36',
-      numDocumento: '0614-290786-103-1',
-      nrc: '234567-8',
-      nombre: 'CLIENTE CONTRIBUYENTE, S.A. DE C.V.',
-      codActividad: '46900',
-      descActividad: 'Venta al por mayor de otros productos',
-      departamento: '06',
-      municipio: '23',
-      distrito: '14',
-      complemento: 'Av. Olímpica #100',
-      telefono: '22445566',
-      correo: 'compras@cliente.com.sv',
-    })
-    expect(c.status).toBe(201)
+    // En pruebas no hay clientes guardados: el receptor viaja en `datos.receptor`.
+    const receptor = { ...RECEPTOR, nombre: 'CLIENTE CONTRIBUYENTE, S.A. DE C.V.' }
     await cliente.json('POST', '/api/v1/dte', FACTURA)
     const ccf = await cliente.json('POST', '/api/v1/dte', {
       tipoDte: '03',
-      clienteId: c.cuerpo.id,
-      datos: { items: [{ descripcion: 'Licencia', cantidad: 1, precioUni: 100 }] },
+      datos: { receptor, items: [{ descripcion: 'Licencia', cantidad: 1, precioUni: 100 }] },
     })
     expect(ccf.status).toBe(201)
     expect(ccf.cuerpo.numeroControl).toBe('DTE-03-M001P001-000000000000001')
@@ -219,8 +223,8 @@ describe('emisión', () => {
     // En el Comprobante de Retención el total es el IVA retenido.
     const retencion = await cliente.json('POST', '/api/v1/dte/validar', {
       tipoDte: '07',
-      clienteId: c.cuerpo.id,
       datos: {
+        receptor,
         items: [
           {
             tipoDte: '03',
@@ -240,24 +244,11 @@ describe('emisión', () => {
 
   it('emite liquidación (08), documento contable de liquidación (09) y donación (15)', async () => {
     const { cliente } = await nuevaOrganizacion({ emisor: true })
-    const c = await cliente.json('POST', '/api/v1/clientes', {
-      tipoDocumento: '36',
-      numDocumento: '0614-290786-103-1',
-      nrc: '234567-8',
-      nombre: 'MANDANTE, S.A. DE C.V.',
-      codActividad: '46900',
-      descActividad: 'Venta al por mayor de otros productos',
-      departamento: '06',
-      municipio: '23',
-      distrito: '14',
-      complemento: 'Av. Olímpica #100',
-      telefono: '22445566',
-      correo: 'compras@cliente.com.sv',
-    })
+    const receptor = { ...RECEPTOR, nombre: 'MANDANTE, S.A. DE C.V.' }
     const liquidacion = await cliente.json('POST', '/api/v1/dte', {
       tipoDte: '08',
-      clienteId: c.cuerpo.id,
       datos: {
+        receptor,
         documentos: [
           {
             tipoDte: '03',
@@ -276,8 +267,8 @@ describe('emisión', () => {
 
     const contable = await cliente.json('POST', '/api/v1/dte', {
       tipoDte: '09',
-      clienteId: c.cuerpo.id,
       datos: {
+        receptor,
         periodo: { inicio: '2026-11-01', fin: '2026-11-07' },
         valorOperaciones: 1130,
         porcentComision: 3,
@@ -290,8 +281,8 @@ describe('emisión', () => {
 
     const donacion = await cliente.json('POST', '/api/v1/dte', {
       tipoDte: '15',
-      clienteId: c.cuerpo.id,
       datos: {
+        receptor,
         documentosAsociados: [{ descripcion: 'Resolución', detalle: 'RES-01-2026' }],
         items: [{ tipoDonacion: 2, descripcion: 'Computadoras', cantidad: 2, valorUni: 300 }],
       },
@@ -379,11 +370,6 @@ describe('aislamiento entre organizaciones', () => {
     const a = await nuevaOrganizacion({ emisor: true })
     const b = await nuevaOrganizacion({ emisor: true })
     const { cuerpo: doc } = await a.cliente.json('POST', '/api/v1/dte', FACTURA)
-    const { cuerpo: cliente } = await a.cliente.json('POST', '/api/v1/clientes', {
-      tipoDocumento: '13',
-      numDocumento: '01234567-8',
-      nombre: 'Cliente de A',
-    })
     const { cuerpo: producto } = await a.cliente.json('POST', '/api/v1/productos', {
       codigo: 'P-1',
       descripcion: 'Producto de A',
@@ -404,7 +390,6 @@ describe('aislamiento entre organizaciones', () => {
       `/api/v1/dte/${doc.id}`,
       `/api/v1/dte/${doc.codigoGeneracion}/json`,
       `/api/v1/dte/${doc.codigoGeneracion}/pdf`,
-      `/api/v1/clientes/${cliente.id}`,
       `/api/v1/productos/${producto.id}`,
     ]) {
       expect((await b.cliente.pedir('GET', ruta)).status, ruta).toBe(404)
@@ -426,9 +411,7 @@ describe('aislamiento entre organizaciones', () => {
         })
       ).status,
     ).toBe(404)
-    expect((await b.cliente.json('GET', '/api/v1/clientes')).cuerpo).toHaveLength(0)
     expect((await b.cliente.json('GET', '/api/v1/claves')).cuerpo).toHaveLength(0)
-    expect((await b.cliente.pedir('DELETE', `/api/v1/clientes/${cliente.id}`)).status).toBe(404)
     expect((await b.cliente.pedir('DELETE', `/api/v1/claves/${claveA.id}`)).status).toBe(404)
     expect(
       (
@@ -437,11 +420,28 @@ describe('aislamiento entre organizaciones', () => {
         })
       ).status,
     ).toBe(404)
-    // Tampoco puede usar un cliente ajeno como receptor.
-    const ajeno = await b.cliente.json('POST', '/api/v1/dte', { ...FACTURA, clienteId: cliente.id })
-    expect(ajeno.status).toBe(404)
     // La clave de A sigue viendo sólo lo de A.
     expect((await claveA.cliente.json('GET', '/api/v1/dte')).cuerpo.total).toBe(1)
+
+    // Clientes: el directorio sólo existe en producción, así que ambas pasan a ese ambiente.
+    await cambiarAmbiente(a.cliente, '01')
+    await cambiarAmbiente(b.cliente, '01')
+    const { cuerpo: cliente } = await a.cliente.json('POST', '/api/v1/clientes', {
+      tipoDocumento: '13',
+      numDocumento: '01234567-8',
+      nombre: 'Cliente de A',
+    })
+    expect((await b.cliente.pedir('GET', `/api/v1/clientes/${cliente.id}`)).status).toBe(404)
+    expect((await b.cliente.json('GET', '/api/v1/clientes')).cuerpo).toHaveLength(0)
+    expect((await b.cliente.pedir('DELETE', `/api/v1/clientes/${cliente.id}`)).status).toBe(404)
+    // Tampoco puede usar un cliente ajeno como receptor (sin credenciales de producción, se valida).
+    const ajeno = await b.cliente.json('POST', '/api/v1/dte/validar', {
+      ...FACTURA,
+      clienteId: cliente.id,
+    })
+    expect(ajeno.status).toBe(404)
+    await cambiarAmbiente(a.cliente, '00')
+    await cambiarAmbiente(b.cliente, '00')
 
     // Webhooks y sus entregas: B no los ve, no los prueba, no los cambia ni los borra.
     const envios = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('ok'))

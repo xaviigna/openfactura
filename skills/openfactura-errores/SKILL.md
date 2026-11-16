@@ -31,6 +31,8 @@ puede crear un segundo documento con valor fiscal.
 | `retorno_excedido` (409)       | El retorno supera lo que queda del documento                   | `details.disponible` dice cuánto queda por retornar. Ajusta las cantidades.                         |
 | `retorno_vigente` (409)         | El documento tiene un evento de retorno procesado              | Para invalidar el documento, primero invalida el retorno: `dte_invalidar` con `details.codigoGeneracion`. |
 | `evento_rechazado` (422)        | Hacienda rechazó el retorno o las operaciones especiales       | Muestra `details.mh.observaciones`, corrige y vuelve a enviar con otra `idempotencyKey`.             |
+| `evento_incierto` (502)         | No se sabe si Hacienda recibió el retorno o las operaciones especiales | **No lo envíes otra vez.** Verifica `details.codigoGeneracion` con Hacienda; reenvía con otra `idempotencyKey` sólo si no llegó. |
+| `clientes_solo_produccion` (409) | Los clientes guardados sólo existen en producción              | En pruebas no uses `clienteId`, `clientes_buscar` ni `cliente_crear`: envía el receptor en `datos.receptor`. |
 | `sin_permiso` (403)                                                    | La clave no tiene el permiso `details.permiso`                 | Pide una clave con ese permiso.                                                                                                                                  |
 | `limite_excedido` (429)                                                | Demasiadas peticiones                                          | Espera `Retry-After` segundos.                                                                                                                                   |
 

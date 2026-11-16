@@ -63,9 +63,10 @@ const OPCIONES: Record<string, TipoOpcion> = {
   hasta: { type: 'string', ayuda: 'Fecha final AAAA-MM-DD' },
   pagina: { type: 'string', ayuda: 'Número de página' },
   motivo: { type: 'string', ayuda: 'Motivo de la invalidación' },
-  cliente: {
+  receptor: {
     type: 'string',
-    ayuda: 'En la certificación, id del cliente contribuyente que recibe los CCF de prueba',
+    ayuda:
+      'En la certificación, receptor de los CCF de prueba: openfactura, o un JSON (archivo o -) con nit, nrc, nombre, actividad, dirección y correo',
   },
   completo: {
     type: 'boolean',

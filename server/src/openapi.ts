@@ -99,6 +99,7 @@ export const CODIGOS_ERROR: Record<string, number> = {
   idempotencia_distinta: 409,
   idempotencia_en_curso: 409,
   cliente_repetido: 409,
+  clientes_solo_produccion: 409,
   producto_repetido: 409,
   codigo_repetido: 409,
   sin_archivo: 409,
@@ -115,6 +116,7 @@ export const CODIGOS_ERROR: Record<string, number> = {
   mh_no_disponible: 502,
   emision_fallida: 502,
   emision_incierta: 502,
+  evento_incierto: 502,
 }
 
 const DESCRIPCION_ESTADO: Record<number, string> = {
@@ -337,10 +339,11 @@ export const RUTAS: Ruta[] = [
     etiqueta: 'Clientes',
     resumen: 'Buscar clientes',
     descripcion:
-      '`q` busca por nombre, nombre comercial o número de documento. Hasta 100 por defecto.',
+      '`q` busca por nombre, nombre comercial o número de documento. Hasta 100 por defecto. Los clientes guardados sólo existen en producción: con una clave de pruebas o la organización en pruebas, todas las rutas de clientes responden `409 clientes_solo_produccion`.',
     permiso: 'clientes:read',
     consulta: esquemaBusqueda,
     respuestas: ok('Clientes.', lista('Cliente')),
+    errores: [409],
   },
   {
     metodo: 'post',
@@ -348,6 +351,7 @@ export const RUTAS: Ruta[] = [
     id: 'cliente_crear',
     etiqueta: 'Clientes',
     resumen: 'Crear un cliente',
+    descripcion: 'Sólo en producción; en pruebas responde `409 clientes_solo_produccion`.',
     permiso: 'clientes:write',
     cuerpo: 'ClienteEntrada',
     respuestas: { 201: { descripcion: 'Cliente creado.', esquema: ref('Cliente') } },
@@ -361,7 +365,7 @@ export const RUTAS: Ruta[] = [
     resumen: 'Obtener un cliente',
     permiso: 'clientes:read',
     respuestas: ok('Cliente.', ref('Cliente')),
-    errores: [404],
+    errores: [404, 409],
   },
   {
     metodo: 'put',
@@ -382,7 +386,7 @@ export const RUTAS: Ruta[] = [
     resumen: 'Eliminar un cliente',
     permiso: 'clientes:write',
     respuestas: ok('Eliminado.', objeto({ eliminado: { const: true } }, ['eliminado'])),
-    errores: [404],
+    errores: [404, 409],
   },
 
   // --- Productos ----------------------------------------------------------
@@ -461,7 +465,7 @@ export const RUTAS: Ruta[] = [
     etiqueta: 'DTE',
     resumen: 'Emitir un DTE',
     descripcion:
-      'Construye, valida, firma y transmite el documento al MH. `datos` es la entrada del constructor del SDK `@openfactura/dte` para ese tipo. En Factura (01) `precioUni` incluye IVA; en Crédito Fiscal, notas y remisión va sin IVA. Si se envía `clienteId` y falta `datos.receptor`, el receptor se toma del cliente guardado. El Comprobante de Liquidación (08), el Documento Contable de Liquidación (09) y el Comprobante de Donación (15) no admiten contingencia: con el MH caído responden `mh_no_disponible`.',
+      'Construye, valida, firma y transmite el documento al MH. `datos` es la entrada del constructor del SDK `@openfactura/dte` para ese tipo. En Factura (01) `precioUni` incluye IVA; en Crédito Fiscal, notas y remisión va sin IVA. Si se envía `clienteId` y falta `datos.receptor`, el receptor se toma del cliente guardado (sólo en producción; en pruebas responde `409 clientes_solo_produccion`). El Comprobante de Liquidación (08), el Documento Contable de Liquidación (09) y el Comprobante de Donación (15) no admiten contingencia: con el MH caído responden `mh_no_disponible`.',
     permiso: 'dte:emit',
     cuerpo: 'Emision',
     idempotente: true,

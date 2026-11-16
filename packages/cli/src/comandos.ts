@@ -986,10 +986,12 @@ const MAX_SIN_RESPUESTA = 3
 
 async function certificacionEjecutar(ctx: Contexto): Promise<number | undefined> {
   const api = ctx.api()
-  const cliente = ctx.op('cliente')
+  // Receptor de los CCF: «openfactura» o un JSON con los datos del contribuyente (archivo o `-`).
+  const origen = ctx.op('receptor')
+  const receptor = !origen || origen === 'openfactura' ? origen : await leerJson(ctx, origen)
   let { datos } = await api.pedir<Certificacion>('POST', '/ext/certificacion/iniciar', {
     cuerpo: {
-      ...(cliente ? { clienteCcfId: cliente } : {}),
+      ...(receptor ? { receptor } : {}),
       ...(ctx.bandera('completo') ? { alcance: 'completo' } : {}),
       desdeCero: ctx.bandera('desde-cero'),
     },
@@ -1644,9 +1646,9 @@ export const COMANDOS: Comando[] = [
   },
   {
     nombre: 'certificacion ejecutar',
-    uso: 'certificacion ejecutar [--cliente <id>] [--completo] [--desde-cero]',
+    uso: 'certificacion ejecutar [--receptor <openfactura|archivo.json|->] [--completo] [--desde-cero]',
     resumen: 'Emite las pruebas mínimas en el ambiente de pruebas hasta completarlas',
-    opciones: ['cliente', 'completo', 'desde-cero'],
+    opciones: ['receptor', 'completo', 'desde-cero'],
     args: [0, 0],
     accion: certificacionEjecutar,
   },

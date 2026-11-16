@@ -1,16 +1,23 @@
 import { and, asc, eq, like, or } from 'drizzle-orm'
 import type { esquemaProducto } from 'shared'
 import type { z } from 'zod'
-import { type Ctx, exigir } from '../contexto'
+import { ambienteDeModo, type Ctx, exigir } from '../contexto'
 import { producto } from '../db'
 import { nuevoId } from '../lib/crypto'
 import { conflicto, noEncontrado } from '../lib/errors'
 import { registrar } from './auditoria'
+import { ambienteActivo } from './emisor'
 
 type Datos = z.infer<typeof esquemaProducto>
 
-const propio = (ctx: Ctx, id: string) =>
-  and(eq(producto.id, id), eq(producto.organizationId, ctx.actor.organizationId))
+/** Igual que los clientes: una clave de API sólo ve y modifica los productos de su ambiente. */
+const visibles = (ctx: Ctx) =>
+  and(
+    eq(producto.organizationId, ctx.actor.organizationId),
+    ctx.actor.modo ? eq(producto.ambiente, ambienteDeModo(ctx.actor.modo)) : undefined,
+  )
+
+const propio = (ctx: Ctx, id: string) => and(eq(producto.id, id), visibles(ctx))
 
 export async function listarProductos(ctx: Ctx, opciones: { q?: string; limite?: number } = {}) {
   exigir(ctx, 'productos:read')
@@ -21,7 +28,7 @@ export async function listarProductos(ctx: Ctx, opciones: { q?: string; limite?:
     .from(producto)
     .where(
       and(
-        eq(producto.organizationId, ctx.actor.organizationId),
+        visibles(ctx),
         patron ? or(like(producto.descripcion, patron), like(producto.codigo, patron)) : undefined,
       ),
     )
@@ -40,7 +47,12 @@ export async function crearProducto(ctx: Ctx, datos: Datos) {
   exigir(ctx, 'productos:write')
   const id = nuevoId()
   try {
-    await ctx.db.insert(producto).values({ id, organizationId: ctx.actor.organizationId, ...datos })
+    await ctx.db.insert(producto).values({
+      id,
+      organizationId: ctx.actor.organizationId,
+      ambiente: ctx.actor.modo ? ambienteDeModo(ctx.actor.modo) : await ambienteActivo(ctx),
+      ...datos,
+    })
   } catch {
     throw conflicto('producto_repetido', `Ya existe un producto con el código ${datos.codigo}`)
   }

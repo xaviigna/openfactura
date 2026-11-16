@@ -1048,8 +1048,43 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "clienteCcfId": {
-                    "type": ["string", "null"],
+                  "receptor": {
+                    "description": "Receptor de los CCF de prueba: \"openfactura\" (recomendado) o los datos de otro contribuyente, con NRC. No es un cliente guardado. Si se omite se conserva el anterior.",
+                    "oneOf": [
+                      { "type": "string", "const": "openfactura" },
+                      {
+                        "type": "object",
+                        "required": [
+                          "nit",
+                          "nrc",
+                          "nombre",
+                          "codActividad",
+                          "descActividad",
+                          "direccion",
+                          "correo"
+                        ],
+                        "properties": {
+                          "nit": { "type": "string" },
+                          "nrc": { "type": "string" },
+                          "nombre": { "type": "string" },
+                          "codActividad": { "type": "string" },
+                          "descActividad": { "type": "string" },
+                          "direccion": {
+                            "type": "object",
+                            "required": ["departamento", "municipio", "distrito", "complemento"],
+                            "properties": {
+                              "departamento": { "type": "string" },
+                              "municipio": { "type": "string" },
+                              "distrito": { "type": "string" },
+                              "complemento": { "type": "string" }
+                            }
+                          },
+                          "telefono": { "type": ["string", "null"] },
+                          "correo": { "type": "string", "format": "email" }
+                        }
+                      },
+                      { "type": "null" }
+                    ],
                     "example": "openfactura"
                   },
                   "desdeCero": {
@@ -1412,8 +1447,14 @@
             "type": "string",
             "enum": ["sin_iniciar", "en_curso", "detenida", "completa"]
           },
-          "clienteCcfId": {
-            "type": ["string", "null"]
+          "receptorCcf": {
+            "type": ["object", "null"],
+            "properties": {
+              "nombre": { "type": "string" },
+              "nit": { "type": "string" },
+              "nrc": { "type": "string" },
+              "esOpenFactura": { "type": "boolean" }
+            }
           },
           "requisitos": {
             "type": "object"

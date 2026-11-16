@@ -847,7 +847,7 @@
           "Clientes"
         ],
         "summary": "Buscar clientes",
-        "description": "`q` busca por nombre, nombre comercial o número de documento. Hasta 100 por defecto.\n\nPermiso: `clientes:read`.",
+        "description": "`q` busca por nombre, nombre comercial o número de documento. Hasta 100 por defecto. Los clientes guardados sólo existen en producción: con una clave de pruebas o la organización en pruebas, todas las rutas de clientes responden `409 clientes_solo_produccion`.\n\nPermiso: `clientes:read`.",
         "x-permiso": "clientes:read",
         "parameters": [
           {
@@ -907,6 +907,9 @@
           "403": {
             "$ref": "#/components/responses/Error403"
           },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
           "429": {
             "$ref": "#/components/responses/Error429"
           }
@@ -918,7 +921,7 @@
           "Clientes"
         ],
         "summary": "Crear un cliente",
-        "description": "Permiso: `clientes:write`.",
+        "description": "Sólo en producción; en pruebas responde `409 clientes_solo_produccion`.\n\nPermiso: `clientes:write`.",
         "x-permiso": "clientes:write",
         "requestBody": {
           "required": true,
@@ -1029,6 +1032,9 @@
           },
           "404": {
             "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -1172,6 +1178,9 @@
           },
           "404": {
             "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -1646,7 +1655,7 @@
           "DTE"
         ],
         "summary": "Emitir un DTE",
-        "description": "Construye, valida, firma y transmite el documento al MH. `datos` es la entrada del constructor del SDK `@openfactura/dte` para ese tipo. En Factura (01) `precioUni` incluye IVA; en Crédito Fiscal, notas y remisión va sin IVA. Si se envía `clienteId` y falta `datos.receptor`, el receptor se toma del cliente guardado. El Comprobante de Liquidación (08), el Documento Contable de Liquidación (09) y el Comprobante de Donación (15) no admiten contingencia: con el MH caído responden `mh_no_disponible`.\n\nPermiso: `dte:emit`.",
+        "description": "Construye, valida, firma y transmite el documento al MH. `datos` es la entrada del constructor del SDK `@openfactura/dte` para ese tipo. En Factura (01) `precioUni` incluye IVA; en Crédito Fiscal, notas y remisión va sin IVA. Si se envía `clienteId` y falta `datos.receptor`, el receptor se toma del cliente guardado (sólo en producción; en pruebas responde `409 clientes_solo_produccion`). El Comprobante de Liquidación (08), el Documento Contable de Liquidación (09) y el Comprobante de Donación (15) no admiten contingencia: con el MH caído responden `mh_no_disponible`.\n\nPermiso: `dte:emit`.",
         "x-permiso": "dte:emit",
         "parameters": [
           {
@@ -3784,7 +3793,7 @@
         }
       },
       "Error409": {
-        "description": "Falta configurar algo o hay un conflicto. Códigos: `sin_organizacion`, `sin_organizacion_activa`, `nit_bloqueado`, `emisor_no_configurado`, `credenciales_incompletas`, `sin_punto_venta`, `estado_invalido`, `ambiente_distinto`, `retorno_excedido`, `retorno_vigente`, `idempotencia_distinta`, `idempotencia_en_curso`, `cliente_repetido`, `producto_repetido`, `codigo_repetido`, `sin_archivo`, `limite_webhooks`, `simulador_inactivo`.",
+        "description": "Falta configurar algo o hay un conflicto. Códigos: `sin_organizacion`, `sin_organizacion_activa`, `nit_bloqueado`, `emisor_no_configurado`, `credenciales_incompletas`, `sin_punto_venta`, `estado_invalido`, `ambiente_distinto`, `retorno_excedido`, `retorno_vigente`, `idempotencia_distinta`, `idempotencia_en_curso`, `cliente_repetido`, `clientes_solo_produccion`, `producto_repetido`, `codigo_repetido`, `sin_archivo`, `limite_webhooks`, `simulador_inactivo`.",
         "content": {
           "application/json": {
             "schema": {
@@ -3829,7 +3838,7 @@
         }
       },
       "Error502": {
-        "description": "Problema hablando con el MH o al firmar. Con `emision_incierta` consulta `details.codigoGeneracion` antes de reintentar. Códigos: `mh_credenciales_rechazadas`, `mh_no_disponible`, `emision_fallida`, `emision_incierta`.",
+        "description": "Problema hablando con el MH o al firmar. Con `emision_incierta` consulta `details.codigoGeneracion` antes de reintentar. Códigos: `mh_credenciales_rechazadas`, `mh_no_disponible`, `emision_fallida`, `emision_incierta`, `evento_incierto`.",
         "content": {
           "application/json": {
             "schema": {
@@ -4815,6 +4824,7 @@
                   "idempotencia_distinta",
                   "idempotencia_en_curso",
                   "cliente_repetido",
+                  "clientes_solo_produccion",
                   "producto_repetido",
                   "codigo_repetido",
                   "sin_archivo",
@@ -4830,7 +4840,8 @@
                   "mh_credenciales_rechazadas",
                   "mh_no_disponible",
                   "emision_fallida",
-                  "emision_incierta"
+                  "emision_incierta",
+                  "evento_incierto"
                 ]
               },
               "message": {

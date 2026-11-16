@@ -37,7 +37,7 @@ const listaTipos = Object.entries(TIPOS_DTE)
 
 const DATOS_DTE = `Datos del documento. Campos habituales:
 - items: [{ descripcion, cantidad, precioUni, tipoItem?: 1 bien | 2 servicio, codigo?, uniMedida?: 59 unidad, descuento?, tipoVenta?: 'gravada'|'exenta'|'noSujeta' }]. En Factura (01) precioUni INCLUYE IVA; en CCF (03), notas y remisión va SIN IVA.
-- receptor: { nit o tipoDocumento+numDocumento, nrc, nombre, codActividad, descActividad, direccion: { departamento, municipio, distrito, complemento }, telefono, correo }. En Factura es opcional bajo USD 25,000. Puede omitirse si envía clienteId.
+- receptor: { nit o tipoDocumento+numDocumento, nrc, nombre, codActividad, descActividad, direccion: { departamento, municipio, distrito, complemento }, telefono, correo }. En Factura es opcional bajo USD 25,000. Puede omitirse si envía clienteId (sólo en producción).
 - condicionOperacion?: 1 contado | 2 crédito | 3 otro; pagos?; credito?: { plazo, periodo }.
 - documentosRelacionados (notas de crédito/débito): [{ tipoDocumento, tipoGeneracion: 2, numeroDocumento: <código de generación>, fechaEmision }].
 - Comprobante de Liquidación (08): documentos: [{ tipoDte: 01|03|05|06|11|18, numeroDocumento, fechaEmision, ventaNoSuj?, ventaExenta?, ventaGravada? (sin IVA), exportaciones?, iva? (sólo F y Retorno), tributos?: [{ codigo, valor }], ivaPercibido?, anulado? }], montos en positivo. Receptor = mandante.
@@ -49,7 +49,12 @@ Los códigos de catálogo se consultan con catalogo_buscar.`
 const entradaEmision = {
   tipoDte: z.enum(tipos).describe(`Tipo de documento: ${listaTipos}`),
   datos: z.record(z.string(), z.unknown()).describe(DATOS_DTE),
-  clienteId: z.string().optional().describe('Id de un cliente guardado para usarlo como receptor'),
+  clienteId: z
+    .string()
+    .optional()
+    .describe(
+      'Id de un cliente guardado para usarlo como receptor. Los clientes guardados sólo existen en producción; en pruebas envíe datos.receptor.',
+    ),
   puntoVentaId: z.string().optional().describe('Punto de venta emisor; por defecto el primero'),
 }
 
@@ -89,7 +94,7 @@ const lectura = { readOnlyHint: true, openWorldHint: false } as const
 
 /** Servidor MCP de una petición: las herramientas actúan con los permisos del actor autenticado. */
 export function crearServidorMcp(ctx: Ctx): McpServer {
-  const servidor = new McpServer({ name: 'openfactura', version: '0.1.0' })
+  const servidor = new McpServer({ name: 'openfactura', version: '0.2.0' })
 
   servidor.registerTool(
     'emisor_obtener',
@@ -132,7 +137,8 @@ export function crearServidorMcp(ctx: Ctx): McpServer {
     'clientes_buscar',
     {
       title: 'Buscar clientes',
-      description: 'Busca clientes guardados por nombre o número de documento.',
+      description:
+        'Busca clientes guardados por nombre o número de documento. El directorio de clientes sólo existe en producción: en pruebas responde clientes_solo_produccion y el receptor va en datos.receptor.',
       inputSchema: { q: z.string().max(100).optional() },
       annotations: lectura,
     },
@@ -144,7 +150,7 @@ export function crearServidorMcp(ctx: Ctx): McpServer {
     {
       title: 'Crear cliente',
       description:
-        'Guarda un cliente para reutilizarlo como receptor. tipoDocumento: 36 NIT, 13 DUI, 03 pasaporte, 02 carné de residente, 37 otro.',
+        'Guarda un cliente para reutilizarlo como receptor. Sólo en producción: en pruebas no hay directorio de clientes (clientes_solo_produccion). tipoDocumento: 36 NIT, 13 DUI, 03 pasaporte, 02 carné de residente, 37 otro.',
       inputSchema: esquemaCliente.shape,
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },

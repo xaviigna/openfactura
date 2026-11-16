@@ -35,6 +35,7 @@ contract and are never renamed.
 | 409  | `idempotencia_distinta`        | That `Idempotency-Key` was already used with a different body             | A different key for a different document; the same body for the same one.                       |
 | 409  | `idempotencia_en_curso`        | The first attempt is still in progress                                    | Wait and retry with the same key.                                                               |
 | 409  | `cliente_repetido`, `producto_repetido`, `codigo_repetido` | A record with that document or code already exists | Update the existing one.                                                                   |
+| 409  | `clientes_solo_produccion`     | Saved clients only exist in production (test key or test environment)   | In test, send the recipient in `datos.receptor`.                                                |
 | 409  | `sin_archivo`                  | The document is still pending and has no file yet                         | Check again in a few minutes.                                                                   |
 | 409  | `simulador_inactivo`           | Test credentials requested from a server without the simulator            | Upload real MH credentials.                                                                     |
 | 422  | `dte_rechazado`                | The MH rejected the document; the control number is left as rejected      | Show `details.mh.observaciones`, fix, and issue a new one with another `Idempotency-Key`.       |
@@ -48,6 +49,7 @@ contract and are never renamed.
 | 502  | `mh_no_disponible`             | Couldn't reach the MH; no control number was consumed                     | Retry with the same `Idempotency-Key`.                                                          |
 | 502  | `emision_fallida`              | Signing failed; the document was left `rechazado` without being transmitted | Check the certificate and issue again.                                                        |
 | 502  | `emision_incierta`             | The outcome couldn't be confirmed; the document stays `pendiente`         | **Don't issue another one.** Check `details.codigoGeneracion`; it reconciles with the MH on its own. |
+| 502  | `evento_incierto`              | Couldn't confirm whether the MH received the return or special operations event | **Don't send it again.** Check `details.codigoGeneracion` with the MH; resend with another `Idempotency-Key` only if it didn't arrive. |
 
 In `details.mh` the MH reports `{ codigo, mensaje, observaciones[] }`.
 

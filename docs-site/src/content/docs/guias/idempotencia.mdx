@@ -29,8 +29,8 @@ curl https://app.openfactura.co/api/v1/dte \
 - **El primer intento sigue en curso** → `409 idempotencia_en_curso`: espera unos segundos y repite.
 - Las claves se conservan **24 horas** y son **independientes por ambiente**: una clave usada en
   pruebas no devuelve nada en producción.
-- Se guardan como respuesta definitiva los éxitos, `dte_rechazado` y `emision_incierta`. Los demás
-  errores liberan la clave para reintentar.
+- Se guardan como respuesta definitiva los éxitos, `dte_rechazado`, `emision_incierta` y
+  `evento_incierto`. Los errores en los que nada llegó al MH liberan la clave para reintentar.
 
 <Aside type="tip">
 Regla de oro: **reintenta sólo con la misma clave**. Una clave nueva puede crear un segundo documento

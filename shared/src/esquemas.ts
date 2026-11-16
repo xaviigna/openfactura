@@ -115,7 +115,10 @@ export const esquemaEmision = z.object({
    * `items`, `receptor`, `condicionOperacion`, `pagos`, `documentosRelacionados`, etc.
    */
   datos: z.record(z.string(), z.unknown()),
-  /** Si se indica y `datos.receptor` falta, el receptor se toma del cliente guardado. */
+  /**
+   * Si se indica y `datos.receptor` falta, el receptor se toma del cliente guardado. Los clientes
+   * guardados sólo existen en producción: en pruebas responde `409 clientes_solo_produccion`.
+   */
   clienteId: z.string().optional(),
   /** Punto de venta que emite. Por defecto el primero del emisor. */
   puntoVentaId: z.string().optional(),

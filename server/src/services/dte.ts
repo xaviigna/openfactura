@@ -47,6 +47,7 @@ import { antesDeEmitir, type Extension, opcionesPdf } from '../extensiones'
 import { nuevoId } from '../lib/crypto'
 import { AppError, conflicto, invalido, mensajeDe, noEncontrado } from '../lib/errors'
 import { registrar } from './auditoria'
+import { clientesVisibles, exigirDirectorio } from './clientes'
 import { ambienteActivo, type ContextoEmision, contextoEmision, emisorParaDte } from './emisor'
 import type { Respuesta } from './idempotencia'
 import { publicar } from './webhooks'
@@ -100,15 +101,11 @@ function resumen(dte: Dte) {
 /** Completa `datos.receptor` con el cliente guardado cuando la petición sólo trae `clienteId`. */
 async function prepararDatos(ctx: Ctx, entrada: EmisionEntrada): Promise<Record<string, unknown>> {
   if (!entrada.clienteId) return entrada.datos
+  await exigirDirectorio(ctx)
   const [c] = await ctx.db
     .select()
     .from(tablaCliente)
-    .where(
-      and(
-        eq(tablaCliente.id, entrada.clienteId),
-        eq(tablaCliente.organizationId, ctx.actor.organizationId),
-      ),
-    )
+    .where(and(eq(tablaCliente.id, entrada.clienteId), clientesVisibles(ctx)))
   if (!c) throw noEncontrado('El cliente')
   if (entrada.datos.receptor || entrada.datos.sujetoExcluido) return entrada.datos
   const direccion =
@@ -304,7 +301,7 @@ async function guardar(
   ])
 }
 
-const mhNoDisponible = (error: unknown) =>
+export const mhNoDisponible = (error: unknown) =>
   error instanceof ContingenciaRequeridaError ||
   error instanceof ErrorConexionMH ||
   (error instanceof ErrorMH && error.status >= 500)

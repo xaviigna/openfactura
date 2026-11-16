@@ -29,7 +29,7 @@ const cuenta = async (sql: string, ...args: unknown[]) =>
 describe('MCP: lotes JSON-RPC', () => {
   it('un lote de 50 llamadas se rechaza y no crea ningún cliente', async () => {
     const { cliente } = await nuevaOrganizacion({ emisor: true })
-    const k = await nuevaClave(cliente, ['clientes:read', 'clientes:write'])
+    const k = await nuevaClave(cliente, ['clientes:read', 'clientes:write'], { modo: 'live' })
     const c = new Cliente(k.clave)
     c.despachar = despachar
     const lote = Array.from({ length: 50 }, (_, i) => llamada(i + 1, 'LOTE'))
@@ -43,7 +43,7 @@ describe('MCP: lotes JSON-RPC', () => {
 
   it('una llamada suelta sigue funcionando', async () => {
     const { cliente } = await nuevaOrganizacion({ emisor: true })
-    const k = await nuevaClave(cliente, ['clientes:read', 'clientes:write'])
+    const k = await nuevaClave(cliente, ['clientes:read', 'clientes:write'], { modo: 'live' })
     const c = new Cliente(k.clave)
     c.despachar = despachar
     const r = await c.pedir('POST', '/mcp', llamada(1, 'SOLA'), ACCEPT)

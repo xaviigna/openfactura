@@ -64,6 +64,20 @@
       "when": 1794781699547,
       "tag": "0008_numero_control_anio",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794797341590,
+      "tag": "0009_cliente_producto_ambiente",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1794799806269,
+      "tag": "0010_cliente_sin_ambiente",
+      "breakpoints": true
     }
   ]
 }

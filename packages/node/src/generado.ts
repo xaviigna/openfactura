@@ -136,7 +136,7 @@ export interface Nucleo {
   }
   Error: {
     error: {
-      code: "datos_invalidos" | "dte_invalido" | "no_autenticado" | "plan_requerido" | "sin_permiso" | "origen_no_permitido" | "no_encontrado" | "sin_organizacion" | "sin_organizacion_activa" | "nit_bloqueado" | "emisor_no_configurado" | "credenciales_incompletas" | "sin_punto_venta" | "estado_invalido" | "ambiente_distinto" | "retorno_excedido" | "retorno_vigente" | "idempotencia_distinta" | "idempotencia_en_curso" | "cliente_repetido" | "producto_repetido" | "codigo_repetido" | "sin_archivo" | "limite_webhooks" | "simulador_inactivo" | "dte_rechazado" | "invalidacion_rechazada" | "contingencia_rechazada" | "evento_rechazado" | "limite_excedido" | "limite_plan" | "error_interno" | "mh_credenciales_rechazadas" | "mh_no_disponible" | "emision_fallida" | "emision_incierta"
+      code: "datos_invalidos" | "dte_invalido" | "no_autenticado" | "plan_requerido" | "sin_permiso" | "origen_no_permitido" | "no_encontrado" | "sin_organizacion" | "sin_organizacion_activa" | "nit_bloqueado" | "emisor_no_configurado" | "credenciales_incompletas" | "sin_punto_venta" | "estado_invalido" | "ambiente_distinto" | "retorno_excedido" | "retorno_vigente" | "idempotencia_distinta" | "idempotencia_en_curso" | "cliente_repetido" | "clientes_solo_produccion" | "producto_repetido" | "codigo_repetido" | "sin_archivo" | "limite_webhooks" | "simulador_inactivo" | "dte_rechazado" | "invalidacion_rechazada" | "contingencia_rechazada" | "evento_rechazado" | "limite_excedido" | "limite_plan" | "error_interno" | "mh_credenciales_rechazadas" | "mh_no_disponible" | "emision_fallida" | "emision_incierta" | "evento_incierto"
       message: string
       /** Detalle según el código; puede faltar. */
       details?: Record<string, unknown>
@@ -489,7 +489,12 @@ export interface Cloud {
   }
   Certificacion: {
     estado?: "sin_iniciar" | "en_curso" | "detenida" | "completa"
-    clienteCcfId?: string | null
+    receptorCcf?: {
+      nombre?: string
+      nit?: string
+      nrc?: string
+      esOpenFactura?: boolean
+    } | null
     requisitos?: Record<string, unknown>
     avance?: Array<Record<string, unknown>>
     ultimoError?: string | null
@@ -1064,7 +1069,22 @@ export interface Operaciones {
     params: never
     query: never
     cuerpo: {
-      clienteCcfId?: string | null
+      /** Receptor de los CCF de prueba: "openfactura" (recomendado) o los datos de otro contribuyente, con NRC. No es un cliente guardado. Si se omite se conserva el anterior. */
+      receptor?: "openfactura" | {
+        nit: string
+        nrc: string
+        nombre: string
+        codActividad: string
+        descActividad: string
+        direccion: {
+          departamento: string
+          municipio: string
+          distrito: string
+          complemento: string
+        }
+        telefono?: string | null
+        correo: string
+      } | null
       desdeCero?: boolean
       alcance?: "minimo" | "completo"
     }

@@ -269,10 +269,12 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
       description:
         'Emite la siguiente tanda (hasta 5) de pruebas mínimas en el ambiente de pruebas; la inicia si aún no existe. Los documentos no tienen valor fiscal. Llama de nuevo mientras estado sea "en_curso". Si queda "detenida", muestra ultimoError al usuario antes de reintentar: el MH rechazó una prueba. Sólo en Open Factura Cloud.',
       inputSchema: z.object({
-        clienteCcfId: z
-          .string()
+        receptor: z
+          .union([z.literal('openfactura'), z.record(z.string(), z.unknown())])
           .optional()
-          .describe('Cliente contribuyente receptor de los CCF; por defecto el propio emisor'),
+          .describe(
+            'Receptor de los CCF de prueba: "openfactura" (recomendado) o { nit, nrc, nombre, codActividad, descActividad, direccion: { departamento, municipio, distrito, complemento }, telefono?, correo }. Hacienda no acepta el propio emisor.',
+          ),
       }),
       annotations: {
         readOnlyHint: false,
@@ -281,10 +283,10 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
         openWorldHint: true,
       },
     },
-    ({ clienteCcfId }) =>
+    ({ receptor }) =>
       responder(async () => {
         await api.pedir('POST', '/ext/certificacion/iniciar', {
-          cuerpo: clienteCcfId ? { clienteCcfId } : {},
+          cuerpo: receptor ? { receptor } : {},
         })
         return api.pedir('POST', '/ext/certificacion/avanzar')
       }),

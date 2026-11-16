@@ -109,6 +109,12 @@ export async function nuevaOrganizacion(opciones: { emisor?: boolean; nit?: stri
   }
 }
 
+/** Cambia el ambiente activo de la organización (el directorio de clientes sólo existe en '01'). */
+export async function cambiarAmbiente(cliente: Cliente, ambiente: '00' | '01') {
+  const r = await cliente.json('PUT', '/api/v1/emisor', { ...EMISOR, ambiente })
+  if (r.status !== 200) throw new Error(`Cambio de ambiente falló: ${JSON.stringify(r.cuerpo)}`)
+}
+
 export async function nuevaClave(
   cliente: Cliente,
   scopes: string[],

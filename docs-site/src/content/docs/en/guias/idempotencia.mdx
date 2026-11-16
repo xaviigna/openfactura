@@ -30,8 +30,8 @@ curl https://app.openfactura.co/api/v1/dte \
   retry.
 - Keys are kept for **24 hours** and are **independent per environment**: a key used in test returns
   nothing in production.
-- Successes, `dte_rechazado`, and `emision_incierta` are stored as the final response. Any other
-  error releases the key so you can retry.
+- Successes, `dte_rechazado`, `emision_incierta`, and `evento_incierto` are stored as the final
+  response. Errors where nothing reached the MH release the key so you can retry.
 
 <Aside type="tip">
 Golden rule: **retry only with the same key**. A new key can create a second document with fiscal

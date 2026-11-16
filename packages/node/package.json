@@ -1,6 +1,6 @@
 {
   "name": "@openfactura/node",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "SDK de la API de Open Factura (facturación electrónica de El Salvador, DTE): tipado, con reintentos e idempotencia, y Plataforma para integrar a tus clientes.",
   "license": "MIT",
   "repository": {

@@ -23,6 +23,7 @@ import {
   errorMh,
   fila,
   guardarEvento,
+  mhNoDisponible,
   vistaEvento,
 } from './dte'
 import { ambienteActivo, type ContextoEmision, contextoEmision } from './emisor'
@@ -49,23 +50,26 @@ async function transmitirYGuardar(
       problemas,
     })
   }
+  const codigoGeneracion = dte.identificacion.codigoGeneracion
+  // Autenticar antes de transmitir: si falla aquí, nada salió hacia el MH y reintentar es seguro.
+  if (!ce.tokenVigente) {
+    try {
+      await ce.cliente.autenticar()
+    } catch (error) {
+      if (mhNoDisponible(error))
+        throw new AppError(502, 'mh_no_disponible', mensajeDe(error, 'El MH no está disponible'))
+      throw new AppError(
+        502,
+        'mh_credenciales_rechazadas',
+        mensajeDe(error, 'El MH rechazó las credenciales'),
+        { ambiente: ce.ambiente },
+      )
+    }
+  }
+
+  let r: Awaited<ReturnType<typeof transmitirEvento>>
   try {
-    const r = await transmitirEvento(ce.cliente, dte, ce.firmante)
-    const id = await guardarEvento(ctx, {
-      tipo,
-      dte,
-      documentoId,
-      estado: 'procesado',
-      firma: r.firma,
-      respuesta: r.respuesta,
-    })
-    await registrar(ctx, `evento.${tipo}`, 'evento', id, {
-      codigoGeneracion: dte.identificacion.codigoGeneracion,
-    })
-    const [f] = await ctx.db.select().from(evento).where(eq(evento.id, id))
-    const cuerpo = vistaEvento(f!)
-    await publicar(ctx, `${tipo}.procesado`, cuerpo)
-    return { status: 201, cuerpo }
+    r = await transmitirEvento(ce.cliente, dte, ce.firmante)
   } catch (error) {
     if (error instanceof DteRechazadoError) {
       const detalle = errorMh(error.respuesta)
@@ -75,12 +79,51 @@ async function transmitirYGuardar(
         documentoId,
         estado: 'rechazado',
         respuesta: error.respuesta,
-      })
+      }).catch((fallo) =>
+        console.error('No se pudo guardar el evento rechazado', codigoGeneracion, fallo),
+      )
       throw new AppError(422, 'evento_rechazado', detalle.mensaje, { mh: detalle })
     }
-    if (error instanceof AppError) throw error
-    throw new AppError(502, 'mh_no_disponible', mensajeDe(error, 'El MH no está disponible'))
+    // La conexión pudo caer con el evento ya recibido por el MH: reintentar armaría otro evento
+    // (otro código de generación) y lo informaría dos veces. La clave queda con esta respuesta.
+    console.error('Evento incierto', codigoGeneracion, error)
+    throw new AppError(
+      502,
+      'evento_incierto',
+      'No se pudo confirmar si el MH recibió el evento. Verifícalo en el MH antes de enviarlo de nuevo con otra Idempotency-Key.',
+      { codigoGeneracion },
+    )
   }
+
+  // El MH ya selló: a partir de aquí ningún fallo local puede liberar la clave.
+  let id: string
+  try {
+    id = await guardarEvento(ctx, {
+      tipo,
+      dte,
+      documentoId,
+      estado: 'procesado',
+      firma: r.firma,
+      respuesta: r.respuesta,
+    })
+  } catch (error) {
+    console.error('Evento sellado sin guardar', codigoGeneracion, r.respuesta.selloRecibido, error)
+    throw new AppError(
+      502,
+      'evento_incierto',
+      'El MH recibió el evento, pero no se pudo guardar. No lo envíes de nuevo.',
+      { codigoGeneracion, selloRecibido: r.respuesta.selloRecibido },
+    )
+  }
+  await registrar(ctx, `evento.${tipo}`, 'evento', id, { codigoGeneracion }).catch((error) =>
+    console.error('No se pudo auditar', `evento.${tipo}`, error),
+  )
+  const [f] = await ctx.db.select().from(evento).where(eq(evento.id, id))
+  const cuerpo = vistaEvento(f!)
+  await publicar(ctx, `${tipo}.procesado`, cuerpo).catch((error) =>
+    console.error('No se pudo publicar', `${tipo}.procesado`, error),
+  )
+  return { status: 201, cuerpo }
 }
 
 /**
