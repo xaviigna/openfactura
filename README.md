@@ -35,6 +35,16 @@ por WhatsApp y la certificación guiada ante Hacienda.
 > de Hacienda emitiendo con Open Factura. La autorización es para el emisor; no es una certificación
 > del software por parte del Ministerio de Hacienda.
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=xaviigna%2Fopenfactura&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=xaviigna/openfactura&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=xaviigna/openfactura&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=xaviigna/openfactura&type=date&legend=top-left" />
+ </picture>
+</a>
+
 ## Qué hace
 
 - **Una API, tres entradas.** Todo funciona desde la API REST, desde tu agente de IA con el servidor
