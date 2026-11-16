@@ -60,7 +60,9 @@ validar → autenticar → reservar → firmar y guardar → transmitir.
 - Un cron cada 5 minutos consulta en el MH los documentos que quedaron `pendiente` por una interrupción.
 - Webhooks salientes (`services/webhooks.ts`): los servicios llaman a `publicar()` al cambiar el estado
   de un documento o evento; se crea una fila en `webhook_entrega` y el primer intento sale con
-  `waitUntil`. El mismo cron reintenta las entregas vencidas con espera exponencial.
+  `waitUntil`. El mismo cron reintenta las entregas vencidas con espera exponencial. Un webhook creado
+  con una clave queda atado a su ambiente y sólo recibe eventos de ese ambiente; uno creado por una
+  persona (`ambiente` nulo) recibe ambos.
 
 ### Autenticación
 
@@ -71,7 +73,9 @@ validar → autenticar → reservar → firmar y guardar → transmitir.
   usa fuera de Node agota la CPU de un Worker.
 - **Claves de API:** implementación propia (`services/claves.ts`). Formato `of_test_` / `of_live_` + 40
   caracteres base62 (≈238 bits). Se guarda el SHA-256; la clave se muestra una vez. Cada clave lleva sus
-  permisos y su modo: `test` sólo opera en el ambiente `00` del MH y `live` sólo en `01`.
+  permisos y su modo: `test` sólo opera en el ambiente `00` del MH y `live` sólo en `01`. El modo
+  también separa los datos: una clave sólo ve los productos y webhooks de su ambiente, y los clientes
+  guardados sólo existen en producción (`409 clientes_solo_produccion` en pruebas).
 - **CSRF:** cookies `SameSite=Lax` más comprobación de `Origin` en toda petición con cookie que modifica
   datos.
 
@@ -98,7 +102,10 @@ devuelve secretos: sólo banderas de "cargado".
 
 - Límite por clave con una ventana fija en D1: un `INSERT … ON CONFLICT … RETURNING` incrementa y lee
   de forma atómica, lo que da valores exactos para `RateLimit-*` y `Retry-After`.
-- `Idempotency-Key` guarda la respuesta de `POST /dte` por organización durante 24 horas.
+- `Idempotency-Key` guarda la respuesta de `POST /dte`, `POST /dte/:codigo/retorno` y
+  `POST /eventos/operaciones-especiales` (y de sus herramientas MCP) por organización durante 24 horas. Tras un
+  efecto fiscal la reserva nunca se libera: si falla guardar la respuesta, se entrega igual y el
+  reintento recibe `409 idempotencia_en_curso` hasta que la reserva caduca.
 
 ### MCP
 
@@ -196,6 +203,7 @@ distribución; si no, el panel (SPA) las atiende antes que el Worker.
 
 - Validación contra el ambiente de pruebas oficial del MH.
 - OAuth 2.1 para MCP (clientes que no admiten un encabezado fijo pueden usar `openfactura mcp`).
-- Correo para invitaciones y recuperación de contraseña.
-- Transmisión por lotes y webhooks de estado.
+- Correo para invitaciones (la confirmación del correo y la recuperación de contraseña ya funcionan
+  con una extensión que envía correo).
+- Transmisión por lotes.
 - Formularios guiados para los tipos 04, 07, 11 y 14 (hoy se emiten con JSON).

@@ -15,6 +15,10 @@ The whole API (`/api/v1/*`) and the MCP server (`/mcp`) require authentication. 
 
 The remote MCP server only accepts API keys, never the dashboard cookie.
 
+A key's environment also separates data: it only sees the products and
+[webhooks](/en/guias/webhooks/) of its environment, and saved customers only exist in production
+(with a test key they respond `409 clientes_solo_produccion`).
+
 ```bash
 curl https://app.openfactura.co/api/v1/yo -H "Authorization: Bearer $OPENFACTURA_API_KEY"
 ```
@@ -54,6 +58,7 @@ Revoking a key takes effect immediately. A revoked or expired key gets `401 no_a
 | `emisor:read`     | View the issuer and its establishments                    |
 | `emisor:write`    | Edit the issuer, establishments, and credentials          |
 | `claves:manage`   | Create and revoke API keys                                |
+| `webhooks:manage` | Configure webhooks and view their deliveries        |
 | `auditoria:read`  | View the audit log                                        |
 | `registros:read`  | View the logs of requests made with API keys              |
 

@@ -978,6 +978,17 @@ const RESPUESTAS_ESQUEMAS: Record<string, Esquema> = {
       },
       required: ['plan'],
     },
+    capacidades: {
+      type: 'array',
+      items: texto,
+      description:
+        'Funciones que agregan las extensiones instaladas (p. ej. `certificacion`). Vacío en una instalación estándar.',
+    },
+    eventosWebhook: {
+      type: 'array',
+      description: 'Eventos de webhook que agregan las extensiones, con su descripción.',
+      items: objeto({ evento: texto, descripcion: texto }, ['evento', 'descripcion']),
+    },
   }),
   Uso: objeto({
     ambiente,
@@ -1083,6 +1094,12 @@ const RESPUESTAS_ESQUEMAS: Record<string, Esquema> = {
   Webhook: objeto(
     {
       id: texto,
+      ambiente: {
+        type: ['string', 'null'],
+        enum: ['00', '01', null],
+        description:
+          'Ambiente cuyos eventos recibe. Una clave lo ata al suyo; uno creado en el panel es nulo y recibe ambos.',
+      },
       url: texto,
       descripcion: textoONulo,
       eventos: { type: 'array', items: { type: 'string', enum: [...EVENTOS_WEBHOOK] } },
@@ -1305,7 +1322,7 @@ export function construirOpenApi() {
           scheme: 'bearer',
           bearerFormat: 'of_test_… | of_live_…',
           description:
-            'Clave de API creada en el panel (Ajustes → Claves de API). `of_test_…` trabaja en el ambiente de pruebas del MH (`00`) y `of_live_…` en producción (`01`). Lleva los permisos elegidos al crearla.',
+            'Clave de API creada en el panel (Desarrolladores → Claves de API). `of_test_…` trabaja en el ambiente de pruebas del MH (`00`) y `of_live_…` en producción (`01`). Lleva los permisos elegidos al crearla.',
         },
         sesion: {
           type: 'apiKey',

@@ -31,7 +31,7 @@ you can request authorization for everything at once.
 ## Before you begin
 
 - Hacienda's **test credentials** loaded (certificate and API password).
-- A **taxpayer customer** (with NIT and NRC) to receive the test Tax Credit Invoices.
+- A **recipient** for the test Tax Credit Invoices: Open Factura or another taxpayer (see below).
 - The issuer's **responsible person**: Hacienda requires it on invalidation and contingency events.
   The page asks for it if it's missing.
 
@@ -53,8 +53,16 @@ you can request authorization for everything at once.
 </Steps>
 
 Test Tax Credit Invoices need **another taxpayer** as the recipient: Hacienda rejects the ones
-addressed to your own company (`[receptor.nit] VALOR NO VALIDO`). Create one under **Customers** with
-NIT, NRC, economic activity, and address, and select it before starting.
+addressed to your own company (`[receptor.nit] VALOR NO VALIDO`). Under **Certification**, choose the
+recipient before starting:
+
+- **Open Factura (recommended):** the test recipient built into Open Factura. You don't have to find
+  anyone.
+- **Another taxpayer:** type their NIT, NRC, name, economic activity, address, and email right there.
+
+The recipient isn't saved as a customer: there are no saved customers in test mode. If you choose
+your own company, certification responds `receptor_propio`. With real credentials, starting without
+a recipient responds `409 receptor_ccf_requerido`.
 
 <Tabs syncKey="via">
 <TabItem label="Dashboard">
@@ -65,23 +73,32 @@ Open **Certification** and click **Start**. You can pause and resume whenever yo
 <TabItem label="CLI">
 
 ```bash
-openfactura certificacion ejecutar              # the mandatory tests
-openfactura certificacion ejecutar --completo   # every document and event
+openfactura certificacion ejecutar --receptor openfactura   # the mandatory tests
+openfactura certificacion ejecutar --completo               # every document and event
+openfactura certificacion ejecutar --desde-cero             # discards progress and counts from now
 openfactura certificacion estado
 ```
+
+`--receptor` takes `openfactura`, or a JSON file (or `-` to read it from stdin) with another
+taxpayer's details. You only need to pass it the first time; it's remembered afterwards.
+`--desde-cero` is for when Hacienda opens a new window for you.
 
 `ejecutar` exits with 0 on completion and with 1 if Hacienda rejected a test or stopped responding.
 
 </TabItem>
 <TabItem label="API">
 
+`receptor` is `"openfactura"` or an object with another taxpayer's `nit`, `nrc`, `nombre`,
+`codActividad`, `descActividad`, `direccion`, and `correo`. It also accepts `alcance` (`minimo` or
+`completo`) and `desdeCero: true`.
+
 ```bash
-curl -X POST https://app.openfactura.co/api/v1/certificacion/iniciar \
+curl -X POST https://app.openfactura.co/api/v1/ext/certificacion/iniciar \
   -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
-  -H "Content-Type: application/json" -d '{}'
+  -H "Content-Type: application/json" -d '{"receptor": "openfactura"}'
 
 # Repeat while "estado" is "en_curso":
-curl -X POST https://app.openfactura.co/api/v1/certificacion/avanzar \
+curl -X POST https://app.openfactura.co/api/v1/ext/certificacion/avanzar \
   -H "Authorization: Bearer $OPENFACTURA_API_KEY"
 ```
 
@@ -91,7 +108,8 @@ The key needs `dte:read`, `dte:emit`, and `dte:invalidate`.
 <TabItem label="MCP">
 
 Ask your agent: "run my Hacienda certification tests". It uses `certificacion_avanzar` until
-completion and shows you the rejection, if any.
+completion and shows you the rejection, if any. The first call carries the `receptor` argument
+(`"openfactura"` or another taxpayer's details).
 
 </TabItem>
 </Tabs>

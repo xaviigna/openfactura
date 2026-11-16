@@ -15,7 +15,8 @@ Hay dos formas de conectarlo:
   `openfactura login` (o las variables `OPENFACTURA_API_KEY` y `OPENFACTURA_URL`). Sirve para clientes
   que no envían encabezados.
 
-Mientras pruebas, usa una clave `of_test_…`: nada de lo que emitas tiene valor fiscal. La clave decide
+Mientras pruebas, usa una clave `of_test_…`: nada de lo que emitas tiene valor fiscal. En pruebas no
+hay clientes guardados: el agente pone el receptor en `datos.receptor`. La clave decide
 qué puede hacer el agente; ve [Autenticación y claves](/autenticacion/) y las herramientas disponibles en
 [Servidor MCP](/herramientas/mcp/).
 

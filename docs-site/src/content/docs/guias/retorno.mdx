@@ -69,6 +69,11 @@ Respuesta: `201` con el `Evento`:
 
 Si el MH rechaza el evento: `422 evento_rechazado` con `details.mh`.
 
+Si no se puede confirmar si el MH recibió el evento (la conexión cayó al transmitirlo, o el MH lo selló
+pero no se pudo guardar): `502 evento_incierto` con `details.codigoGeneracion` y, si llegó a sellarse,
+`details.selloRecibido`. Queda como respuesta definitiva de la `Idempotency-Key`. **No lo envíes otra
+vez** sin verificar antes en el MH; reenvía con otra clave sólo si no llegó.
+
 ## Consultar y entregar
 
 - `GET /eventos?tipo=retorno` — los 50 más recientes del ambiente activo.

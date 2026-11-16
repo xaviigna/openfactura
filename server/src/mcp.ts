@@ -406,7 +406,7 @@ export function crearServidorMcp(ctx: Ctx): McpServer {
     'webhook_crear',
     {
       title: 'Crear webhook',
-      description: `Registra una URL https:// que recibirá un POST firmado cuando cambie el estado de un documento. Eventos: ${EVENTOS_WEBHOOK.join(', ')}. Devuelve el secreto de firma (whsec_…) UNA sola vez: entrégaselo al usuario para que verifique la firma OpenFactura-Signature.`,
+      description: `Registra una URL https:// que recibirá un POST firmado cuando cambie el estado de un documento. Eventos: ${EVENTOS_WEBHOOK.join(', ')}, más los que declare una extensión (GET /yo → eventosWebhook; en la nube, cliente.listo). Devuelve el secreto de firma (whsec_…) UNA sola vez: entrégaselo al usuario para que verifique la firma OpenFactura-Signature.`,
       inputSchema: esquemaWebhook.shape,
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },

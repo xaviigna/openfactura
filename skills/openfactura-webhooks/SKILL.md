@@ -7,7 +7,7 @@ description: Configura y recibe webhooks de Open Factura (facturación electrón
 
 Open Factura envía un `POST` JSON firmado a la URL del cliente cuando cambia el estado de un documento.
 Configúralos con el MCP (`webhooks_listar`, `webhook_crear`, `webhook_eliminar`, `webhook_probar`), la
-CLI (`openfactura webhooks …`), la API (`/api/v1/webhooks`) o el panel (Administración → Webhooks).
+CLI (`openfactura webhooks …`), la API (`/api/v1/webhooks`) o el panel (Desarrolladores → Webhooks).
 Requieren el permiso `webhooks:manage`.
 
 ## Eventos
@@ -19,7 +19,12 @@ Requieren el permiso `webhooks:manage`.
 | `dte.contingencia`                 | Hacienda no respondió y el documento quedó firmado en contingencia           |
 | `dte.invalidado`                   | Se invalidó un documento                                                     |
 | `retorno.procesado`                | Hacienda selló un evento de retorno (18)                                     |
+| `retorno.invalidado`               | Se invalidó un evento de retorno                                             |
 | `operaciones_especiales.procesado` | Hacienda selló un evento de operaciones especiales (17)                      |
+| `operaciones_especiales.invalidado` | Se invalidó un evento de operaciones especiales                             |
+
+En los `*.invalidado`, `datos.invalidacion` trae `codigoGeneracion` y `selloRecibido` del evento de
+invalidación.
 
 `webhook.prueba` sólo llega al usar `webhook_probar`. Suscribe sólo los eventos que el sistema usa.
 
@@ -32,6 +37,10 @@ Requieren el permiso `webhooks:manage`.
    `OPENFACTURA_WEBHOOK_SECRET`). No lo escribas en archivos versionados ni lo repitas después.
 3. Implementa el endpoint (abajo) y despliégalo.
 4. `webhook_probar`: debe responder `entregado: true`. Si no, revisa `status` y `error`.
+
+Un webhook creado con una clave queda atado al ambiente de la clave: con una clave de pruebas sólo
+recibe eventos de pruebas (`ambiente: "00"`), y `webhooks_listar` muestra sólo los de ese ambiente.
+Para recibir producción, créalo con una clave de producción o desde el panel (ahí recibe ambos).
 
 Máximo 10 webhooks por organización (`409 limite_webhooks`). Si el secreto se filtra, rótalo
 (`openfactura webhooks rotate <id>` o `POST /webhooks/:id/rotar-secreto`): el anterior deja de valer.

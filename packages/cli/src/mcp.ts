@@ -22,7 +22,7 @@ const listaTipos = Object.entries(TIPOS_DTE)
 
 const DATOS_DTE = `Datos del documento. Campos habituales:
 - items: [{ descripcion, cantidad, precioUni, tipoItem?: 1 bien | 2 servicio, codigo?, uniMedida?: 59 unidad, descuento?, tipoVenta?: 'gravada'|'exenta'|'noSujeta' }]. En Factura (01) precioUni INCLUYE IVA; en CCF (03), notas y remisión va SIN IVA.
-- receptor: { nit o tipoDocumento+numDocumento, nrc, nombre, codActividad, descActividad, direccion: { departamento, municipio, distrito, complemento }, telefono, correo }. En Factura es opcional bajo USD 25,000. Puede omitirse si envías clienteId.
+- receptor: { nit o tipoDocumento+numDocumento, nrc, nombre, codActividad, descActividad, direccion: { departamento, municipio, distrito, complemento }, telefono, correo }. En Factura es opcional bajo USD 25,000. Puede omitirse si envías clienteId (sólo en producción).
 - condicionOperacion?: 1 contado | 2 crédito | 3 otro; pagos?; credito?: { plazo, periodo }.
 - documentosRelacionados (notas de crédito/débito): [{ tipoDocumento, tipoGeneracion: 2, numeroDocumento: <código de generación>, fechaEmision }].
 - Comprobante de Liquidación (08): documentos: [{ tipoDte: 01|03|05|06|11|18, numeroDocumento, fechaEmision, ventaNoSuj?, ventaExenta?, ventaGravada? (sin IVA), exportaciones?, iva? (sólo F y Retorno), tributos?: [{ codigo, valor }], ivaPercibido?, anulado? }], montos en positivo. Receptor = mandante.
@@ -34,7 +34,12 @@ Los códigos de catálogo se consultan con catalogo_buscar.`
 const entradaEmision = {
   tipoDte: tipoDte.describe(`Tipo de documento: ${listaTipos}`),
   datos: z.record(z.string(), z.unknown()).describe(DATOS_DTE),
-  clienteId: z.string().optional().describe('Id de un cliente guardado para usarlo como receptor'),
+  clienteId: z
+    .string()
+    .optional()
+    .describe(
+      'Id de un cliente guardado para usarlo como receptor. Los clientes guardados sólo existen en producción; en pruebas envía datos.receptor.',
+    ),
   puntoVentaId: z.string().optional().describe('Punto de venta emisor; por defecto el primero'),
 }
 
@@ -111,7 +116,8 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
     'clientes_buscar',
     {
       title: 'Buscar clientes',
-      description: 'Busca clientes guardados por nombre o número de documento.',
+      description:
+        'Busca clientes guardados por nombre o número de documento. El directorio de clientes sólo existe en producción: en pruebas responde clientes_solo_produccion y el receptor va en datos.receptor.',
       inputSchema: z.object({ q: z.string().optional() }),
       annotations: lectura,
     },
@@ -123,7 +129,7 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
     {
       title: 'Crear cliente',
       description:
-        'Guarda un cliente para reutilizarlo como receptor. tipoDocumento: 36 NIT, 13 DUI, 03 pasaporte, 02 carné de residente, 37 otro.',
+        'Guarda un cliente para reutilizarlo como receptor. Sólo en producción: en pruebas no hay directorio de clientes (clientes_solo_produccion). tipoDocumento: 36 NIT, 13 DUI, 03 pasaporte, 02 carné de residente, 37 otro.',
       inputSchema: cliente,
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
@@ -398,7 +404,7 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
     'webhook_crear',
     {
       title: 'Crear webhook',
-      description: `Registra una URL https:// que recibirá un POST firmado cuando cambie el estado de un documento. Eventos: ${EVENTOS_WEBHOOK.join(', ')}. Devuelve el secreto de firma (whsec_…) UNA sola vez: entrégaselo al usuario para que verifique la firma OpenFactura-Signature.`,
+      description: `Registra una URL https:// que recibirá un POST firmado cuando cambie el estado de un documento. Eventos: ${EVENTOS_WEBHOOK.join(', ')}, más los que declare una extensión (GET /yo → eventosWebhook; en la nube, cliente.listo). Devuelve el secreto de firma (whsec_…) UNA sola vez: entrégaselo al usuario para que verifique la firma OpenFactura-Signature.`,
       inputSchema: webhook,
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },

@@ -98,7 +98,7 @@ const OPCIONES: Record<string, TipoOpcion> = {
   eventos: {
     type: 'string',
     ayuda:
-      'Eventos del webhook separados por coma (por defecto todos): dte.procesado, dte.rechazado, dte.contingencia, dte.invalidado, retorno.procesado, retorno.invalidado, operaciones_especiales.procesado, operaciones_especiales.invalidado',
+      'Eventos del webhook separados por coma (por defecto todos): dte.procesado, dte.rechazado, dte.contingencia, dte.invalidado, retorno.procesado, retorno.invalidado, operaciones_especiales.procesado, operaciones_especiales.invalidado; más los de las extensiones (GET /yo → eventosWebhook)',
   },
   precio: { type: 'string', ayuda: 'Precio unitario SIN IVA' },
   'tipo-item': {

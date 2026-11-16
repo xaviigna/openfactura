@@ -15,6 +15,10 @@ Toda la API (`/api/v1/*`) y el servidor MCP (`/mcp`) exigen autenticación. Hay 
 
 El servidor MCP remoto sólo acepta claves de API, nunca la cookie del panel.
 
+El ambiente de una clave también separa los datos: sólo ve los productos y los
+[webhooks](/guias/webhooks/) de su ambiente, y los clientes guardados sólo existen en producción
+(con una clave de pruebas responden `409 clientes_solo_produccion`).
+
 ```bash
 curl https://app.openfactura.co/api/v1/yo -H "Authorization: Bearer $OPENFACTURA_API_KEY"
 ```
@@ -55,6 +59,7 @@ Revocar una clave tiene efecto inmediato. Una clave revocada o expirada responde
 | `emisor:read`     | Ver el emisor y sus establecimientos                |
 | `emisor:write`    | Editar el emisor, establecimientos y credenciales   |
 | `claves:manage`   | Crear y revocar claves de API                       |
+| `webhooks:manage` | Configurar webhooks y ver sus entregas              |
 | `auditoria:read`  | Ver la bitácora de auditoría                        |
 | `registros:read` | Ver los registros de peticiones hechas con claves de API |
 

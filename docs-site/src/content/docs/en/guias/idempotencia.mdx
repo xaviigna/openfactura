@@ -27,7 +27,8 @@ curl https://app.openfactura.co/api/v1/dte \
   Nothing is issued twice.
 - **Same key and a different body** → `409 idempotencia_distinta`.
 - **The first attempt is still in progress** → `409 idempotencia_en_curso`: wait a few seconds and
-  retry.
+  retry. If it persists, the first attempt's result couldn't be confirmed (it may have been issued): check
+  your documents before using another key.
 - Keys are kept for **24 hours** and are **independent per environment**: a key used in test returns
   nothing in production.
 - Successes, `dte_rechazado`, `emision_incierta`, and `evento_incierto` are stored as the final

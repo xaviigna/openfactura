@@ -246,6 +246,13 @@ export interface Nucleo {
         ruta: string
       }
     } | null
+    /** Funciones que agregan las extensiones instaladas (p. ej. `certificacion`). Vacío en una instalación estándar. */
+    capacidades?: Array<string>
+    /** Eventos de webhook que agregan las extensiones, con su descripción. */
+    eventosWebhook?: Array<{
+      evento: string
+      descripcion: string
+    }>
   }
   Uso: {
     ambiente?: "00" | "01"
@@ -343,6 +350,8 @@ export interface Nucleo {
   })
   Webhook: {
     id: string
+    /** Ambiente cuyos eventos recibe. Una clave lo ata al suyo; uno creado en el panel es nulo y recibe ambos. */
+    ambiente?: "00" | "01" | null
     url: string
     descripcion?: string | null
     eventos: Array<"dte.procesado" | "dte.rechazado" | "dte.contingencia" | "dte.invalidado" | "retorno.procesado" | "retorno.invalidado" | "operaciones_especiales.procesado" | "operaciones_especiales.invalidado">
@@ -488,16 +497,40 @@ export interface Cloud {
     creado?: number
   }
   Certificacion: {
-    estado?: "sin_iniciar" | "en_curso" | "detenida" | "completa"
-    receptorCcf?: {
+    ambiente: "00" | "01"
+    /** La certificación sólo corre en el ambiente de pruebas. */
+    disponible: boolean
+    requisitos: {
+      emisor?: boolean
+      credenciales?: boolean
+      /** Credenciales del simulador: es un simulacro, nada llega a Hacienda. */
+      simuladas?: boolean
+      responsable?: boolean
+    }
+    estado: "sin_iniciar" | "en_curso" | "detenida" | "completa"
+    alcance: "minimo" | "completo"
+    /** Milisegundos desde 1970; nulo si no se ha iniciado. */
+    iniciada: number | null
+    /** Receptor de los CCF de prueba; nulo = el propio emisor (sólo en un simulacro). */
+    receptorCcf: {
       nombre?: string
       nit?: string
       nrc?: string
       esOpenFactura?: boolean
     } | null
-    requisitos?: Record<string, unknown>
-    avance?: Array<Record<string, unknown>>
-    ultimoError?: string | null
+    metas: Array<{
+      id: "facturas" | "ccf" | "invalidaciones" | "contingencias" | "remisiones" | "notasCredito" | "notasDebito" | "retenciones" | "liquidaciones" | "contables" | "exportaciones" | "sujetosExcluidos" | "donaciones" | "retornos" | "operacionesEspeciales"
+      nombre: string
+      meta: number
+      hechas: number
+    }>
+    /** El rechazo del MH (u otro error) que detuvo la certificación. */
+    ultimoError: {
+      operacion: "facturas" | "ccf" | "invalidaciones" | "contingencias" | "remisiones" | "notasCredito" | "notasDebito" | "retenciones" | "liquidaciones" | "contables" | "exportaciones" | "sujetosExcluidos" | "donaciones" | "retornos" | "operacionesEspeciales"
+      codigo: string
+      mensaje: string
+      observaciones?: Array<string>
+    } | null
   }
   Error: {
     error?: {
@@ -506,6 +539,17 @@ export interface Cloud {
       details?: unknown
     }
   }
+  AvanceCertificacion: (Cloud["Certificacion"]) & ({
+    /** Lo hecho en esta tanda. */
+    operaciones: Array<{
+      operacion: "facturas" | "ccf" | "invalidaciones" | "contingencias" | "remisiones" | "notasCredito" | "notasDebito" | "retenciones" | "liquidaciones" | "contables" | "exportaciones" | "sujetosExcluidos" | "donaciones" | "retornos" | "operacionesEspeciales"
+      numeroControl: string | null
+      codigoGeneracion: string | null
+      selloRecibido: string | null
+    }>
+    /** Si el MH no respondió y se cortó la tanda: por qué. Volver a llamar la reanuda. */
+    aviso: string | null
+  })
 }
 
 /** Cada operación de la API: parámetros de ruta, consulta, cuerpo y respuesta. */
@@ -1095,7 +1139,7 @@ export interface Operaciones {
     params: never
     query: never
     cuerpo: never
-    respuesta: Cloud["Certificacion"]
+    respuesta: Cloud["AvanceCertificacion"]
   }
 }
 

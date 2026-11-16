@@ -77,7 +77,7 @@ Factura de consumidor final, sin receptor:
 }
 ```
 
-Crédito Fiscal para un cliente guardado (el receptor sale del cliente):
+Crédito Fiscal para un cliente guardado (sólo en producción; el receptor sale del cliente):
 
 ```json
 {

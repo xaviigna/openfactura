@@ -62,7 +62,7 @@ All of them accept `--json` (the API's JSON on stdout), `--url`, `--profile`, an
 openfactura whoami                      # actor, permissions, environment
 openfactura emisor                      # tax details, establishments, loaded credentials
 
-openfactura clientes list --q "contribuyente"
+openfactura clientes list --q "contribuyente"   # customers: production only
 openfactura clientes add --file cliente.json
 openfactura productos list --q licencia
 openfactura productos add --codigo LIC-001 --descripcion "Licencia anual" --precio 100 --tipo-item 2
@@ -95,11 +95,18 @@ openfactura uso [--desde 2026-11-01] [--hasta 2026-11-30]   # issued, processed,
 openfactura registros list [--estado error] [--origen api] [--limite 50]   # requires registros:read
 
 openfactura certificacion estado              # Open Factura Cloud only
-openfactura certificacion ejecutar            # issues the minimum tests (Open Factura Cloud)
+openfactura certificacion ejecutar --receptor openfactura   # issues the minimum tests (Open Factura Cloud)
+openfactura certificacion ejecutar --completo [--desde-cero]  # every document; from scratch
 ```
 
 The file for `dte emitir` is the same body as `POST /api/v1/dte` (see
 [Issue documents](/en/guias/emitir/)). `-` reads from standard input.
+
+Saved customers only exist in production: with a test key, `clientes` responds
+`clientes_solo_produccion` and the recipient goes in `datos.receptor`. Products and webhooks are those
+of the key's environment. In `certificacion ejecutar`, `--receptor` is `openfactura` (recommended) or
+a JSON (file or `-`) with another taxpayer's details; see
+[Certification](/en/guias/certificacion/).
 
 <Aside>
 With an `of_live_…` key, `dte emitir`, `dte retorno`, `eventos operaciones-especiales`,

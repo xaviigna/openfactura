@@ -6,10 +6,24 @@ Open Factura notifies your system when a document changes status, so you don't h
 Configure webhooks in the dashboard (**Developers → Webhooks**), with the API, with
 `openfactura webhooks`, or with the MCP tools. They require the `webhooks:manage` permission.
 
+## Environments
+
+Each webhook receives the events of one environment or of both:
+
+- Created with an **API key**, it's tied to the key's environment: a test key's webhook only
+  receives events with `ambiente: "00"`, and a production key's only `"01"`. A key only sees,
+  changes, and tests the webhooks of its own environment.
+- Created by a **person in the dashboard**, it has `ambiente: null` and receives both. The dashboard
+  shows every webhook in the organization.
+
+An event that doesn't belong to an environment (in the cloud, Plataforma's `cliente.listo`) carries
+`ambiente: null` and reaches every subscribed webhook. Besides the core events, an extension can
+declare its own: `GET /yo` lists them in `eventosWebhook`.
+
 ## Routes (`webhooks:manage`)
 
-- `GET /webhooks` → `[{ id, url, descripcion, eventos[], activo, creado, actualizado }]` (never the
-  secret)
+- `GET /webhooks` → `[{ id, ambiente, url, descripcion, eventos[], activo, creado, actualizado }]`
+  (never the secret)
 - `POST /webhooks` — `{ url, eventos: [...], descripcion?, activo? }` → the above plus `secreto`
   (`whsec_…`, this one time only). Up to 10 per organization (`409 limite_webhooks`).
 - `PATCH /webhooks/:id` — any of `{ url, descripcion, eventos, activo }`

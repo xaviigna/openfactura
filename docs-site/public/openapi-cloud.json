@@ -1013,7 +1013,7 @@
         "operationId": "certificacion_iniciar",
         "tags": ["Certificación"],
         "summary": "Iniciar o retomar la certificación",
-        "description": "Receptor de los Créditos Fiscales de prueba: `openfactura` (Open Factura, se agrega a tus Clientes) o el id de un cliente contribuyente; Hacienda no acepta el propio emisor. Permisos `dte:emit` y `dte:invalidate`.",
+        "description": "Receptor de los Créditos Fiscales de prueba: `openfactura` (Open Factura, recomendado) o los datos de otro contribuyente con NRC; no se guarda como cliente. Hacienda no acepta el propio emisor (`409 receptor_propio`); con credenciales reales hace falta un receptor (`409 receptor_ccf_requerido`). Permisos `dte:emit` y `dte:invalidate`.",
         "responses": {
           "200": {
             "description": "Certificación.",
@@ -1051,7 +1051,10 @@
                   "receptor": {
                     "description": "Receptor de los CCF de prueba: \"openfactura\" (recomendado) o los datos de otro contribuyente, con NRC. No es un cliente guardado. Si se omite se conserva el anterior.",
                     "oneOf": [
-                      { "type": "string", "const": "openfactura" },
+                      {
+                        "type": "string",
+                        "const": "openfactura"
+                      },
                       {
                         "type": "object",
                         "required": [
@@ -1064,26 +1067,51 @@
                           "correo"
                         ],
                         "properties": {
-                          "nit": { "type": "string" },
-                          "nrc": { "type": "string" },
-                          "nombre": { "type": "string" },
-                          "codActividad": { "type": "string" },
-                          "descActividad": { "type": "string" },
+                          "nit": {
+                            "type": "string"
+                          },
+                          "nrc": {
+                            "type": "string"
+                          },
+                          "nombre": {
+                            "type": "string"
+                          },
+                          "codActividad": {
+                            "type": "string"
+                          },
+                          "descActividad": {
+                            "type": "string"
+                          },
                           "direccion": {
                             "type": "object",
                             "required": ["departamento", "municipio", "distrito", "complemento"],
                             "properties": {
-                              "departamento": { "type": "string" },
-                              "municipio": { "type": "string" },
-                              "distrito": { "type": "string" },
-                              "complemento": { "type": "string" }
+                              "departamento": {
+                                "type": "string"
+                              },
+                              "municipio": {
+                                "type": "string"
+                              },
+                              "distrito": {
+                                "type": "string"
+                              },
+                              "complemento": {
+                                "type": "string"
+                              }
                             }
                           },
-                          "telefono": { "type": ["string", "null"] },
-                          "correo": { "type": "string", "format": "email" }
+                          "telefono": {
+                            "type": ["string", "null"]
+                          },
+                          "correo": {
+                            "type": "string",
+                            "format": "email"
+                          }
                         }
                       },
-                      { "type": "null" }
+                      {
+                        "type": "null"
+                      }
                     ],
                     "example": "openfactura"
                   },
@@ -1109,11 +1137,11 @@
         "description": "Hasta 5 pruebas por llamada, en el ambiente de pruebas. Llama de nuevo mientras `estado` sea `en_curso`. Permisos `dte:emit` y `dte:invalidate`.",
         "responses": {
           "200": {
-            "description": "Certificación.",
+            "description": "Avance de la certificación.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Certificacion"
+                  "$ref": "#/components/schemas/AvanceCertificacion"
                 }
               }
             }
@@ -1443,32 +1471,151 @@
       "Certificacion": {
         "type": "object",
         "properties": {
+          "ambiente": {
+            "type": "string",
+            "enum": ["00", "01"]
+          },
+          "disponible": {
+            "type": "boolean",
+            "description": "La certificación sólo corre en el ambiente de pruebas."
+          },
+          "requisitos": {
+            "type": "object",
+            "properties": {
+              "emisor": {
+                "type": "boolean"
+              },
+              "credenciales": {
+                "type": "boolean"
+              },
+              "simuladas": {
+                "type": "boolean",
+                "description": "Credenciales del simulador: es un simulacro, nada llega a Hacienda."
+              },
+              "responsable": {
+                "type": "boolean"
+              }
+            }
+          },
           "estado": {
             "type": "string",
             "enum": ["sin_iniciar", "en_curso", "detenida", "completa"]
           },
+          "alcance": {
+            "type": "string",
+            "enum": ["minimo", "completo"]
+          },
+          "iniciada": {
+            "type": ["integer", "null"],
+            "description": "Milisegundos desde 1970; nulo si no se ha iniciado."
+          },
           "receptorCcf": {
             "type": ["object", "null"],
+            "description": "Receptor de los CCF de prueba; nulo = el propio emisor (sólo en un simulacro).",
             "properties": {
-              "nombre": { "type": "string" },
-              "nit": { "type": "string" },
-              "nrc": { "type": "string" },
-              "esOpenFactura": { "type": "boolean" }
+              "nombre": {
+                "type": "string"
+              },
+              "nit": {
+                "type": "string"
+              },
+              "nrc": {
+                "type": "string"
+              },
+              "esOpenFactura": {
+                "type": "boolean"
+              }
             }
           },
-          "requisitos": {
-            "type": "object"
-          },
-          "avance": {
+          "metas": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "facturas",
+                    "ccf",
+                    "invalidaciones",
+                    "contingencias",
+                    "remisiones",
+                    "notasCredito",
+                    "notasDebito",
+                    "retenciones",
+                    "liquidaciones",
+                    "contables",
+                    "exportaciones",
+                    "sujetosExcluidos",
+                    "donaciones",
+                    "retornos",
+                    "operacionesEspeciales"
+                  ]
+                },
+                "nombre": {
+                  "type": "string"
+                },
+                "meta": {
+                  "type": "integer"
+                },
+                "hechas": {
+                  "type": "integer"
+                }
+              },
+              "required": ["id", "nombre", "meta", "hechas"]
             }
           },
           "ultimoError": {
-            "type": ["string", "null"]
+            "type": ["object", "null"],
+            "description": "El rechazo del MH (u otro error) que detuvo la certificación.",
+            "properties": {
+              "operacion": {
+                "type": "string",
+                "enum": [
+                  "facturas",
+                  "ccf",
+                  "invalidaciones",
+                  "contingencias",
+                  "remisiones",
+                  "notasCredito",
+                  "notasDebito",
+                  "retenciones",
+                  "liquidaciones",
+                  "contables",
+                  "exportaciones",
+                  "sujetosExcluidos",
+                  "donaciones",
+                  "retornos",
+                  "operacionesEspeciales"
+                ]
+              },
+              "codigo": {
+                "type": "string"
+              },
+              "mensaje": {
+                "type": "string"
+              },
+              "observaciones": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["operacion", "codigo", "mensaje"]
           }
-        }
+        },
+        "required": [
+          "ambiente",
+          "disponible",
+          "requisitos",
+          "estado",
+          "alcance",
+          "iniciada",
+          "receptorCcf",
+          "metas",
+          "ultimoError"
+        ]
       },
       "Error": {
         "type": "object",
@@ -1487,6 +1634,62 @@
             }
           }
         }
+      },
+      "AvanceCertificacion": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Certificacion"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "operaciones": {
+                "type": "array",
+                "description": "Lo hecho en esta tanda.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "operacion": {
+                      "type": "string",
+                      "enum": [
+                        "facturas",
+                        "ccf",
+                        "invalidaciones",
+                        "contingencias",
+                        "remisiones",
+                        "notasCredito",
+                        "notasDebito",
+                        "retenciones",
+                        "liquidaciones",
+                        "contables",
+                        "exportaciones",
+                        "sujetosExcluidos",
+                        "donaciones",
+                        "retornos",
+                        "operacionesEspeciales"
+                      ]
+                    },
+                    "numeroControl": {
+                      "type": ["string", "null"]
+                    },
+                    "codigoGeneracion": {
+                      "type": ["string", "null"]
+                    },
+                    "selloRecibido": {
+                      "type": ["string", "null"]
+                    }
+                  },
+                  "required": ["operacion", "numeroControl", "codigoGeneracion", "selloRecibido"]
+                }
+              },
+              "aviso": {
+                "type": ["string", "null"],
+                "description": "Si el MH no respondió y se cortó la tanda: por qué. Volver a llamar la reanuda."
+              }
+            },
+            "required": ["operaciones", "aviso"]
+          }
+        ]
       }
     },
     "responses": {

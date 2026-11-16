@@ -62,7 +62,7 @@ Todos aceptan `--json` (el JSON de la API en stdout), `--url`, `--profile` y `--
 openfactura whoami                      # actor, permisos, ambiente
 openfactura emisor                      # datos fiscales, establecimientos, credenciales cargadas
 
-openfactura clientes list --q "contribuyente"
+openfactura clientes list --q "contribuyente"   # clientes: sólo en producción
 openfactura clientes add --file cliente.json
 openfactura productos list --q licencia
 openfactura productos add --codigo LIC-001 --descripcion "Licencia anual" --precio 100 --tipo-item 2
@@ -95,11 +95,18 @@ openfactura uso [--desde 2026-11-01] [--hasta 2026-11-30]   # emitidos, procesad
 openfactura registros list [--estado error] [--origen api] [--limite 50]   # requiere registros:read
 
 openfactura certificacion estado              # sólo en Open Factura Cloud
-openfactura certificacion ejecutar            # emite las pruebas mínimas (Open Factura Cloud)
+openfactura certificacion ejecutar --receptor openfactura   # emite las pruebas mínimas (Open Factura Cloud)
+openfactura certificacion ejecutar --completo [--desde-cero]  # todos los documentos; desde cero
 ```
 
 El archivo de `dte emitir` es el mismo cuerpo de `POST /api/v1/dte` (ve
 [Emitir documentos](/guias/emitir/)). `-` lee de la entrada estándar.
+
+Los clientes guardados sólo existen en producción: con una clave de pruebas, `clientes` responde
+`clientes_solo_produccion` y el receptor va en `datos.receptor`. Los productos y los webhooks son los
+del ambiente de la clave. En `certificacion ejecutar`, `--receptor` es `openfactura` (recomendado) o
+un JSON (archivo o `-`) con los datos de otro contribuyente; ve
+[Certificación](/guias/certificacion/).
 
 <Aside>
 Con una clave `of_live_…`, `dte emitir`, `dte retorno`, `eventos operaciones-especiales`,

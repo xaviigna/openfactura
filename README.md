@@ -30,7 +30,7 @@ los SDK y las habilidades para agentes. Despliégalo en tu propia cuenta de Clou
 [Open Factura Cloud](https://openfactura.co), que corre esta misma API y suma el panel, la facturación
 por WhatsApp y la certificación guiada ante Hacienda.
 
-> **Probado en la realidad.** YA TECHNOLOGIES, S.A. DE C.V., la empresa que opera Open Factura Cloud,
+> **Probado en la realidad.** Yaya Technologies, S.A.S. de C.V., la empresa que opera Open Factura Cloud,
 > fue autorizada como emisora de DTE por la DGII (MH.DGII.DFE/008.071632/2026) tras pasar las pruebas
 > de Hacienda emitiendo con Open Factura. La autorización es para el emisor; no es una certificación
 > del software por parte del Ministerio de Hacienda.
@@ -143,6 +143,11 @@ pruebas mínimas. El paso a paso completo está en [`docs/self-hosting.md`](docs
 | `CRED_KEK_V1`             | Llave maestra AES-256 (32 bytes, base64) para las credenciales del MH. Se rota con `CRED_KEK_V2`                    |
 | `ADMIN_TOKEN`             | La credencial del operador: crea y administra organizaciones. 32+ caracteres, o la administración queda desactivada |
 | `LIMITE_CLAVE_POR_MINUTO` | Peticiones por minuto por clave de API (120)                                                                        |
+| `TRUSTED_ORIGINS`         | Orígenes adicionales de confianza, separados por coma                                                               |
+| `GITHUB_CLIENT_ID`        | «Ingresar con GitHub»: Client ID de una GitHub App (opcional)                                                       |
+| `GITHUB_CLIENT_SECRET`    | Client secret de esa GitHub App (secreto); sin los dos no se ofrece el ingreso con GitHub                           |
+| `URL_MCP`                 | URL pública del MCP si no es `<APP_URL>/mcp` (la devuelve `GET /api/v1/yo`)                                         |
+| `MH_BASE_URL`             | Sustituye la URL del MH (sólo para pruebas)                                                                         |
 | `MH_SIMULADO`             | `1` activa el simulador del MH en el ambiente de pruebas                                                            |
 | `WEBHOOKS_LOCAL`          | `1` permite webhooks a `http://localhost`. Sólo en desarrollo                                                       |
 

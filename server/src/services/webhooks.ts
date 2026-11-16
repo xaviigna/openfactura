@@ -366,11 +366,13 @@ export async function publicar(
     const suscritos = activos.filter((w) => (JSON.parse(w.eventos) as string[]).includes(evento))
     if (!suscritos.length) return
 
-    // Un webhook atado a un ambiente no recibe datos de otro (sin ambiente en el dato: el activo).
-    const activo = lista.some((d) => !d.ambiente) ? await ambienteActivo(ctx) : null
+    // Un webhook atado a un ambiente no recibe datos de otro. Sin `ambiente` en el dato cuenta el
+    // activo; `ambiente: null` explícito es un evento sin ambiente (p. ej. de una extensión) y
+    // llega a todos.
+    const activo = lista.some((d) => d.ambiente === undefined) ? await ambienteActivo(ctx) : null
     const entregas = suscritos.flatMap((w) =>
       lista
-        .filter((d) => !w.ambiente || (d.ambiente ?? activo) === w.ambiente)
+        .filter((d) => !w.ambiente || d.ambiente === null || (d.ambiente ?? activo) === w.ambiente)
         .map((d) => nuevaEntrega(ctx, w.id, evento, d)),
     )
     if (!entregas.length) return

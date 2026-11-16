@@ -31,7 +31,7 @@ solicitar la autorización de todo de una vez.
 ## Antes de empezar
 
 - Las **credenciales de pruebas** de Hacienda cargadas (certificado y contraseña de API).
-- Un **cliente contribuyente** (con NIT y NRC) que reciba los Créditos Fiscales de prueba.
+- Un **receptor** para los Créditos Fiscales de prueba: Open Factura u otro contribuyente (ver abajo).
 - El **responsable** del emisor: Hacienda lo exige en los eventos de invalidación y contingencia. La
   página te lo pide si falta.
 
@@ -53,8 +53,17 @@ solicitar la autorización de todo de una vez.
 </Steps>
 
 Los Créditos Fiscales de prueba necesitan como receptor a **otro contribuyente**: Hacienda rechaza
-los que van dirigidos a tu propia empresa (`[receptor.nit] VALOR NO VALIDO`). Crea en **Clientes** uno
-con NIT, NRC, actividad económica y dirección, y elígelo antes de iniciar.
+los que van dirigidos a tu propia empresa (`[receptor.nit] VALOR NO VALIDO`). En **Certificación** elige
+el receptor antes de iniciar:
+
+- **Open Factura (recomendado):** el receptor de prueba que trae Open Factura. No tienes que buscar a
+  nadie.
+- **Otro contribuyente:** escribe ahí mismo su NIT, NRC, nombre, actividad económica, dirección y
+  correo.
+
+El receptor no se guarda como cliente: en pruebas no hay clientes guardados. Si eliges tu propia
+empresa, la certificación responde `receptor_propio`. Con credenciales reales, iniciar sin receptor
+responde `409 receptor_ccf_requerido`.
 
 <Tabs syncKey="via">
 <TabItem label="Panel">
@@ -65,23 +74,32 @@ Abre **Certificación** y pulsa **Iniciar**. Puedes pausar y reanudar cuando qui
 <TabItem label="CLI">
 
 ```bash
-openfactura certificacion ejecutar              # lo obligatorio
-openfactura certificacion ejecutar --completo   # todos los documentos y eventos
+openfactura certificacion ejecutar --receptor openfactura   # lo obligatorio
+openfactura certificacion ejecutar --completo               # todos los documentos y eventos
+openfactura certificacion ejecutar --desde-cero             # descarta el avance y cuenta desde ahora
 openfactura certificacion estado
 ```
+
+`--receptor` acepta `openfactura`, o un archivo JSON (o `-` para leerlo de la entrada) con los datos
+de otro contribuyente. Basta con darlo la primera vez; luego se recuerda. `--desde-cero` sirve cuando
+Hacienda te abre un plazo nuevo.
 
 `ejecutar` sale con 0 al completar y con 1 si Hacienda rechazó una prueba o dejó de responder.
 
 </TabItem>
 <TabItem label="API">
 
+`receptor` es `"openfactura"` o un objeto con `nit`, `nrc`, `nombre`, `codActividad`,
+`descActividad`, `direccion` y `correo` de otro contribuyente. También acepta `alcance`
+(`minimo` o `completo`) y `desdeCero: true`.
+
 ```bash
-curl -X POST https://app.openfactura.co/api/v1/certificacion/iniciar \
+curl -X POST https://app.openfactura.co/api/v1/ext/certificacion/iniciar \
   -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
-  -H "Content-Type: application/json" -d '{}'
+  -H "Content-Type: application/json" -d '{"receptor": "openfactura"}'
 
 # Repite mientras "estado" sea "en_curso":
-curl -X POST https://app.openfactura.co/api/v1/certificacion/avanzar \
+curl -X POST https://app.openfactura.co/api/v1/ext/certificacion/avanzar \
   -H "Authorization: Bearer $OPENFACTURA_API_KEY"
 ```
 
@@ -91,7 +109,8 @@ La clave necesita `dte:read`, `dte:emit` y `dte:invalidate`.
 <TabItem label="MCP">
 
 Pide a tu agente: «certifícame ante Hacienda». Usa `certificacion_avanzar` hasta completar y te
-muestra el rechazo si lo hay.
+muestra el rechazo si lo hay. La primera llamada lleva el argumento `receptor` (`"openfactura"` o los
+datos de otro contribuyente).
 
 </TabItem>
 </Tabs>

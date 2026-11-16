@@ -67,7 +67,9 @@ want: their data remains theirs.
    that one instead.
 
 4. **Find out when they're ready.** Subscribe a [webhook](/en/guias/webhooks/) to `cliente.listo`: it
-   arrives once when the customer can issue in test and again when they can in production. You can
+   arrives once when the customer can issue in test and again when they can in production, at any
+   subscribed webhook (created with a test key, a production key, or in the dashboard). With the CLI:
+   `openfactura webhooks add <url> --eventos cliente.listo`. You can
    also query `GET /clientes/:id`: `preparacion` (`conectado`, `pruebas`, `produccion`) and `falta`
    (what is still missing).
 
@@ -110,10 +112,13 @@ single integration.
 
 Your webhooks **also receive the events of all your customers** (`dte.procesado`, `dte.rechazado`,
 `dte.contingencia`, `dte.invalidado`…) with `cliente` in `datos` so you know whose it is. Your
-customer still receives their own, without `cliente`.
+customer still receives their own, without `cliente`. Like any webhook, one created with a test key
+only receives test events ([Environments](/en/guias/webhooks/#environments)).
 
 Should a customer's system receive **only** its own events? Create the webhook in their space:
-`POST /clientes/:id/webhooks` (or in the dashboard, *New webhook → For whom?*).
+`POST /clientes/:id/webhooks` (or in the dashboard, *New webhook → For whom?*). That webhook isn't
+tied to an environment (`ambiente: null`): it receives your customer's test and production events,
+even if you create it with a test key. Use the body's `ambiente` to tell them apart.
 
 ```json
 {

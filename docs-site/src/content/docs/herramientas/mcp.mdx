@@ -82,9 +82,9 @@ Si ya ejecutaste `openfactura login` en ese equipo puedes omitir `env`.
 | --------------------------------- | ----------------------------------------------- | ---------------- |
 | `emisor_obtener`                  | Emisor, ambiente activo, puntos de venta        | `emisor:read`    |
 | `catalogo_buscar`                 | Busca en catálogos del MH (CAT-xxx)             | —                |
-| `clientes_buscar`                 | Busca clientes guardados                        | `clientes:read`  |
-| `cliente_crear`                   | Guarda un cliente                               | `clientes:write` |
-| `productos_buscar`                | Busca productos                                 | `productos:read` |
+| `clientes_buscar`                 | Busca clientes guardados (sólo en producción)   | `clientes:read`  |
+| `cliente_crear`                   | Guarda un cliente (sólo en producción)          | `clientes:write` |
+| `productos_buscar`                | Busca productos del ambiente de la clave        | `productos:read` |
 | `producto_crear`                  | Guarda un producto (precio sin IVA)             | `productos:write` |
 | `dte_validar`                     | Valida sin emitir; devuelve problemas y total   | `dte:emit`       |
 | `dte_emitir`                      | Emite (requiere `idempotencyKey`)               | `dte:emit`       |
@@ -95,7 +95,7 @@ Si ya ejecutaste `openfactura login` en ese equipo puedes omitir `env`.
 | `operaciones_especiales_informar` | Evento 17 (requiere `idempotencyKey`)           | `dte:emit`       |
 | `eventos_listar`                  | Lista eventos de retorno y operaciones especiales | `dte:read`     |
 | `evento_obtener`                  | Un evento con su JSON y la respuesta del MH     | `dte:read`       |
-| `webhooks_listar`                 | Tus webhooks y sus eventos                      | `webhooks:manage` |
+| `webhooks_listar`                 | Tus webhooks del ambiente de la clave           | `webhooks:manage` |
 | `webhook_crear`                   | Crea un webhook (el secreto sólo aparece aquí)  | `webhooks:manage` |
 | `webhook_eliminar`                | Borra un webhook                                | `webhooks:manage` |
 | `webhook_probar`                  | Envía un evento de prueba firmado               | `webhooks:manage` |
@@ -117,7 +117,8 @@ Si ya ejecutaste `openfactura login` en ese equipo puedes omitir `env`.
 ## Cómo debe trabajar el asistente
 
 1. `emisor_obtener` para saber el ambiente. En `01`, avisarte que emitirá **en producción**.
-2. Buscar receptor y productos; no adivinar NIT, NRC ni actividad económica.
+2. Buscar receptor y productos; no adivinar NIT, NRC ni actividad económica. En pruebas no hay
+   clientes guardados: el receptor va en `datos.receptor`.
 3. `dte_validar` y corregir los problemas.
 4. Mostrarte el resumen (tipo, receptor, líneas, total, ambiente) y esperar un "sí" explícito.
 5. `dte_emitir` con una `idempotencyKey`, y reutilizarla si reintenta.

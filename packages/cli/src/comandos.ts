@@ -1062,8 +1062,9 @@ async function webhooksAdd(ctx: Contexto): Promise<undefined> {
         .map((e) => e.trim())
         .filter(Boolean)
     : [...EVENTOS_WEBHOOK]
-  const desconocido = eventos.find((e) => !(EVENTOS_WEBHOOK as readonly string[]).includes(e))
-  if (desconocido || !eventos.length) {
+  // Los nombres los valida la API: además de los del núcleo acepta los que declare una extensión
+  // (en la nube, `cliente.listo` de Plataforma), que la CLI no conoce.
+  if (!eventos.length) {
     throw new ErrorUso(`--eventos acepta, separados por coma: ${EVENTOS_WEBHOOK.join(', ')}`)
   }
   const cuerpo: Registro = { url: ctx.args[0], eventos }
@@ -1486,7 +1487,7 @@ export const COMANDOS: Comando[] = [
   {
     nombre: 'clientes list',
     uso: 'clientes list [--q <texto>]',
-    resumen: 'Lista o busca clientes',
+    resumen: 'Lista o busca clientes (sólo en producción)',
     opciones: ['q'],
     args: [0, 0],
     accion: clientesList,
@@ -1494,7 +1495,7 @@ export const COMANDOS: Comando[] = [
   {
     nombre: 'clientes add',
     uso: 'clientes add --file <cliente.json> | --tipo-documento <36|13|03|02|37> --num-documento <n> --nombre <nombre> […]',
-    resumen: 'Crea un cliente',
+    resumen: 'Crea un cliente (sólo en producción)',
     opciones: ['file', ...Object.keys(CAMPOS_CLIENTE)],
     args: [0, 0],
     accion: clientesAdd,

@@ -65,7 +65,9 @@ sus datos siguen siendo suyos.
    Si ya usa Open Factura con su empresa, puede conectar ésa en su lugar.
 
 4. **Entérate cuando esté listo.** Suscribe un [webhook](/guias/webhooks/) a `cliente.listo`: llega
-   una vez cuando el cliente puede emitir en pruebas y otra cuando puede en producción. También
+   una vez cuando el cliente puede emitir en pruebas y otra cuando puede en producción, a cualquier
+   webhook suscrito (creado con clave de pruebas, de producción o en el panel). Con la CLI:
+   `openfactura webhooks add <url> --eventos cliente.listo`. También
    puedes consultar `GET /clientes/:id`: `preparacion` (`conectado`, `pruebas`, `produccion`) y
    `falta` (lo que le falta).
 
@@ -107,10 +109,13 @@ sola integración.
 
 Tus webhooks reciben **también los eventos de todos tus clientes** (`dte.procesado`,
 `dte.rechazado`, `dte.contingencia`, `dte.invalidado`…) con `cliente` en `datos` para saber de quién
-es. Tu cliente sigue recibiendo los suyos, sin `cliente`.
+es. Tu cliente sigue recibiendo los suyos, sin `cliente`. Como todo webhook, uno creado con una clave
+de pruebas sólo recibe eventos de pruebas ([Ambientes](/guias/webhooks/#ambientes)).
 
 ¿El sistema de un cliente debe recibir **sólo** sus eventos? Crea el webhook en su espacio:
-`POST /clientes/:id/webhooks` (o en el panel, *Nuevo webhook → ¿Para quién?*).
+`POST /clientes/:id/webhooks` (o en el panel, *Nuevo webhook → ¿Para quién?*). Ese webhook no queda
+atado a un ambiente (`ambiente: null`): recibe los eventos de pruebas y de producción de tu cliente,
+aunque lo crees con una clave de pruebas. Usa `ambiente` del cuerpo para separarlos.
 
 ```json
 {

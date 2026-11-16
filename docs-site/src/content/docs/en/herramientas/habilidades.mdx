@@ -25,7 +25,7 @@ npx skills add xaviigna/openfactura --skill openfactura-facturar   # just one
 - Confirm the summary with you (type, recipient, lines, total, and environment) before issuing.
 - Don't calculate taxes: show the total Open Factura returns.
 - One `idempotencyKey` per attempt, reused on retries.
-- Don't guess tax details: look them up in saved customers or ask.
+- Don't guess tax details: look them up in saved customers (in production) or ask.
 - Branch on the error's `code`, never on the message text.
 
 The skills work together with the [MCP server](/en/herramientas/mcp/) or the

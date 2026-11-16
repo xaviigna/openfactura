@@ -69,6 +69,12 @@ Response: `201` with the `Evento`:
 
 If the MH rejects the event: `422 evento_rechazado` with `details.mh`.
 
+If it can't be confirmed whether the MH received the event (the connection dropped while
+transmitting it, or the MH stamped it but it couldn't be saved): `502 evento_incierto` with
+`details.codigoGeneracion` and, if it was stamped, `details.selloRecibido`. It's stored as the final
+response for the `Idempotency-Key`. **Don't send it again** without checking with the MH first;
+resend with another key only if it didn't arrive.
+
 ## Query and deliver
 
 - `GET /eventos?tipo=retorno` — the 50 most recent in the active environment.

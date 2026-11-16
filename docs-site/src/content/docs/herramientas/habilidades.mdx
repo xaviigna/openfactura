@@ -25,7 +25,7 @@ npx skills add xaviigna/openfactura --skill openfactura-facturar   # sólo una
 - Confirmar contigo el resumen (tipo, receptor, líneas, total y ambiente) antes de emitir.
 - No calcular impuestos: mostrar el total que devuelve Open Factura.
 - Una `idempotencyKey` por intento, reutilizada en los reintentos.
-- No adivinar datos fiscales: buscarlos en clientes guardados o preguntarlos.
+- No adivinar datos fiscales: buscarlos en clientes guardados (en producción) o preguntarlos.
 - Decidir por el `code` del error, nunca por el texto del mensaje.
 
 Las habilidades funcionan junto con el [servidor MCP](/herramientas/mcp/) o la [CLI](/herramientas/cli/).

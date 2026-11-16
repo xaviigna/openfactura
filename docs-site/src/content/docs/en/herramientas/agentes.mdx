@@ -15,7 +15,8 @@ two ways to connect it:
   `openfactura login` (or the `OPENFACTURA_API_KEY` and `OPENFACTURA_URL` variables). Use it for
   clients that don't send headers.
 
-While you're testing, use an `of_test_…` key: nothing you issue has fiscal value. The key decides
+While you're testing, use an `of_test_…` key: nothing you issue has fiscal value. In test mode there
+are no saved customers: the agent puts the recipient in `datos.receptor`. The key decides
 what the agent can do; see [Authentication and keys](/en/autenticacion/) and the available tools in
 [MCP server](/en/herramientas/mcp/).
 

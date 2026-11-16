@@ -82,9 +82,9 @@ If you already ran `openfactura login` on that machine, you can omit `env`.
 | --------------------------------- | ----------------------------------------------- | ---------------- |
 | `emisor_obtener`                  | Issuer, active environment, points of sale      | `emisor:read`    |
 | `catalogo_buscar`                 | Searches MH catalogs (CAT-xxx)                  | —                |
-| `clientes_buscar`                 | Searches saved customers                        | `clientes:read`  |
-| `cliente_crear`                   | Saves a customer                                | `clientes:write` |
-| `productos_buscar`                | Searches products                               | `productos:read` |
+| `clientes_buscar`                 | Searches saved customers (production only)      | `clientes:read`  |
+| `cliente_crear`                   | Saves a customer (production only)              | `clientes:write` |
+| `productos_buscar`                | Searches the key environment's products         | `productos:read` |
 | `producto_crear`                  | Saves a product (price without VAT)             | `productos:write` |
 | `dte_validar`                     | Validates without issuing; returns problems and total | `dte:emit` |
 | `dte_emitir`                      | Issues (requires `idempotencyKey`)              | `dte:emit`       |
@@ -95,7 +95,7 @@ If you already ran `openfactura login` on that machine, you can omit `env`.
 | `operaciones_especiales_informar` | Event 17 (requires `idempotencyKey`)            | `dte:emit`       |
 | `eventos_listar`                  | Lists return and special operations events      | `dte:read`       |
 | `evento_obtener`                  | An event with its JSON and the MH response      | `dte:read`       |
-| `webhooks_listar`                 | Your webhooks and their events                  | `webhooks:manage` |
+| `webhooks_listar`                 | Your webhooks in the key's environment          | `webhooks:manage` |
 | `webhook_crear`                   | Creates a webhook (the secret only appears here) | `webhooks:manage` |
 | `webhook_eliminar`                | Deletes a webhook                               | `webhooks:manage` |
 | `webhook_probar`                  | Sends a signed test event                       | `webhooks:manage` |
@@ -117,7 +117,8 @@ If you already ran `openfactura login` on that machine, you can omit `env`.
 ## How the assistant should work
 
 1. `emisor_obtener` to learn the environment. In `01`, warn you that it will issue **in production**.
-2. Look up the recipient and products; never guess a NIT, NRC, or economic activity.
+2. Look up the recipient and products; never guess a NIT, NRC, or economic activity. In test mode
+   there are no saved customers: the recipient goes in `datos.receptor`.
 3. `dte_validar` and fix the problems.
 4. Show you the summary (type, recipient, lines, total, environment) and wait for an explicit "yes".
 5. `dte_emitir` with an `idempotencyKey`, and reuse it on retries.

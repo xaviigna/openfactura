@@ -135,6 +135,9 @@ describe('webhooks por ambiente (despacho)', () => {
     expect(await cuenta()).toBe(0)
     await publicar(ctx, 'dte.procesado', { codigoGeneracion: 'PRUEBA', ambiente: '00' })
     expect(await cuenta()).toBe(1)
+    // `ambiente: null` explícito (un evento sin ambiente, de una extensión) llega igual.
+    await publicar(ctx, 'dte.procesado', { codigoGeneracion: 'SIN-AMBIENTE', ambiente: null })
+    expect(await cuenta()).toBe(2)
   })
 })
 

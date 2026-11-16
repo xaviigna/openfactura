@@ -16,8 +16,10 @@ El MH tiene dos ambientes, y Open Factura los mantiene separados de punta a punt
 - El panel usa el ambiente guardado en el emisor (**Empresa y Hacienda → Datos fiscales → Ambiente**).
 - Las credenciales del MH (contraseña de API y certificado) son **distintas en cada ambiente**: las de
   pruebas no sirven en producción.
-- Cada clave ve sólo los documentos y eventos de su ambiente. Las claves de idempotencia también son
-  independientes por ambiente.
+- Cada clave ve sólo los documentos, eventos, productos y [webhooks](/guias/webhooks/#ambientes) de su
+  ambiente. Las claves de idempotencia también son independientes por ambiente.
+- Los clientes guardados sólo existen en producción. En pruebas, el receptor va en `datos.receptor`
+  (`409 clientes_solo_produccion`).
 - Los PDF del ambiente de pruebas advierten que el documento no tiene valor legal.
 
 Si operas sobre un documento de otro ambiente, la API responde `409 ambiente_distinto`.

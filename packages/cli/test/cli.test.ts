@@ -477,14 +477,9 @@ describe('webhooks', () => {
     expect(t.stdout).toMatch(/no se vuelve a mostrar/)
   })
 
-  it('add valida --eventos sin llamar a la API', async () => {
+  it('add rechaza --eventos vacío sin llamar a la API y deja a la API validar los nombres', async () => {
     const t = crearEntorno({ env: conClave })
-    expect(
-      await ejecutar(
-        ['webhooks', 'add', WEBHOOK.url, '--eventos', 'dte.procesado,dte.otro'],
-        t.ent,
-      ),
-    ).toBe(2)
+    expect(await ejecutar(['webhooks', 'add', WEBHOOK.url, '--eventos', ' , '], t.ent)).toBe(2)
     expect(t.stderr).toMatch(/--eventos/)
     expect(t.llamadas).toHaveLength(0)
 
@@ -499,6 +494,16 @@ describe('webhooks', () => {
     expect((bien.llamadas[0]?.cuerpo as { eventos?: string[] } | undefined)?.eventos).toEqual([
       'dte.rechazado',
       'dte.invalidado',
+    ])
+
+    // Un evento de extensión (Plataforma en la nube) llega a la API tal cual.
+    const extension = crearEntorno({
+      env: conClave,
+      respuestas: [json({ ...WEBHOOK, secreto: SECRETO })],
+    })
+    await ejecutar(['webhooks', 'add', WEBHOOK.url, '--eventos', 'cliente.listo'], extension.ent)
+    expect((extension.llamadas[0]?.cuerpo as { eventos?: string[] } | undefined)?.eventos).toEqual([
+      'cliente.listo',
     ])
   })
 

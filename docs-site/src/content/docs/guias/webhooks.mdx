@@ -6,9 +6,23 @@ Open Factura avisa a tu sistema cuando un documento cambia de estado, sin que te
 Configúralos en el panel (**Desarrolladores → Webhooks**), con la API, con `openfactura webhooks` o con
 las herramientas MCP. Requieren el permiso `webhooks:manage`.
 
+## Ambientes
+
+Cada webhook recibe los eventos de un ambiente o de ambos:
+
+- Creado con una **clave de API**, queda atado al ambiente de la clave: el de una clave de pruebas
+  sólo recibe eventos con `ambiente: "00"` y el de una de producción, sólo `"01"`. Una clave sólo ve,
+  cambia y prueba los webhooks de su ambiente.
+- Creado por una **persona en el panel**, tiene `ambiente: null` y recibe los de los dos. En el panel
+  se ven todos los webhooks de la organización.
+
+Un evento que no pertenece a un ambiente (en la nube, `cliente.listo` de Plataforma) lleva
+`ambiente: null` y llega a todos los webhooks suscritos. Además de los eventos del núcleo, una
+extensión puede declarar los suyos: `GET /yo` los lista en `eventosWebhook`.
+
 ## Rutas (`webhooks:manage`)
 
-- `GET /webhooks` → `[{ id, url, descripcion, eventos[], activo, creado, actualizado }]` (nunca el secreto)
+- `GET /webhooks` → `[{ id, ambiente, url, descripcion, eventos[], activo, creado, actualizado }]` (nunca el secreto)
 - `POST /webhooks` — `{ url, eventos: [...], descripcion?, activo? }` → lo anterior más `secreto`
   (`whsec_…`, sólo esta vez). Hasta 10 por organización (`409 limite_webhooks`).
 - `PATCH /webhooks/:id` — cualquiera de `{ url, descripcion, eventos, activo }`

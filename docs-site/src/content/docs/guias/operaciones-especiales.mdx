@@ -62,3 +62,8 @@ openfactura eventos operaciones-especiales simplificadas.json
 
 Respuesta: `201` con el `Evento` (`tipo: "operaciones_especiales"`, `tipoEvento: "17"`). Si el MH lo
 rechaza: `422 evento_rechazado`. Consulta los enviados con `GET /eventos?tipo=operaciones_especiales`.
+
+Si no se puede confirmar si el MH recibió el evento (la conexión cayó al transmitirlo, o el MH lo selló
+pero no se pudo guardar): `502 evento_incierto` con `details.codigoGeneracion` y, si llegó a sellarse,
+`details.selloRecibido`. Queda como respuesta definitiva de la `Idempotency-Key`. **No lo envíes otra
+vez** sin verificar antes en el MH; reenvía con otra clave sólo si no llegó.

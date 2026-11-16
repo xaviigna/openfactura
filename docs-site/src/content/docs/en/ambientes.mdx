@@ -16,8 +16,10 @@ The MH has two environments, and Open Factura keeps them separate end to end:
 - The dashboard uses the environment saved on the issuer (**Company & Tax Authority → Tax details → Environment**).
 - MH credentials (API password and certificate) are **different in each environment**: test ones
   don't work in production.
-- Each key sees only the documents and events of its environment. Idempotency keys are also
-  independent per environment.
+- Each key sees only the documents, events, products, and [webhooks](/en/guias/webhooks/#environments)
+  of its environment. Idempotency keys are also independent per environment.
+- Saved customers only exist in production. In test mode, the recipient goes in `datos.receptor`
+  (`409 clientes_solo_produccion`).
 - PDFs from the test environment warn that the document has no legal value.
 
 If you operate on a document from another environment, the API responds `409 ambiente_distinto`.

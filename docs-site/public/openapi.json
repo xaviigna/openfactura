@@ -3685,7 +3685,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "of_test_… | of_live_…",
-        "description": "Clave de API creada en el panel (Ajustes → Claves de API). `of_test_…` trabaja en el ambiente de pruebas del MH (`00`) y `of_live_…` en producción (`01`). Lleva los permisos elegidos al crearla."
+        "description": "Clave de API creada en el panel (Desarrolladores → Claves de API). `of_test_…` trabaja en el ambiente de pruebas del MH (`00`) y `of_live_…` en producción (`01`). Lleva los permisos elegidos al crearla."
       },
       "sesion": {
         "type": "apiKey",
@@ -5349,6 +5349,32 @@
             "required": [
               "plan"
             ]
+          },
+          "capacidades": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Funciones que agregan las extensiones instaladas (p. ej. `certificacion`). Vacío en una instalación estándar."
+          },
+          "eventosWebhook": {
+            "type": "array",
+            "description": "Eventos de webhook que agregan las extensiones, con su descripción.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "evento": {
+                  "type": "string"
+                },
+                "descripcion": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "evento",
+                "descripcion"
+              ]
+            }
           }
         }
       },
@@ -5712,6 +5738,18 @@
         "properties": {
           "id": {
             "type": "string"
+          },
+          "ambiente": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "00",
+              "01",
+              null
+            ],
+            "description": "Ambiente cuyos eventos recibe. Una clave lo ata al suyo; uno creado en el panel es nulo y recibe ambos."
           },
           "url": {
             "type": "string"
