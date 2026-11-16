@@ -153,7 +153,7 @@ With a key enabled for Plataforma, the [MCP](/en/herramientas/mcp/) adds these t
 With the **Platform** plan your customers see **your** brand, not Open Factura's. You choose the
 name, logo and color. Below is exactly what carries your brand and what doesn't.
 
-**Set it up** in the dashboard (*Marca → White label for your customers*) or through the API
+**Set it up** in the dashboard (*Developer* mode → *Brand*) or through the API
 (`/api/v1/ext/marca/plataforma*`, with `emisor:write`; reading needs `emisor:read`):
 
 ```bash
@@ -196,8 +196,9 @@ curl -X PUT https://app.openfactura.co/api/v1/ext/marca/plataforma \
   neutral subdomain.
 - **GitHub sign-in.** It is disabled on brand hosts.
 
-Neutral or own senders and neutral subdomains are set up by us: write to us and we enable them.
-They are not self-serve yet.
+**Your neutral subdomain is automatic:** once your brand is active, your panel lives at
+`https://<slug>.<neutral domain>/app`, and sign-up links and emails use it. No DNS on your side.
+Neutral or own senders are set up by us: write to us and we enable them.
 
 ### What a brand host answers
 
@@ -234,7 +235,7 @@ the root domain), up to **3** per platform.
 
 <Steps>
 
-1. **Add it.** In the dashboard: *Marca → Dirección → Dominio propio*. Or through the API:
+1. **Add it.** In the dashboard, *Developer* mode: *Brand → Custom domain*. Or through the API:
 
    ```bash
    curl -X POST https://app.openfactura.co/api/v1/ext/marca/plataforma/dominios \
@@ -254,8 +255,11 @@ the root domain), up to **3** per platform.
 
 </Steps>
 
-Once active, your onboarding links use that domain and your dashboard answers on it. If the plan
-lapses, the domain stops being served until you renew.
+Once active, your dashboard answers on it. Before your onboarding links use it, we set up the
+sign-up and sign-in security check for that domain, a few minutes after it goes active. Meanwhile
+the dashboard says so (`turnstile: "pendiente"` in the API) and links stay on your subdomain; once it
+says `listo`, they move to the domain. If the plan lapses, the domain stops being served until you
+renew.
 
 Host rules:
 

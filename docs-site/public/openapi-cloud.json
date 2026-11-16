@@ -2249,6 +2249,11 @@
           },
           "activado": {
             "type": ["integer", "null"]
+          },
+          "turnstile": {
+            "type": ["string", "null"],
+            "enum": ["listo", "pendiente", null],
+            "description": "Con el dominio activo: si la verificación anti-bots del registro y del inicio de sesión ya funciona en él (`listo`) o se está preparando (`pendiente`; mientras, los enlaces siguen en el subdominio). `null` si no aplica."
           }
         }
       },

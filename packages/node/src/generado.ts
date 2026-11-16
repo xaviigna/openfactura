@@ -590,6 +590,8 @@ export interface Cloud {
     }>
     creado?: number
     activado?: number | null
+    /** Con el dominio activo: si la verificación anti-bots del registro y del inicio de sesión ya funciona en él (`listo`) o se está preparando (`pendiente`; mientras, los enlaces siguen en el subdominio). `null` si no aplica. */
+    turnstile?: "listo" | "pendiente" | null
   }
   MarcaVigente: {
     nombre?: string

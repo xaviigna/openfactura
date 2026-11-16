@@ -150,7 +150,7 @@ Con una clave habilitada para Plataforma, el [MCP](/herramientas/mcp/) suma esta
 Con el plan **Platform** tus clientes ven **tu** marca, no la de Open Factura. Tú eliges el nombre,
 el logo y el color. Abajo está, sin adornos, qué lleva tu marca y qué no.
 
-**Configúrala** en el panel (*Marca → Marca blanca para tus clientes*) o por API
+**Configúrala** en el panel (modo *Desarrollador* → *Marca*) o por API
 (`/api/v1/ext/marca/plataforma*`, con `emisor:write`; consultar pide `emisor:read`):
 
 ```bash
@@ -193,8 +193,10 @@ curl -X PUT https://app.openfactura.co/api/v1/ext/marca/plataforma \
   que uses un subdominio neutro.
 - **Ingreso con GitHub.** No está disponible en los hosts de marca.
 
-Los remitentes neutros o propios y los subdominios neutros los configuramos nosotros: escríbenos y
-los habilitamos. Todavía no son de autoservicio.
+**Tu subdominio neutro es automático:** con la marca activa, tu panel queda en
+`https://<slug>.<dominio neutro>/app` y los enlaces de alta y los correos lo usan. No hace falta
+DNS de tu lado. Los remitentes neutros o propios los configuramos nosotros: escríbenos y los
+habilitamos.
 
 ### Qué responde un host de marca
 
@@ -231,7 +233,7 @@ Tu portal puede vivir en un subdominio tuyo, por ejemplo `facturas.tumarca.com`.
 
 <Steps>
 
-1. **Agrégalo.** En el panel: *Marca → Dirección → Dominio propio*. O por API:
+1. **Agrégalo.** En el panel, modo *Desarrollador*: *Marca → Dominio propio*. O por API:
 
    ```bash
    curl -X POST https://app.openfactura.co/api/v1/ext/marca/plataforma/dominios \
@@ -251,8 +253,11 @@ Tu portal puede vivir en un subdominio tuyo, por ejemplo `facturas.tumarca.com`.
 
 </Steps>
 
-Cuando está activo, tus enlaces de alta usan ese dominio y tu panel responde en él. Si el plan
-vence, el dominio deja de servirse hasta que renueves.
+Cuando está activo, tu panel responde en él. Antes de que tus enlaces de alta lo usen, preparamos
+la verificación de seguridad del registro y del inicio de sesión para ese dominio: unos minutos
+después de activarse. Mientras tanto el panel lo indica (`turnstile: "pendiente"` en la API) y los
+enlaces siguen en tu subdominio; cuando dice `listo`, pasan al dominio. Si el plan vence, el dominio
+deja de servirse hasta que renueves.
 
 Reglas del host:
 
