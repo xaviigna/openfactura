@@ -32,10 +32,30 @@ crearla; el servidor guarda únicamente su SHA-256.
   confirmación de correo, un correo que ya tiene cuenta recibe la misma respuesta (200 sin sesión), también
   si dos altas llegan a la vez; un alta con el correo de una cuenta sin confirmar la reemplaza. Hasta 5
   altas por correo y hora; pasado el tope, `429` (la dueña recupera la cuenta con «Olvidé mi contraseña»).
+  El nombre admite 120 caracteres y la imagen debe ser una URL `https://` de hasta 2 KB.
 - `POST /api/auth/sign-in/email` `{ email, password }`
+- `POST /api/auth/send-verification-email` `{ email }`: reenvía el enlace de confirmación. Hasta 3 por
+  correo y hora (exista o no la cuenta); pasado el tope, `429 demasiados_reenvios`.
+- `POST /api/auth/confirmar-correo` `{ token, password }` o `{ token, newPassword }`: confirma el correo
+  con el token del enlace. Con `password` (la del alta) confirma y abre sesión; con `newPassword`
+  reemplaza la contraseña, cierra todas las sesiones, confirma y abre sesión. Contraseña equivocada:
+  `401 INVALID_PASSWORD`; hasta 5 intentos por cuenta y hora (`429 demasiados_intentos`) y 10 cada 5
+  minutos por IP. Token vencido o de una cuenta reemplazada: `400 INVALID_TOKEN`; cuenta ya confirmada:
+  `400 EMAIL_ALREADY_VERIFIED`. `GET /api/auth/verify-email` ya no confirma: redirige a la página del
+  panel `/auth/confirmar`.
+- `POST /api/auth/request-password-reset` `{ email, redirectTo }`: hasta 3 enlaces por correo y hora;
+  pasado el tope responde igual y no envía. Restablecer la contraseña de una cuenta sin confirmar la
+  confirma.
+- Con Cloudflare Turnstile activo (`TURNSTILE_SECRET`), `sign-up/email`, `sign-in/email` y
+  `request-password-reset` exigen el token del widget en el encabezado `x-turnstile-token` (acciones
+  `signup`, `login` y `password_reset`); se comprueba antes del hash de la contraseña. Sin él o
+  inválido: `403 turnstile_invalido`.
 - `POST /api/auth/sign-out`
 - `GET  /api/auth/get-session`
-- `POST /api/auth/organization/create` `{ name, slug }` — el creador queda como `owner`
+- `POST /api/auth/organization/create` `{ name, slug }` — el creador queda como `owner`. Hasta 10
+  organizaciones propias por persona (`403 YOU_HAVE_REACHED_THE_MAXIMUM_NUMBER_OF_ORGANIZATIONS`);
+  `name` hasta 120 caracteres, `slug` 60, `metadata` 4 KB y `logo` una URL `https://` de hasta 2 KB
+  (también en `organization/update`); si no, `400 datos_invalidos`.
 - `POST /api/auth/organization/set-active` `{ organizationId }`
 - `GET  /api/auth/organization/list`
 - Invitaciones y miembros: `organization/invite-member`, `organization/list-members`,
@@ -45,6 +65,9 @@ crearla; el servidor guarda únicamente su SHA-256.
 Un usuario sin organización recibe `409 sin_organizacion` en `/api/v1/*`. Si pertenece a varias y la
 sesión no tiene una activa, recibe `409 sin_organizacion_activa` con `details.organizaciones`: llama a
 `organization/set-active`.
+
+`GET /api/v1/acceso` (público) dice cómo se ingresa en esta instalación:
+`{ github, correo, turnstile }`, donde `turnstile` es la clave pública del widget o `null`.
 
 ## Permisos
 

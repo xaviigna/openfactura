@@ -42,7 +42,9 @@ export interface CambioMiembro {
 
 /**
  * Correo de la cuenta que el núcleo pide enviar. `url` lleva un token de un solo propósito: no la
- * registre. `clave_cambiada` avisa de un cambio de contraseña (por si no fue la persona);
+ * registre. En `verificar` lleva a la página `<APP_URL>/auth/confirmar?token=…` del panel, que pide
+ * la contraseña del alta (o una nueva) y llama a `POST /api/auth/confirmar-correo`: una distribución
+ * que envía correos de cuenta debe servir esa página. `clave_cambiada` avisa de un cambio de contraseña (por si no fue la persona);
  * `bienvenida` sale una vez, cuando la cuenta nueva ya tiene su correo confirmado.
  */
 export type CorreoCuenta = { correo: string; nombre: string } & (

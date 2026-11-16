@@ -54,6 +54,18 @@ cambian de nombre.
 
 En `details.mh` el MH informa `{ codigo, mensaje, observaciones[] }`.
 
+## Errores de las rutas de sesión
+
+Las rutas de `/api/auth/*` (Better Auth) responden `{ "code": "…", "message": "…" }`, sin el objeto
+`error`. Además de los códigos de Better Auth:
+
+| HTTP | `code`                 | Qué pasó                                                              | Qué hacer                                                    |
+| ---- | ---------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 400  | `datos_invalidos`      | Un nombre, identificador, logo, imagen o metadatos pasa de su tope    | Acórtalo; la imagen y el logo, una URL `https://`.           |
+| 403  | `turnstile_invalido`   | Falta el token de Turnstile, no es válido o es de otra pantalla       | Resuelve el widget de nuevo y repite.                        |
+| 429  | `demasiados_reenvios`  | Ya se enviaron varios enlaces de confirmación a ese correo esta hora | Usa el enlace más reciente o «Olvidé mi contraseña».         |
+| 429  | `demasiados_intentos`  | Demasiados intentos con contraseña al confirmar el correo             | Define una contraseña nueva desde el mismo enlace.           |
+
 <Aside>
 La lista completa de códigos también está en el esquema `Error` de la
 [referencia de la API](/api/).

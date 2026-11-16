@@ -23,11 +23,11 @@ export async function consumir(
   const inicio = ahora - (ahora % ventanaSegundos)
   const fila = await d1
     .prepare(
-      `INSERT INTO ventana_limite (bucket, ventana_inicio, cuenta) VALUES (?1, ?2, 1)
+      `INSERT INTO ventana_limite (bucket, ventana_inicio, cuenta, segundos) VALUES (?1, ?2, 1, ?3)
        ON CONFLICT (bucket, ventana_inicio) DO UPDATE SET cuenta = cuenta + 1
        RETURNING cuenta`,
     )
-    .bind(bucket, inicio)
+    .bind(bucket, inicio, ventanaSegundos)
     .first<{ cuenta: number }>()
   const cuenta = fila?.cuenta ?? 1
   return {
@@ -39,13 +39,16 @@ export async function consumir(
   }
 }
 
-/** Borra ventanas viejas e idempotencias caducadas. Lo llama el cron. */
+/**
+ * Borra las ventanas que ya terminaron (cada una según su duración: las hay de un minuto y de un
+ * día) y las idempotencias caducadas. Lo llama el cron.
+ */
 export async function limpiar(d1: D1Database): Promise<void> {
   const ahora = Date.now()
   await d1.batch([
     d1
-      .prepare('DELETE FROM ventana_limite WHERE ventana_inicio < ?1')
-      .bind(Math.floor(ahora / 1000) - 3600),
+      .prepare('DELETE FROM ventana_limite WHERE ventana_inicio + segundos <= ?1')
+      .bind(Math.floor(ahora / 1000)),
     d1.prepare('DELETE FROM idempotencia WHERE creado < ?1').bind(ahora - 86_400_000),
   ])
 }

@@ -74,6 +74,9 @@ function crearApp(extensiones: readonly Extension[]) {
           github: githubConfigurado(c.env),
           // Con correo hay verificación de la dirección y recuperación de la contraseña.
           correo: envioDeCuenta(c.env, c.var.extensiones) !== null,
+          // Clave pública de Turnstile: con ella, el panel muestra el widget en el registro, el
+          // inicio de sesión y la recuperación de la contraseña.
+          turnstile: (c.env.TURNSTILE_SECRET && c.env.TURNSTILE_SITE_KEY) || null,
         },
         200,
         { 'Cache-Control': 'no-store' },

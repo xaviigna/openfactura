@@ -86,6 +86,27 @@ tiene una activa, `409 sin_organizacion_activa` con la lista en `details.organiz
 Las peticiones con cookie que modifican datos deben venir del mismo origen del panel; si no,
 `403 origen_no_permitido`.
 
+### Confirmación del correo
+
+Si la instalación envía correos de cuenta, el enlace «Confirma tu correo» abre `/auth/confirmar` en el
+panel y pide la contraseña con la que se creó la cuenta. Quien no la conoce define una nueva: la
+anterior deja de servir, se cierran todas las sesiones, el correo queda confirmado y se abre la sesión.
+Por debajo es `POST /api/auth/confirmar-correo` con `{ token, password }` o `{ token, newPassword }`.
+El enlace solo (`GET /api/auth/verify-email`) ya no confirma ni abre sesión. Restablecer la contraseña
+de una cuenta sin confirmar también la confirma.
+
+### Verificación de persona (opcional)
+
+Con Cloudflare Turnstile activo, el registro, el inicio de sesión y la petición del enlace de
+recuperación piden resolver el widget; el token va en el encabezado `x-turnstile-token`. Ver
+[Autoalojamiento](/autoalojamiento/).
+
+### Límites de los datos de la cuenta
+
+Cada persona es propietaria de hasta 10 organizaciones (las que la invitan no cuentan). El nombre de
+la persona y de la organización admiten 120 caracteres, el identificador (`slug`) 60, los metadatos
+4 KB, y la imagen y el logo deben ser una URL `https://` de hasta 2 KB.
+
 ## Credenciales del MH
 
 La contraseña de API del MH y la llave privada del certificado se guardan cifradas con AES-256-GCM y

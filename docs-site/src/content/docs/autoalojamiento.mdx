@@ -220,6 +220,27 @@ ese límite: usa el plan de pago de Workers.
 | `MH_BASE_URL`             | var     | Sustituye la URL del MH (sólo para pruebas)                          |
 | `MH_SIMULADO`             | var     | `1` permite `POST /emisor/credenciales-prueba` (simulador del MH, ambiente `00`) |
 | `WEBHOOKS_LOCAL`          | var     | `1` permite webhooks a `http://localhost` (sólo desarrollo)          |
+| `TURNSTILE_SECRET`        | secreto | Cloudflare Turnstile (opcional). Con él, el registro, el inicio de sesión y la petición del enlace de recuperación exigen el token del widget |
+| `TURNSTILE_SITE_KEY`      | var o secreto | Clave pública del widget; el panel la recibe en `GET /api/v1/acceso` |
+| `TURNSTILE_HOSTNAMES`     | var o secreto | Dominios donde se muestra el widget, separados por coma; con el secreto y sin dominios se rechaza todo |
+
+### Cloudflare Turnstile (opcional)
+
+Con `TURNSTILE_SECRET` definido, `POST /api/auth/sign-up/email`, `/api/auth/sign-in/email` y
+`/api/auth/request-password-reset` exigen el token del widget en el encabezado `x-turnstile-token`. El
+servidor lo comprueba con Cloudflare (`siteverify`, con la IP de `cf-connecting-ip`) **antes** de
+calcular el hash de la contraseña, y exige que la acción sea la de esa pantalla (`signup`, `login` o
+`password_reset`) y que el dominio esté en `TURNSTILE_HOSTNAMES`. Sin token, con uno inválido, o si
+Cloudflare no responde: `403 turnstile_invalido`. Las tres variables pueden ser secretos o vars; sin
+`TURNSTILE_SECRET` todo funciona como antes. No pongas `localhost` en los dominios de producción.
+
+Para probar en local o en CI, usa las claves de prueba de Cloudflare: la del sitio
+`1x00000000000000000000AA` con el secreto `1x0000000000000000000000000000000AA` siempre pasan; los
+secretos `2x0000000000000000000000000000000AA` (y la clave del sitio `2x00000000000000000000AB`)
+siempre bloquean. Con ellas, Cloudflare responde sin `action`, con `hostname` `example.com` y la marca
+`metadata.result_with_testing_key`: sólo entonces el servidor acepta la respuesta sin acción, y
+`example.com` tiene que estar en `TURNSTILE_HOSTNAMES` (p. ej. `localhost,example.com`). Si el
+widget no carga (un bloqueador o un firewall), el panel lo dice y ofrece reintentar.
 
 ## Rotar la llave maestra
 

@@ -131,14 +131,16 @@ describe('GET /api/v1/acceso', () => {
     expect((await nuevoCliente().json('GET', '/api/v1/acceso')).cuerpo).toEqual({
       github: true,
       correo: false,
+      turnstile: null,
     })
     expect((await nuevoCliente({}).json('GET', '/api/v1/acceso')).cuerpo).toEqual({
       github: false,
       correo: false,
+      turnstile: null,
     })
     expect(
       (await nuevoCliente({ GITHUB_CLIENT_ID: 'Iv1.prueba' }).json('GET', '/api/v1/acceso')).cuerpo,
-    ).toEqual({ github: false, correo: false })
+    ).toEqual({ github: false, correo: false, turnstile: null })
   })
 })
 

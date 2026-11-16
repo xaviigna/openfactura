@@ -423,6 +423,11 @@ export const ventanaLimite = sqliteTable(
     bucket: text('bucket').notNull(),
     ventanaInicio: integer('ventana_inicio').notNull(),
     cuenta: integer('cuenta').notNull(),
+    /**
+     * Duración de la ventana en segundos: la limpieza sólo la borra cuando terminó. Las filas de
+     * antes de esta columna toman 1 día, la ventana más larga que se usaba.
+     */
+    segundos: integer('segundos').notNull().default(86_400),
   },
   (t) => [primaryKey({ columns: [t.bucket, t.ventanaInicio] })],
 )

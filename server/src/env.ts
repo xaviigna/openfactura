@@ -32,4 +32,14 @@ export interface Bindings {
    * acceso de administración. Nunca se define en Open Factura Cloud.
    */
   ADMIN_TOKEN?: string
+  /**
+   * Cloudflare Turnstile (opcional). Con el secreto definido, el registro, el inicio de sesión y la
+   * petición del enlace de recuperación exigen el token del widget (`x-turnstile-token`). La clave
+   * del sitio es pública: el panel la recibe en `GET /api/v1/acceso` para mostrar el widget.
+   * `TURNSTILE_HOSTNAMES`: dominios (separados por coma) donde se muestra el widget; el token de
+   * otro dominio se rechaza. Con el secreto y sin dominios, se rechaza todo.
+   */
+  TURNSTILE_SECRET?: string
+  TURNSTILE_SITE_KEY?: string
+  TURNSTILE_HOSTNAMES?: string
 }

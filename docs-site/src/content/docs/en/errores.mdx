@@ -54,6 +54,18 @@ contract and are never renamed.
 
 In `details.mh` the MH reports `{ codigo, mensaje, observaciones[] }`.
 
+## Session route errors
+
+The `/api/auth/*` routes (Better Auth) answer `{ "code": "…", "message": "…" }`, without the `error`
+object. Besides Better Auth's own codes:
+
+| HTTP | `code`                 | What happened                                                         | What to do                                                   |
+| ---- | ---------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 400  | `datos_invalidos`      | A name, slug, logo, image or metadata exceeds its limit              | Shorten it; image and logo must be an `https://` URL.        |
+| 403  | `turnstile_invalido`   | The Turnstile token is missing, invalid, or from another screen       | Solve the widget again and retry.                            |
+| 429  | `demasiados_reenvios`  | Several confirmation links were already sent to that email this hour  | Use the latest link or «Olvidé mi contraseña».               |
+| 429  | `demasiados_intentos`  | Too many password attempts while confirming the email                 | Set a new password from the same link.                       |
+
 <Aside>
 The full list of codes is also in the `Error` schema of the [API reference](/api/) (in Spanish).
 </Aside>

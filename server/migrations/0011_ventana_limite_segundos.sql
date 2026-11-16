@@ -1,0 +1,1 @@
+ALTER TABLE `ventana_limite` ADD `segundos` integer DEFAULT 86400 NOT NULL;

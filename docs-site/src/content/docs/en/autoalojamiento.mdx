@@ -222,6 +222,27 @@ that limit: use the Workers paid plan.
 | `MH_BASE_URL`             | var    | Overrides the MH URL (testing only)                                  |
 | `MH_SIMULADO`             | var    | `1` enables `POST /emisor/credenciales-prueba` (MH simulator, environment `00`) |
 | `WEBHOOKS_LOCAL`          | var    | `1` allows webhooks to `http://localhost` (development only)         |
+| `TURNSTILE_SECRET`        | secret | Cloudflare Turnstile (optional). With it, sign-up, sign-in and the password-reset request require the widget token |
+| `TURNSTILE_SITE_KEY`      | var or secret | Public widget key; the dashboard gets it from `GET /api/v1/acceso` |
+| `TURNSTILE_HOSTNAMES`     | var or secret | Domains where the widget is shown, comma-separated; with the secret and no domains, everything is rejected |
+
+### Cloudflare Turnstile (optional)
+
+With `TURNSTILE_SECRET` set, `POST /api/auth/sign-up/email`, `/api/auth/sign-in/email` and
+`/api/auth/request-password-reset` require the widget token in the `x-turnstile-token` header. The
+server checks it with Cloudflare (`siteverify`, with the IP from `cf-connecting-ip`) **before**
+hashing the password, and requires the action to match that screen (`signup`, `login` or
+`password_reset`) and the domain to be in `TURNSTILE_HOSTNAMES`. Missing or invalid token, or
+Cloudflare not answering: `403 turnstile_invalido`. All three variables can be secrets or vars;
+without `TURNSTILE_SECRET` everything works as before. Don't put `localhost` in production domains.
+
+To test locally or in CI, use Cloudflare's test keys: site key `1x00000000000000000000AA` with
+secret `1x0000000000000000000000000000000AA` always pass; secret
+`2x0000000000000000000000000000000AA` (and site key `2x00000000000000000000AB`) always block. With
+them, Cloudflare answers without `action`, with `hostname` `example.com` and the
+`metadata.result_with_testing_key` flag: only then does the server accept a response without an
+action, and `example.com` must be in `TURNSTILE_HOSTNAMES` (e.g. `localhost,example.com`). If the
+widget can't load (an ad blocker or a firewall), the dashboard says so and offers to retry.
 
 ## Rotating the master key
 

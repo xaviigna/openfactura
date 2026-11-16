@@ -10,6 +10,11 @@ description: How many requests each key allows, the RateLimit headers, and how t
 | Attempts with invalid keys, per IP    | 30 per minute                   |
 | Session routes (`/api/auth/*`)        | Per-IP limit                    |
 | Sign-ups with the same email          | 5 per hour (with confirmation)  |
+| Resending the confirmation link       | 3 per email per hour; then `429 demasiados_reenvios` |
+| Confirmation links when signing in unconfirmed | 6 per email per hour (counting sign-up ones) |
+| Password-reset links                  | 3 per email per hour; after that none are sent (the response doesn't change) |
+| Password attempts when confirming the email | 5 per account per hour; 10 every 5 minutes per IP |
+| Organizations a person owns           | 10                              |
 | Body size                             | 512 KB                          |
 
 On a self-hosted installation, the per-key limit is changed with the `LIMITE_CLAVE_POR_MINUTO`

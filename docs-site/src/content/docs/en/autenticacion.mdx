@@ -86,6 +86,27 @@ active gets `409 sin_organizacion_activa` with the list in `details.organizacion
 Cookie-authenticated requests that modify data must come from the dashboard's own origin; otherwise,
 `403 origen_no_permitido`.
 
+### Email confirmation
+
+If the installation sends account emails, the «Confirma tu correo» link opens `/auth/confirmar` in the
+dashboard and asks for the password the account was created with. Whoever doesn't know it sets a new
+one: the old one stops working, every session is closed, the email is confirmed and a session opens.
+Underneath it's `POST /api/auth/confirmar-correo` with `{ token, password }` or
+`{ token, newPassword }`. The link alone (`GET /api/auth/verify-email`) no longer confirms or signs
+anyone in. Resetting the password of an unconfirmed account also confirms it.
+
+### Human verification (optional)
+
+With Cloudflare Turnstile enabled, sign-up, sign-in and the password-reset request ask you to solve
+the widget; the token goes in the `x-turnstile-token` header. See
+[Self-hosting](/en/autoalojamiento/).
+
+### Account data limits
+
+Each person owns up to 10 organizations (the ones they're invited to don't count). Person and
+organization names allow 120 characters, the `slug` 60, metadata 4 KB, and the image and logo must
+be an `https://` URL of up to 2 KB.
+
 ## MH credentials
 
 The MH API password and the certificate's private key are stored encrypted with AES-256-GCM and are

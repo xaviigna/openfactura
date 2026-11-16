@@ -19,3 +19,13 @@ ADMIN_TOKEN=
 # Read-only» y la URL de retorno <APP_URL>/api/auth/callback/github.
 # GITHUB_CLIENT_ID=
 # GITHUB_CLIENT_SECRET=
+# Cloudflare Turnstile (opcional) en el registro, el inicio de sesión y la recuperación de la
+# contraseña. Con el secreto, esas rutas exigen el token del widget (encabezado x-turnstile-token),
+# comprobado antes del hash de la contraseña. Las tres pueden ser secretos o vars. Sin el secreto,
+# no se pide nada. TURNSTILE_HOSTNAMES: dominios del widget, separados por coma (en producción, nunca
+# localhost); con el secreto y sin dominios se rechaza todo. Claves de prueba de Cloudflare:
+# https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+# TURNSTILE_SECRET=
+# TURNSTILE_SITE_KEY=
+# TURNSTILE_HOSTNAMES=localhost,example.com
+# Las pruebas (vitest) fijan las tres en vacío: un .dev.vars local con Turnstile no las afecta.

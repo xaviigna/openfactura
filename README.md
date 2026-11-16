@@ -150,6 +150,9 @@ pruebas mínimas. El paso a paso completo está en [`docs/self-hosting.md`](docs
 | `MH_BASE_URL`             | Sustituye la URL del MH (sólo para pruebas)                                                                         |
 | `MH_SIMULADO`             | `1` activa el simulador del MH en el ambiente de pruebas                                                            |
 | `WEBHOOKS_LOCAL`          | `1` permite webhooks a `http://localhost`. Sólo en desarrollo                                                       |
+| `TURNSTILE_SECRET`        | Cloudflare Turnstile (opcional, secreto): exige el token del widget al registrarse, entrar y recuperar              |
+| `TURNSTILE_SITE_KEY`      | Clave pública del widget (var o secreto); el panel la recibe en `GET /api/v1/acceso`                                |
+| `TURNSTILE_HOSTNAMES`     | Dominios del widget, separados por coma (var o secreto); sin ellos, con el secreto, se rechaza todo                 |
 
 ## API, MCP y agentes
 

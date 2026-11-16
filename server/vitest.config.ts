@@ -8,6 +8,10 @@ export default defineConfig(async () => ({
       wrangler: { configPath: './wrangler.jsonc' },
       miniflare: {
         bindings: {
+          // Sin Turnstile aunque el .dev.vars local lo defina: las pruebas no usan secretos locales.
+          TURNSTILE_SECRET: '',
+          TURNSTILE_SITE_KEY: '',
+          TURNSTILE_HOSTNAMES: '',
           TEST_MIGRATIONS: await readD1Migrations('./migrations'),
           APP_URL: 'http://localhost',
           BETTER_AUTH_SECRET: 'secreto-solo-para-pruebas-0123456789abcdef',
