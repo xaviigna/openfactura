@@ -550,6 +550,62 @@ export interface Cloud {
     /** Si el MH no respondió y se cortó la tanda: por qué. Volver a llamar la reanuda. */
     aviso: string | null
   })
+  MarcaPlataforma: {
+    /** Si tu plan incluye marca blanca. */
+    disponible?: boolean
+    activa?: boolean
+    /** 2 a 40 caracteres. */
+    nombre?: string | null
+    slug?: string | null
+    /** Hexadecimal `#rrggbb` con contraste suficiente sobre fondo oscuro. */
+    color?: string | null
+    logo?: {
+      tipo?: string
+      url?: string
+    } | null
+    correoSoporte?: string | null
+    whatsappSoporte?: string | null
+    remitente?: {
+      direccion?: string
+      verificado?: boolean
+    } | null
+    /** Base de los enlaces de alta de tus clientes: tu dominio activo o, si no, el de Open Factura. */
+    urlBase?: string
+    dominiosPropios?: {
+      disponible?: boolean
+    }
+    dominios?: Array<Cloud["DominioPropio"]>
+  }
+  DominioPropio: {
+    id?: string
+    host?: string
+    estado?: "pendiente" | "verificando" | "activo" | "error"
+    error?: string | null
+    /** Registros que debes crear en el DNS de tu dominio. */
+    dns?: Array<{
+      tipo?: "CNAME" | "TXT"
+      nombre?: string
+      valor?: string
+      para?: "trafico" | "propiedad" | "certificado"
+    }>
+    creado?: number
+    activado?: number | null
+  }
+  MarcaVigente: {
+    nombre?: string
+    color?: string | null
+    /** Si hay logo; la imagen está en `GET /api/v1/ext/marca/vigente/logo`. */
+    tieneLogo?: boolean
+    correoSoporte?: string | null
+    whatsappSoporte?: string | null
+  } | null
+  DominiosPropios: {
+    disponible?: boolean
+    limite?: number
+    /** A dónde apunta el CNAME. */
+    destino?: string | null
+    dominios?: Array<Cloud["DominioPropio"]>
+  }
 }
 
 /** Cada operación de la API: parámetros de ruta, consulta, cuerpo y respuesta. */
@@ -1141,6 +1197,89 @@ export interface Operaciones {
     cuerpo: never
     respuesta: Cloud["AvanceCertificacion"]
   }
+  /** Ver tu marca blanca */
+  marca_plataforma_obtener: {
+    params: never
+    query: never
+    cuerpo: never
+    respuesta: Cloud["MarcaPlataforma"]
+  }
+  /** Configurar tu marca blanca */
+  marca_plataforma_actualizar: {
+    params: never
+    query: never
+    cuerpo: {
+      activa?: boolean
+      nombre?: string
+      slug?: string
+      color?: string
+      correoSoporte?: string | null
+      whatsappSoporte?: string | null
+    }
+    respuesta: Cloud["MarcaPlataforma"]
+  }
+  /** Subir el logo de tu marca */
+  marca_plataforma_logo_subir: {
+    params: never
+    query: never
+    cuerpo: {
+      base64: string
+    }
+    respuesta: Cloud["MarcaPlataforma"]
+  }
+  /** Quitar el logo de tu marca */
+  marca_plataforma_logo_quitar: {
+    params: never
+    query: never
+    cuerpo: never
+    respuesta: Cloud["MarcaPlataforma"]
+  }
+  /** Ver la marca que ve tu cuenta */
+  marca_vigente_obtener: {
+    params: never
+    query: never
+    cuerpo: never
+    respuesta: Cloud["MarcaVigente"]
+  }
+  /** El logo de la marca que ve tu cuenta */
+  marca_vigente_logo_obtener: {
+    params: never
+    query: never
+    cuerpo: never
+    respuesta: ArrayBuffer
+  }
+  /** Listar tus dominios propios */
+  marca_dominios_listar: {
+    params: never
+    query: never
+    cuerpo: never
+    respuesta: Cloud["DominiosPropios"]
+  }
+  /** Agregar un dominio propio */
+  marca_dominio_agregar: {
+    params: never
+    query: never
+    cuerpo: {
+      host: string
+    }
+    respuesta: Cloud["DominioPropio"]
+  }
+  /** Revisar un dominio ahora */
+  marca_dominio_revisar: {
+    params: { id: string }
+    query: never
+    cuerpo: never
+    respuesta: Cloud["DominioPropio"]
+  }
+  /** Eliminar un dominio propio */
+  marca_dominio_eliminar: {
+    params: { id: string }
+    query: never
+    cuerpo: never
+    respuesta: {
+      eliminado?: boolean
+    }
+  }
 }
 
 export type IdOperacion = keyof Operaciones
@@ -1219,4 +1358,14 @@ export const RUTAS: Record<IdOperacion, { metodo: string; ruta: string; binaria?
   certificacion_estado: { metodo: 'GET', ruta: '/api/v1/ext/certificacion' },
   certificacion_iniciar: { metodo: 'POST', ruta: '/api/v1/ext/certificacion/iniciar' },
   certificacion_avanzar: { metodo: 'POST', ruta: '/api/v1/ext/certificacion/avanzar' },
+  marca_plataforma_obtener: { metodo: 'GET', ruta: '/api/v1/ext/marca/plataforma' },
+  marca_plataforma_actualizar: { metodo: 'PUT', ruta: '/api/v1/ext/marca/plataforma' },
+  marca_plataforma_logo_subir: { metodo: 'PUT', ruta: '/api/v1/ext/marca/plataforma/logo' },
+  marca_plataforma_logo_quitar: { metodo: 'DELETE', ruta: '/api/v1/ext/marca/plataforma/logo' },
+  marca_vigente_obtener: { metodo: 'GET', ruta: '/api/v1/ext/marca/vigente' },
+  marca_vigente_logo_obtener: { metodo: 'GET', ruta: '/api/v1/ext/marca/vigente/logo', binaria: true },
+  marca_dominios_listar: { metodo: 'GET', ruta: '/api/v1/ext/marca/plataforma/dominios' },
+  marca_dominio_agregar: { metodo: 'POST', ruta: '/api/v1/ext/marca/plataforma/dominios' },
+  marca_dominio_revisar: { metodo: 'POST', ruta: '/api/v1/ext/marca/plataforma/dominios/:id/revisar' },
+  marca_dominio_eliminar: { metodo: 'DELETE', ruta: '/api/v1/ext/marca/plataforma/dominios/:id' },
 }

@@ -287,6 +287,16 @@ describe('evento de retorno (18, v1)', () => {
     expect((await generarPdfDte(evento)).length).toBeGreaterThan(1000)
   })
 
+  it('el PDF dice «Open Factura» como productor, salvo que se indique otro', async () => {
+    const { PDFDocument } = await import('pdf-lib')
+    const { generarPdfDte } = await import('../src/pdf')
+    const dte = construirFactura(ctx(), { items: [{ descripcion: 'Servicio', cantidad: 1, precioUni: 113, tipoItem: 2 }] })
+    const productor = async (o?: { productor?: string }) =>
+      (await PDFDocument.load(await generarPdfDte(dte, o), { updateMetadata: false })).getProducer()
+    expect(await productor()).toBe('Open Factura')
+    expect(await productor({ productor: 'Mi Plataforma' })).toBe('Mi Plataforma')
+  })
+
   it('plazo: 3 meses desde la generación, 2 años para ciertas actividades en FE y FEXE', () => {
     expect(limiteRetorno('01', '2026-11-30').toISOString()).toBe('2027-03-01T05:59:59.000Z')
     expect(limiteRetorno('01', '2026-11-12', '47721').toISOString()).toBe('2028-11-13T05:59:59.000Z')

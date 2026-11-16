@@ -28,6 +28,10 @@
     },
     {
       "name": "Certificación"
+    },
+    {
+      "name": "Marca blanca",
+      "description": "Para plataformas (plan Platform): tus clientes ven tu marca y tu dominio en lugar de Open Factura."
     }
   ],
   "paths": {
@@ -1157,6 +1161,445 @@
           }
         }
       }
+    },
+    "/api/v1/ext/marca/plataforma": {
+      "get": {
+        "operationId": "marca_plataforma_obtener",
+        "tags": ["Marca blanca"],
+        "summary": "Ver tu marca blanca",
+        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Permiso `emisor:read`.",
+        "responses": {
+          "200": {
+            "description": "Marca blanca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarcaPlataforma"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        }
+      },
+      "put": {
+        "operationId": "marca_plataforma_actualizar",
+        "tags": ["Marca blanca"],
+        "summary": "Configurar tu marca blanca",
+        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Todos los campos son opcionales. `activa` la enciende o apaga; al apagarla, o si el plan vence, nada se borra y todo vuelve a la marca de Open Factura. Permiso `emisor:write`.",
+        "responses": {
+          "200": {
+            "description": "Marca blanca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarcaPlataforma"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "409": {
+            "description": "`slug_en_uso`: otra plataforma ya usa ese identificador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "activa": {
+                    "type": "boolean"
+                  },
+                  "nombre": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 40
+                  },
+                  "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9-]{2,31}$"
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-fA-F]{6}$"
+                  },
+                  "correoSoporte": {
+                    "type": ["string", "null"]
+                  },
+                  "whatsappSoporte": {
+                    "type": ["string", "null"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ext/marca/plataforma/logo": {
+      "put": {
+        "operationId": "marca_plataforma_logo_subir",
+        "tags": ["Marca blanca"],
+        "summary": "Subir el logo de tu marca",
+        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). PNG o JPG de hasta 200 KB y 2000 px, en base64. Permiso `emisor:write`.",
+        "responses": {
+          "200": {
+            "description": "Marca blanca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarcaPlataforma"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["base64"],
+                "properties": {
+                  "base64": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "marca_plataforma_logo_quitar",
+        "tags": ["Marca blanca"],
+        "summary": "Quitar el logo de tu marca",
+        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Permiso `emisor:write`.",
+        "responses": {
+          "200": {
+            "description": "Marca blanca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarcaPlataforma"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        }
+      }
+    },
+    "/api/v1/ext/marca/vigente": {
+      "get": {
+        "operationId": "marca_vigente_obtener",
+        "tags": ["Marca blanca"],
+        "summary": "Ver la marca que ve tu cuenta",
+        "description": "La marca blanca de la plataforma que administra a la cuenta de quien llama, si está activa y su plan vigente; si no, `null`. Permiso `emisor:read`.",
+        "responses": {
+          "200": {
+            "description": "Marca o `null`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarcaVigente"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        }
+      }
+    },
+    "/api/v1/ext/marca/vigente/logo": {
+      "get": {
+        "operationId": "marca_vigente_logo_obtener",
+        "tags": ["Marca blanca"],
+        "summary": "El logo de la marca que ve tu cuenta",
+        "description": "Los bytes del logo de la plataforma que administra a la cuenta de quien llama. `404` si no hay marca o no tiene logo. Permiso `emisor:read`.",
+        "responses": {
+          "200": {
+            "description": "Imagen del logo.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        }
+      }
+    },
+    "/api/v1/ext/marca/plataforma/dominios": {
+      "get": {
+        "operationId": "marca_dominios_listar",
+        "tags": ["Marca blanca"],
+        "summary": "Listar tus dominios propios",
+        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Los dominios propios son subdominios (hasta 3). `disponible: false` si el servidor no los tiene habilitados. Permiso `emisor:read`.",
+        "responses": {
+          "200": {
+            "description": "Dominios.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DominiosPropios"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          }
+        }
+      },
+      "post": {
+        "operationId": "marca_dominio_agregar",
+        "tags": ["Marca blanca"],
+        "summary": "Agregar un dominio propio",
+        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Crea el dominio en estado `pendiente` y devuelve los registros DNS que debes crear. Errores: `400 host_invalido`, `409 dominio_en_uso`, `409 limite_dominios`, `429 limite_excedido`, `502 cloudflare_no_disponible`, `503 dominios_no_disponibles`. Permiso `emisor:write`.",
+        "responses": {
+          "201": {
+            "description": "Dominio creado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DominioPropio"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
+          },
+          "502": {
+            "$ref": "#/components/responses/E502"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["host"],
+                "properties": {
+                  "host": {
+                    "type": "string",
+                    "example": "facturas.tuempresa.com"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ext/marca/plataforma/dominios/{id}/revisar": {
+      "post": {
+        "operationId": "marca_dominio_revisar",
+        "tags": ["Marca blanca"],
+        "summary": "Revisar un dominio ahora",
+        "description": "Consulta el estado actual del dominio y lo actualiza (`pendiente`, `verificando`, `activo` o `error`). Permiso `emisor:write`.",
+        "responses": {
+          "200": {
+            "description": "Dominio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DominioPropio"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
+          },
+          "502": {
+            "$ref": "#/components/responses/E502"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/ext/marca/plataforma/dominios/{id}": {
+      "delete": {
+        "operationId": "marca_dominio_eliminar",
+        "tags": ["Marca blanca"],
+        "summary": "Eliminar un dominio propio",
+        "description": "Deja de servir ese dominio. Permiso `emisor:write`.",
+        "responses": {
+          "200": {
+            "description": "Eliminado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eliminado": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
+          },
+          "502": {
+            "$ref": "#/components/responses/E502"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1690,6 +2133,168 @@
             "required": ["operaciones", "aviso"]
           }
         ]
+      },
+      "MarcaPlataforma": {
+        "type": "object",
+        "properties": {
+          "disponible": {
+            "type": "boolean",
+            "description": "Si tu plan incluye marca blanca."
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "nombre": {
+            "type": ["string", "null"],
+            "description": "2 a 40 caracteres."
+          },
+          "slug": {
+            "type": ["string", "null"]
+          },
+          "color": {
+            "type": ["string", "null"],
+            "description": "Hexadecimal `#rrggbb` con contraste suficiente sobre fondo oscuro.",
+            "example": "#3b82f6"
+          },
+          "logo": {
+            "type": ["object", "null"],
+            "properties": {
+              "tipo": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            }
+          },
+          "correoSoporte": {
+            "type": ["string", "null"]
+          },
+          "whatsappSoporte": {
+            "type": ["string", "null"]
+          },
+          "remitente": {
+            "type": ["object", "null"],
+            "properties": {
+              "direccion": {
+                "type": "string"
+              },
+              "verificado": {
+                "type": "boolean"
+              }
+            }
+          },
+          "urlBase": {
+            "type": "string",
+            "description": "Base de los enlaces de alta de tus clientes: tu dominio activo o, si no, el de Open Factura."
+          },
+          "dominiosPropios": {
+            "type": "object",
+            "properties": {
+              "disponible": {
+                "type": "boolean"
+              }
+            }
+          },
+          "dominios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DominioPropio"
+            }
+          }
+        }
+      },
+      "DominioPropio": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string",
+            "example": "facturas.tuempresa.com"
+          },
+          "estado": {
+            "type": "string",
+            "enum": ["pendiente", "verificando", "activo", "error"]
+          },
+          "error": {
+            "type": ["string", "null"]
+          },
+          "dns": {
+            "type": "array",
+            "description": "Registros que debes crear en el DNS de tu dominio.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tipo": {
+                  "type": "string",
+                  "enum": ["CNAME", "TXT"]
+                },
+                "nombre": {
+                  "type": "string"
+                },
+                "valor": {
+                  "type": "string"
+                },
+                "para": {
+                  "type": "string",
+                  "enum": ["trafico", "propiedad", "certificado"]
+                }
+              }
+            }
+          },
+          "creado": {
+            "type": "integer"
+          },
+          "activado": {
+            "type": ["integer", "null"]
+          }
+        }
+      },
+      "MarcaVigente": {
+        "type": ["object", "null"],
+        "description": "La marca de la plataforma de quien llama, o `null`.",
+        "properties": {
+          "nombre": {
+            "type": "string"
+          },
+          "color": {
+            "type": ["string", "null"]
+          },
+          "tieneLogo": {
+            "type": "boolean",
+            "description": "Si hay logo; la imagen está en `GET /api/v1/ext/marca/vigente/logo`."
+          },
+          "correoSoporte": {
+            "type": ["string", "null"]
+          },
+          "whatsappSoporte": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "DominiosPropios": {
+        "type": "object",
+        "properties": {
+          "disponible": {
+            "type": "boolean"
+          },
+          "limite": {
+            "type": "integer",
+            "example": 3
+          },
+          "destino": {
+            "type": ["string", "null"],
+            "description": "A dónde apunta el CNAME."
+          },
+          "dominios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DominioPropio"
+            }
+          }
+        }
       }
     },
     "responses": {
@@ -1755,6 +2360,26 @@
       },
       "E429": {
         "description": "Límite de empresas del plan (`limite_plan`)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E502": {
+        "description": "No pudimos hablar con Cloudflare al registrar, revisar o borrar el dominio (`cloudflare_no_disponible`)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E503": {
+        "description": "Los dominios propios no están habilitados en este servidor (`dominios_no_disponibles`)",
         "content": {
           "application/json": {
             "schema": {

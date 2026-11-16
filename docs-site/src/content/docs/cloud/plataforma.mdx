@@ -62,7 +62,8 @@ sus datos siguen siendo suyos.
 
    Con el enlace, tu cliente crea su usuario y **activa su cuenta**: queda como dueño, revisa lo
    que configuraste y completa lo que falte (sus credenciales de Hacienda, si no las cargaste tú).
-   Si ya usa Open Factura con su empresa, puede conectar ésa en su lugar.
+   Si ya usa Open Factura con su empresa, puede conectar ésa en su lugar. Si al crear su usuario le
+   pedimos confirmar el correo, el enlace del correo lo trae de vuelta a su alta para terminar.
 
 4. **Entérate cuando esté listo.** Suscribe un [webhook](/guias/webhooks/) a `cliente.listo`: llega
    una vez cuando el cliente puede emitir en pruebas y otra cuando puede en producción, a cualquier
@@ -143,6 +144,150 @@ Con una clave habilitada para Plataforma, el [MCP](/herramientas/mcp/) suma esta
 | `plataforma_cliente_clave_crear` | Una clave de API en su espacio |
 
 *«Agrega a Casa Barista, NIT 0614-290786-102-3, y dame su enlace de alta.»*
+
+## Marca blanca
+
+Con el plan **Platform** tus clientes ven **tu** marca, no la de Open Factura. Tú eliges el nombre,
+el logo y el color. Abajo está, sin adornos, qué lleva tu marca y qué no.
+
+**Configúrala** en el panel (*Marca → Marca blanca para tus clientes*) o por API
+(`/api/v1/ext/marca/plataforma*`, con `emisor:write`; consultar pide `emisor:read`):
+
+```bash
+curl -X PUT https://app.openfactura.co/api/v1/ext/marca/plataforma \
+  -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA" \
+  -H "Content-Type: application/json" \
+  -d '{ "nombre": "Tu Marca", "color": "#3b82f6", "correoSoporte": "soporte@tumarca.com", "activa": true }'
+```
+
+| Campo | Reglas |
+|---|---|
+| `nombre` | 2 a 40 caracteres, sólo letras latinas, números y `. , ' & ( ) + ! ? -`, sin enlaces. Se rechazan las imitaciones de Open Factura o de Hacienda (letras de otro alfabeto, números por letras, separadores). |
+| `slug` | Minúsculas, números y guiones (3 a 32). Algunos están reservados. Único: `409 slug_en_uso` si otra plataforma lo tiene. |
+| `color` | `#rrggbb`, con contraste suficiente sobre fondo oscuro. |
+| Logo | `PUT /plataforma/logo` con `{ "base64": "…" }`: PNG o JPG, hasta 200 KB y 2000 px. Sin SVG. |
+| Soporte | `correoSoporte` y `whatsappSoporte`: sólo correo y teléfono. |
+
+### Qué ve tu cliente
+
+**Lleva tu marca:**
+
+- **Alta.** El enlace de alta lleva tu logo, tu nombre y tu color, sin mencionar a Open Factura.
+- **Panel.** En tu dominio, el panel muestra tu nombre, logo, color, título y favicon, y sólo lo de
+  su negocio (emisor, documentos, clientes, productos, WhatsApp). No ve planes, claves de API,
+  webhooks ni nada de desarrollo.
+- **Correos.** Los de su cuenta (confirmar correo, restablecer contraseña) y los de sus documentos
+  salen con tu nombre y tu soporte.
+- **PDF.** El PDF lleva el logo de tu cliente y, en sus metadatos, tu nombre como productor.
+- **Bot de WhatsApp.** El texto del bot habla con tu nombre y tu soporte.
+
+**No la lleva (todavía):**
+
+- **El número de WhatsApp.** Es compartido: el nombre del perfil sigue diciendo Open Factura y el
+  enlace `wa.me` lleva ese número. Un número dedicado por plataforma llegará más adelante.
+- **La dirección del remitente de los correos**, salvo que tengas un remitente neutro o un dominio
+  de envío propio. Sin eso, el nombre es el tuyo pero la dirección conserva el dominio de Open Factura.
+- **El código del panel.** Quien mire el código fuente de la página (*view-source*) puede encontrar
+  textos de Open Factura en el JavaScript.
+- **El destino del CNAME.** En el DNS de tu dominio se ve el host de respaldo de Open Factura, salvo
+  que uses un subdominio neutro.
+- **Ingreso con GitHub.** No está disponible en los hosts de marca.
+
+Los remitentes neutros o propios y los subdominios neutros los configuramos nosotros: escríbenos y
+los habilitamos. Todavía no son de autoservicio.
+
+### Qué responde un host de marca
+
+En el dominio de una marca sólo se atiende lo que el panel de un cliente necesita: el panel, el
+alta, el inicio de sesión y las rutas de `/api/v1` de su negocio (emisor, documentos, clientes,
+productos, eventos, catálogos, WhatsApp, correo y certificación), siempre con la sesión del
+navegador: una petición con `Authorization` ahí responde 404. Todo lo demás, incluidos `openapi.json`,
+claves, webhooks, planes, `plataforma` y `ext/marca/plataforma*`, responde un `404 No encontrado`
+neutro. Tus claves de API y tu integración siguen usando `app.openfactura.co`.
+
+Dentro de ese host sólo entran personas cuyas empresas son todas clientes tuyos. Una cuenta nueva
+sin empresas queda ligada a la plataforma donde se registró.
+
+En modo marca tu cliente no ve la acción **Desconectar**: el vínculo lo administras tú desde tu
+panel (*Clientes → Desactivar*). Tu cliente sigue siendo dueño de su cuenta y puede escribirnos.
+Si llega al tope de DTE de su plan, el `429 limite_plan` le pide contactar a su proveedor (tú).
+
+### Plan y vigencia
+
+La marca blanca es del plan Platform. Si el plan vence, **no se borra nada**: tu portal en dominio
+propio responde «Portal en pausa» de inmediato, y los correos, los PDF y el bot vuelven a la marca
+de Open Factura. Al renovar, todo se restaura. `GET /api/v1/ext/marca/vigente` devuelve la marca que
+ve la cuenta de quien llama (o `null`), con `tieneLogo` en lugar del logo; la imagen está en
+`GET /api/v1/ext/marca/vigente/logo` (`404` si no hay).
+
+El cupo de empresas depende de tu plan (**3** en Pro y **25** en Platform, contando la tuya). El
+panel de *Clientes* muestra cuántas usas; al llegar al cupo, crear un cliente responde
+`429 limite_plan` con el `limite` en `details`. Si necesitas más, escríbenos para ampliarlo.
+
+## Dominio propio
+
+Tu portal puede vivir en un subdominio tuyo, por ejemplo `facturas.tumarca.com`. Sólo subdominios
+(no el dominio raíz), hasta **3** por plataforma.
+
+<Steps>
+
+1. **Agrégalo.** En el panel: *Marca → Dirección → Dominio propio*. O por API:
+
+   ```bash
+   curl -X POST https://app.openfactura.co/api/v1/ext/marca/plataforma/dominios \
+     -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA" \
+     -H "Content-Type: application/json" \
+     -d '{ "host": "facturas.tumarca.com" }'
+   ```
+
+2. **Crea el CNAME** en el DNS de tu dominio: el nombre del subdominio apuntando al destino que
+   te muestra el panel (o `destino` en `GET …/dominios`).
+
+3. **Agrega los registros TXT** que aparezcan (verificación de propiedad y de certificado), si hay.
+   Cada registro del campo `dns` trae su tipo, nombre y valor.
+
+4. **Espera a que diga «Activo».** Puede tardar unos minutos. Para no esperar, pulsa *Revisar
+   ahora* (`POST …/dominios/:id/revisar`). Estados: `pendiente`, `verificando`, `activo`, `error`.
+
+</Steps>
+
+Cuando está activo, tus enlaces de alta usan ese dominio y tu panel responde en él. Si el plan
+vence, el dominio deja de servirse hasta que renueves.
+
+Reglas del host:
+
+- Sólo subdominios (`facturas.tumarca.com`), con letras ASCII, números y guiones. Sin IDN ni
+  etiquetas `xn--`, sin puertos, rutas ni comodines; el dominio de nivel superior son sólo letras.
+  No se aceptan dominios de Open Factura ni de servicios como `workers.dev`.
+- Hasta **3** dominios por plataforma.
+- Un dominio que ya reclamó otra plataforma da `409 dominio_en_uso`. Si ese reclamo no se activó
+  (`pendiente`, `verificando` o `error`) y tiene más de 24 h, lo puedes reemplazar con el tuyo
+  (así nadie bloquea un dominio ajeno); uno `activo` nunca se reemplaza.
+- Un dominio que no llega a activarse en 7 días (`pendiente`, `verificando` o `error`) se elimina;
+  puedes agregarlo de nuevo.
+- Al eliminar una organización de plataforma sin clientes, sus dominios se quitan también del
+  proveedor de certificados.
+
+Si tu registro usa verificación anti-bots, avísanos para habilitar tu dominio.
+
+Errores: `400 host_invalido`, `409 dominio_en_uso`, `409 limite_dominios`, `429 limite_excedido`
+(también al borrar o revisar dominios con demasiada frecuencia), `502 cloudflare_no_disponible`,
+`503 dominios_no_disponibles` (el servidor aún no los tiene habilitados).
+
+### Errores de la marca blanca
+
+| Código | Cuándo |
+|---|---|
+| `400 datos_invalidos` | Nombre, `slug`, color, soporte o logo que no cumplen las reglas. |
+| `400 host_invalido` | El dominio no cumple las reglas del host. |
+| `402 plan_requerido` | La cuenta no tiene el plan Platform o la administra otra plataforma. |
+| `404` | El dominio o el logo no existen. |
+| `409 slug_en_uso` | Otra plataforma ya usa ese `slug`. |
+| `409 dominio_en_uso` | El host ya está reclamado (por ti, o por otra plataforma con un reclamo activo o de menos de 24 h). |
+| `409 limite_dominios` | Ya tienes 3 dominios. |
+| `429 limite_excedido` | Demasiados intentos por hora (alta 5, revisar 20, borrar 20). Trae `reintentarEn`. |
+| `502 cloudflare_no_disponible` | El proveedor de dominios no respondió. |
+| `503 dominios_no_disponibles` | Los dominios propios no están habilitados en el servidor. |
 
 ## Referencia
 

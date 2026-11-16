@@ -18,6 +18,8 @@ const LOGO_MAX_LADO = 2000
 export interface OpcionesPdf {
   /** Logo PNG o JPG del emisor. */
   logo?: { bytes: Uint8Array; tipo: 'png' | 'jpg' }
+  /** Nombre en el campo «Producer» de los metadatos del PDF (por defecto «Open Factura»). */
+  productor?: string
 }
 
 type Color = ReturnType<typeof rgb>
@@ -131,7 +133,7 @@ export async function generarPdfDte(archivo: Dte & { selloRecibido?: string | nu
   const negrita = await pdf.embedFont(StandardFonts.HelveticaBold)
   const nombre = NOMBRES_DTE[tipo] ?? tipo
   pdf.setTitle(`${nombre} ${id.codigoGeneracion}`)
-  pdf.setProducer('Open Factura')
+  pdf.setProducer(opciones.productor ?? 'Open Factura')
 
   let pagina!: PDFPage
   let y = 0

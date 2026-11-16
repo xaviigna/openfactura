@@ -64,7 +64,8 @@ want: their data remains theirs.
    With the link, your customer creates their user and **activates their account**: they become the
    owner, review what you configured, and complete whatever is missing (their Hacienda credentials,
    if you didn't upload them). If they already use Open Factura with their company, they can connect
-   that one instead.
+   that one instead. If we ask them to confirm their email when creating their user, the email link
+   brings them back to their onboarding page to finish.
 
 4. **Find out when they're ready.** Subscribe a [webhook](/en/guias/webhooks/) to `cliente.listo`: it
    arrives once when the customer can issue in test and again when they can in production, at any
@@ -146,6 +147,150 @@ With a key enabled for Plataforma, the [MCP](/en/herramientas/mcp/) adds these t
 | `plataforma_cliente_clave_crear` | An API key in their space |
 
 *"Add Casa Barista, NIT 0614-290786-102-3, and give me their onboarding link."*
+
+## White label
+
+With the **Platform** plan your customers see **your** brand, not Open Factura's. You choose the
+name, logo and color. Below is exactly what carries your brand and what doesn't.
+
+**Set it up** in the dashboard (*Marca → White label for your customers*) or through the API
+(`/api/v1/ext/marca/plataforma*`, with `emisor:write`; reading needs `emisor:read`):
+
+```bash
+curl -X PUT https://app.openfactura.co/api/v1/ext/marca/plataforma \
+  -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA" \
+  -H "Content-Type: application/json" \
+  -d '{ "nombre": "Your Brand", "color": "#3b82f6", "correoSoporte": "support@yourbrand.com", "activa": true }'
+```
+
+| Field | Rules |
+|---|---|
+| `nombre` | 2 to 40 characters, Latin letters, numbers and `. , ' & ( ) + ! ? -` only, no links. Imitations of Open Factura or Hacienda are rejected (letters from other alphabets, digits for letters, separators). |
+| `slug` | Lowercase letters, numbers and hyphens (3 to 32). Some are reserved. Unique: `409 slug_en_uso` if another platform has it. |
+| `color` | `#rrggbb`, with enough contrast on a dark background. |
+| Logo | `PUT /plataforma/logo` with `{ "base64": "…" }`: PNG or JPG, up to 200 KB and 2000 px. No SVG. |
+| Support | `correoSoporte` and `whatsappSoporte`: email and phone only. |
+
+### What your customer sees
+
+**Carries your brand:**
+
+- **Onboarding.** The onboarding link carries your logo, name and color, with no mention of Open Factura.
+- **Dashboard.** On your domain the dashboard shows your name, logo, color, title and favicon, and
+  only their business features (issuer, documents, customers, products, WhatsApp). No plans, API
+  keys, webhooks or developer tools.
+- **Emails.** Account emails (confirm email, reset password) and document emails go out under your
+  name and support.
+- **PDFs.** The PDF carries your customer's logo and, in its metadata, your name as producer.
+- **WhatsApp bot.** The bot's text speaks under your name and support.
+
+**Doesn't (yet):**
+
+- **The WhatsApp number.** It is shared: the profile name still says Open Factura and the `wa.me`
+  link uses that number. A dedicated number per platform will come later.
+- **The email sender address**, unless you have a neutral sender or your own sending domain.
+  Otherwise the display name is yours but the address keeps Open Factura's domain.
+- **The dashboard code.** Anyone reading the page source (*view-source*) can find Open Factura
+  strings in the JavaScript.
+- **The CNAME target.** Your domain's DNS shows Open Factura's fallback host, unless you use a
+  neutral subdomain.
+- **GitHub sign-in.** It is disabled on brand hosts.
+
+Neutral or own senders and neutral subdomains are set up by us: write to us and we enable them.
+They are not self-serve yet.
+
+### What a brand host answers
+
+On a brand's domain only what a customer's dashboard needs is served: the dashboard, onboarding,
+sign-in and the `/api/v1` routes of their business (issuer, documents, customers, products, events,
+catalogs, WhatsApp, email and certification), always with the browser session: a request carrying
+`Authorization` there gets 404. Everything else, including `openapi.json`, keys, webhooks, plans,
+`plataforma` and `ext/marca/plataforma*`, gets a neutral `404 No encontrado`. Your API keys and
+integration keep using `app.openfactura.co`.
+
+Only people whose companies are all your customers can sign in on that host. A new account with no
+companies is tied to the platform where it signed up.
+
+In brand mode your customer doesn't see the **Disconnect** action: you manage the link from your
+dashboard (*Clients → Deactivate*). Your customer still owns their account and can write to us.
+If they reach their plan's DTE cap, the `429 limite_plan` tells them to contact their provider (you).
+
+### Plan and lapse
+
+White label belongs to the Platform plan. If the plan lapses, **nothing is deleted**: your portal on
+a custom domain answers "Portal en pausa" right away, and emails, PDFs and the bot go back to Open
+Factura's brand. When you renew, everything is restored. `GET /api/v1/ext/marca/vigente` returns
+the brand the caller's account sees (or `null`), with `tieneLogo` instead of the logo; the image is
+at `GET /api/v1/ext/marca/vigente/logo` (`404` if none).
+
+The company cap depends on your plan (**3** on Pro and **25** on Platform, counting your own). The
+*Clients* dashboard shows how many you use; at the cap, creating a client answers
+`429 limite_plan` with the `limite` in `details`. If you need more, write to us to raise it.
+
+## Custom domain
+
+Your portal can live on a subdomain of yours, such as `facturas.yourbrand.com`. Subdomains only (not
+the root domain), up to **3** per platform.
+
+<Steps>
+
+1. **Add it.** In the dashboard: *Marca → Dirección → Dominio propio*. Or through the API:
+
+   ```bash
+   curl -X POST https://app.openfactura.co/api/v1/ext/marca/plataforma/dominios \
+     -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA" \
+     -H "Content-Type: application/json" \
+     -d '{ "host": "facturas.yourbrand.com" }'
+   ```
+
+2. **Create the CNAME** in your domain's DNS: the subdomain name pointing to the target the
+   dashboard shows (or `destino` in `GET …/dominios`).
+
+3. **Add any TXT records** shown (ownership and certificate verification). Each entry in `dns`
+   carries its type, name and value.
+
+4. **Wait for "Activo".** It can take a few minutes. To skip the wait, press *Revisar ahora*
+   (`POST …/dominios/:id/revisar`). States: `pendiente`, `verificando`, `activo`, `error`.
+
+</Steps>
+
+Once active, your onboarding links use that domain and your dashboard answers on it. If the plan
+lapses, the domain stops being served until you renew.
+
+Host rules:
+
+- Subdomains only (`facturas.yourbrand.com`), with ASCII letters, numbers and hyphens. No IDN or
+  `xn--` labels, no ports, paths or wildcards; the top-level domain is letters only. Open Factura
+  domains and services such as `workers.dev` are not accepted.
+- Up to **3** domains per platform.
+- A domain already claimed by another platform gives `409 dominio_en_uso`. If that claim never
+  activated (`pendiente`, `verificando` or `error`) and is older than 24 h, you can replace it with
+  yours (so nobody can block a domain that isn't theirs); an `activo` one is never replaced.
+- A domain that doesn't become active within 7 days (`pendiente`, `verificando` or `error`) is
+  removed; you can add it again.
+- Deleting a platform organization that has no customers also removes its domains from the
+  certificate provider.
+
+If your sign-up uses anti-bot verification, let us know so we can enable your domain.
+
+Errors: `400 host_invalido`, `409 dominio_en_uso`, `409 limite_dominios`, `429 limite_excedido`
+(also when deleting or rechecking domains too often), `502 cloudflare_no_disponible`,
+`503 dominios_no_disponibles` (the server doesn't have them enabled yet).
+
+### White label errors
+
+| Code | When |
+|---|---|
+| `400 invalid` (invalid data) | A name, `slug`, color, support field or logo that breaks the rules. |
+| `400 host_invalido` | The domain breaks the host rules. |
+| `402 plan_requerido` | The account isn't on the Platform plan or is managed by another platform. |
+| `404` | The domain or the logo doesn't exist. |
+| `409 slug_en_uso` | Another platform already uses that `slug`. |
+| `409 dominio_en_uso` | The host is already claimed (by you, or by another platform with an active or under-24 h claim). |
+| `409 limite_dominios` | You already have 3 domains. |
+| `429 limite_excedido` | Too many attempts per hour (add 5, recheck 20, delete 20). Includes `reintentarEn`. |
+| `502 cloudflare_no_disponible` | The domain provider didn't respond. |
+| `503 dominios_no_disponibles` | Custom domains aren't enabled on the server. |
 
 ## Reference
 
