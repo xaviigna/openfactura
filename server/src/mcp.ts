@@ -94,7 +94,7 @@ const lectura = { readOnlyHint: true, openWorldHint: false } as const
 
 /** Servidor MCP de una petición: las herramientas actúan con los permisos del actor autenticado. */
 export function crearServidorMcp(ctx: Ctx): McpServer {
-  const servidor = new McpServer({ name: 'openfactura', version: '0.2.0' })
+  const servidor = new McpServer({ name: 'openfactura', version: '0.2.1' })
 
   servidor.registerTool(
     'emisor_obtener',
