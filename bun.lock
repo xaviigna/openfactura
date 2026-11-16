@@ -22,7 +22,7 @@
     },
     "packages/cli": {
       "name": "@openfactura/cli",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "bin": {
         "openfactura": "dist/index.js",
       },
