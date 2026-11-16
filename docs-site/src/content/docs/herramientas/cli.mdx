@@ -138,6 +138,17 @@ producción, con confirmación) y la guarda en tu perfil con permisos `0600`. Al
 no se crean claves nuevas. `whoami` muestra con quién actúas. Con `OPENFACTURA_API_KEY` definida,
 manda esa clave y se ignora el cliente en uso.
 
+### Tu marca blanca
+
+Con [marca blanca](/cloud/plataforma/) (plan Platform) puedes consultar desde la terminal cómo la ven
+tus clientes, siempre con **tu** clave. Es sólo lectura: encenderla, cambiar el nombre, el subdominio,
+el logo o agregar dominios se hace en el panel (*Marca*).
+
+```bash
+openfactura marca-blanca estado   # encendida o no, nombre, dirección y dominios
+openfactura dominios list         # tus dominios propios y su estado
+```
+
 ## En scripts
 
 ```bash

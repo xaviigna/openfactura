@@ -415,7 +415,8 @@ herramientas que el remoto y las ejecuta llamando a la API REST con tu clave:
 `producto_crear`, `dte_validar`, `dte_emitir`, `dte_listar`, `dte_obtener`, `dte_invalidar`,
 `dte_retorno`, `operaciones_especiales_informar`, `eventos_listar`, `evento_obtener`,
 `webhooks_listar`, `webhook_crear`, `webhook_eliminar`, `webhook_probar`, `uso_obtener`,
-`registros_listar`, y en Open Factura Cloud `certificacion_estado` y `certificacion_avanzar`.
+`registros_listar`, y en Open Factura Cloud `certificacion_estado`, `certificacion_avanzar`,
+`marca_blanca_obtener` y `marca_dominios_listar` (estas dos, sólo lectura).
 
 Cada herramienta exige el mismo permiso que su ruta REST, así que la clave decide qué puede hacer el
 asistente. Empieza con una clave `of_test_…`; `dte_emitir`, `dte_retorno`, `operaciones_especiales_informar` y

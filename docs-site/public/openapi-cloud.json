@@ -1194,7 +1194,7 @@
         "operationId": "marca_plataforma_actualizar",
         "tags": ["Marca blanca"],
         "summary": "Configurar tu marca blanca",
-        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Todos los campos son opcionales. `activa` la enciende o apaga; al apagarla, o si el plan vence, nada se borra y todo vuelve a la marca de Open Factura. Permiso `emisor:write`.",
+        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Todos los campos son opcionales: la primera vez basta con `{ \"activa\": true }`; el nombre sale del de tu negocio y el `slug` es uno aleatorio (`torogoz-izalco`), y los dos se cambian después. `activa` la enciende o apaga; al apagarla, o si el plan vence, nada se borra y todo vuelve a la marca de Open Factura. Permiso `emisor:write`.",
         "responses": {
           "200": {
             "description": "Marca blanca.",
@@ -1250,7 +1250,8 @@
                   },
                   "slug": {
                     "type": "string",
-                    "pattern": "^[a-z][a-z0-9-]{2,31}$"
+                    "pattern": "^[a-z][a-z0-9-]{2,31}$",
+                    "description": "Si falta la primera vez, se asigna uno aleatorio (`torogoz-izalco`)."
                   },
                   "color": {
                     "type": "string",
@@ -2188,6 +2189,10 @@
             "type": "string",
             "description": "Base de los enlaces de alta de tus clientes: tu dominio activo o, si no, el de Open Factura."
           },
+          "dominioNeutro": {
+            "type": ["string", "null"],
+            "description": "Dominio de los subdominios de marca (`<slug>.<dominioNeutro>`), o null si no está habilitado."
+          },
           "dominiosPropios": {
             "type": "object",
             "properties": {
@@ -2240,6 +2245,10 @@
                 "para": {
                   "type": "string",
                   "enum": ["trafico", "propiedad", "certificado"]
+                },
+                "listo": {
+                  "type": "boolean",
+                  "description": "Si el proveedor ya lo dio por bueno: el CNAME y el TXT de propiedad al activarse el dominio; el TXT de certificado al activarse el certificado."
                 }
               }
             }

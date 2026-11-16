@@ -571,6 +571,8 @@ export interface Cloud {
     } | null
     /** Base de los enlaces de alta de tus clientes: tu dominio activo o, si no, el de Open Factura. */
     urlBase?: string
+    /** Dominio de los subdominios de marca (`<slug>.<dominioNeutro>`), o null si no está habilitado. */
+    dominioNeutro?: string | null
     dominiosPropios?: {
       disponible?: boolean
     }
@@ -587,6 +589,8 @@ export interface Cloud {
       nombre?: string
       valor?: string
       para?: "trafico" | "propiedad" | "certificado"
+      /** Si el proveedor ya lo dio por bueno: el CNAME y el TXT de propiedad al activarse el dominio; el TXT de certificado al activarse el certificado. */
+      listo?: boolean
     }>
     creado?: number
     activado?: number | null
@@ -1213,6 +1217,7 @@ export interface Operaciones {
     cuerpo: {
       activa?: boolean
       nombre?: string
+      /** Si falta la primera vez, se asigna uno aleatorio (`torogoz-izalco`). */
       slug?: string
       color?: string
       correoSoporte?: string | null

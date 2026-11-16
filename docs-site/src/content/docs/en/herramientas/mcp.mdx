@@ -113,6 +113,10 @@ If you already ran `openfactura login` on that machine, you can omit `env`.
 | `plataforma_cliente_crear`        | Adds a customer (with prefilled data)           | Key enabled for Plataforma |
 | `plataforma_cliente_enlace`       | Their onboarding link                           | Key enabled for Plataforma |
 | `plataforma_cliente_clave_crear`  | An API key in the customer's space              | Key enabled for Plataforma |
+| `marca_blanca_obtener`            | Your white label: name, address and domains (read-only) | `emisor:read`, Platform plan |
+| `marca_dominios_listar`           | Your custom domains and their status (read-only) | `emisor:read`, Platform plan |
+
+White label is changed in the dashboard (*Brand*), not with an API key.
 
 ## How the assistant should work
 

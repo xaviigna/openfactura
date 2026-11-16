@@ -73,7 +73,7 @@ Tus webhooks de cuenta reciben los eventos de todos tus clientes con `evento.dat
 
 `dte` · `eventos` · `contingencia` · `emisor` (y establecimientos) · `clientes` · `productos` ·
 `catalogos` · `claves` · `webhooks` · `registros` · `auditoria` · `uso` · `yo` · y en Cloud:
-`plataforma` · `marca` · `correo` · `certificacion`. Referencia completa:
+`plataforma` · `marca` · `marcaBlanca` (sólo lectura) · `correo` · `certificacion`. Referencia completa:
 [docs.openfactura.co](https://docs.openfactura.co).
 
 Licencia MIT.

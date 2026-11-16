@@ -163,10 +163,16 @@ curl -X PUT https://app.openfactura.co/api/v1/ext/marca/plataforma \
   -d '{ "nombre": "Your Brand", "color": "#3b82f6", "correoSoporte": "support@yourbrand.com", "activa": true }'
 ```
 
+**Turning it on asks for nothing.** The first time, `{ "activa": true }` is enough: the name is your
+business name and the subdomain is a random Salvadoran one, such as `torogoz-izalco` (on a
+collision another one is picked and, eventually, two digits are appended: `torogoz-izalco-10`). You
+can change both later with `nombre` and `slug`, or in the dashboard with the pencil next to the
+address.
+
 | Field | Rules |
 |---|---|
 | `nombre` | 2 to 40 characters, Latin letters, numbers and `. , ' & ( ) + ! ? -` only, no links. Imitations of Open Factura or Hacienda are rejected (letters from other alphabets, digits for letters, separators). |
-| `slug` | Lowercase letters, numbers and hyphens (3 to 32). Some are reserved. Unique: `409 slug_en_uso` if another platform has it. |
+| `slug` | Lowercase letters, numbers and hyphens (3 to 32). Some are reserved. Unique: `409 slug_en_uso` if another platform has it. If you don't send it the first time, a random one is assigned. |
 | `color` | `#rrggbb`, with enough contrast on a dark background. |
 | Logo | `PUT /plataforma/logo` with `{ "base64": "…" }`: PNG or JPG, up to 200 KB and 2000 px. No SVG. |
 | Support | `correoSoporte` and `whatsappSoporte`: email and phone only. |
@@ -235,7 +241,9 @@ the root domain), up to **3** per platform.
 
 <Steps>
 
-1. **Add it.** In the dashboard, *Developer* mode: *Brand → Custom domain*. Or through the API:
+1. **Add it.** In the dashboard, *Developer* mode: *Brand → Custom domain → Configure*. A
+   three-step wizard asks for the domain, shows the records (Host, Type and Value, with copy
+   buttons) and checks them one by one. Or through the API:
 
    ```bash
    curl -X POST https://app.openfactura.co/api/v1/ext/marca/plataforma/dominios \
@@ -248,7 +256,9 @@ the root domain), up to **3** per platform.
    dashboard shows (or `destino` in `GET …/dominios`).
 
 3. **Add any TXT records** shown (ownership and certificate verification). Each entry in `dns`
-   carries its type, name and value.
+   carries its `tipo`, `nombre`, `valor` and `listo` (`true` once the provider has accepted it: the
+   CNAME and ownership TXT when the domain goes active, the certificate TXT when the certificate
+   does).
 
 4. **Wait for "Activo".** It can take a few minutes. To skip the wait, press *Revisar ahora*
    (`POST …/dominios/:id/revisar`). States: `pendiente`, `verificando`, `activo`, `error`.

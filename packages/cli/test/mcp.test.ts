@@ -138,7 +138,7 @@ describe('openfactura mcp (stdio)', () => {
     await new Promise((resolve) => api?.close(resolve))
   })
 
-  it('tools/list anuncia las mismas 21 herramientas que el servidor remoto', async () => {
+  it('tools/list anuncia las mismas herramientas que el servidor remoto (con las de la nube)', async () => {
     const { result } = (await pedir('tools/list')) as {
       result: { tools: Herramienta[] }
     }
@@ -156,6 +156,8 @@ describe('openfactura mcp (stdio)', () => {
       'dte_invalidar',
       'certificacion_estado',
       'certificacion_avanzar',
+      'marca_blanca_obtener',
+      'marca_dominios_listar',
       'dte_retorno',
       'operaciones_especiales_informar',
       'eventos_listar',

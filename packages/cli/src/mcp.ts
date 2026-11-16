@@ -298,6 +298,32 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
       }),
   )
 
+  const MARCA = '/ext/marca/plataforma'
+  const SOLO_PLATFORM =
+    'Sólo en Open Factura Cloud con el plan Platform y la clave de la plataforma (no la de un cliente).'
+
+  servidor.registerTool(
+    'marca_blanca_obtener',
+    {
+      title: 'Ver la marca blanca',
+      description: `Marca blanca de la plataforma: si está encendida, nombre, color, logo, soporte, dirección donde entran sus clientes (urlBase) y dominios propios con su estado. ${SOLO_PLATFORM}`,
+      inputSchema: z.object({}),
+      annotations: lectura,
+    },
+    () => responder(() => api.pedir('GET', MARCA)),
+  )
+
+  servidor.registerTool(
+    'marca_dominios_listar',
+    {
+      title: 'Ver los dominios propios',
+      description: `Dominios propios de la marca blanca, su estado (pendiente, verificando, activo, error) y los registros DNS de cada uno. ${SOLO_PLATFORM}`,
+      inputSchema: z.object({}),
+      annotations: lectura,
+    },
+    () => responder(() => api.pedir('GET', `${MARCA}/dominios`)),
+  )
+
   servidor.registerTool(
     'dte_retorno',
     {

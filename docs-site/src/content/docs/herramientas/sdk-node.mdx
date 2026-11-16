@@ -53,3 +53,10 @@ await of.comoCliente(clave).dte.emitir({ tipoDte: '01', datos }) // en SU espaci
 ```
 
 Guarda la clave de cada cliente en tu base de datos: se muestra una sola vez.
+
+Tu [marca blanca](/cloud/plataforma/), sólo lectura (se cambia en el panel):
+
+```ts
+const marca = await of.marcaBlanca.obtener() // activa, nombre, urlBase, dominios…
+const { dominios } = await of.marcaBlanca.dominios()
+```

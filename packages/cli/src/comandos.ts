@@ -52,6 +52,8 @@ export interface Contexto {
   api: () => ClienteApi
   /** API de Plataforma (`/cloud/plataforma`) con TU clave, aunque estés usando un cliente. */
   apiPlataforma: () => ClienteApi
+  /** La API (`/api/v1`) con TU clave, aunque estés usando un cliente (p. ej. la marca blanca). */
+  apiPropia: () => ClienteApi
 }
 
 export interface Comando {
@@ -1430,6 +1432,79 @@ async function usar(ctx: Contexto): Promise<undefined> {
   return undefined
 }
 
+// ───────────────────────────── marca blanca ─────────────────────────────
+//
+// Open Factura Cloud (plan Platform): lo que ven tus clientes y dónde entran. Sólo lectura: los
+// cambios (encenderla, nombre, subdominio, logo, dominios) se hacen en el panel. Usa siempre TU
+// clave, aunque estés usando un cliente.
+
+interface DominioPropio extends Registro {
+  id: string
+  host: string
+  estado: string
+}
+
+interface MarcaBlanca extends Registro {
+  activa: boolean
+  nombre: string | null
+  color: string | null
+  logo: unknown
+  correoSoporte: string | null
+  whatsappSoporte: string | null
+  urlBase: string | null
+  dominios: DominioPropio[]
+}
+
+const RUTA_MARCA = '/ext/marca/plataforma'
+const CAMBIOS_EN_PANEL = 'Los cambios se hacen en el panel: Marca.'
+
+async function marcaEstado(ctx: Contexto): Promise<undefined> {
+  const { datos: m } = await ctx.apiPropia().pedir<MarcaBlanca>('GET', RUTA_MARCA)
+  mostrar(ctx, m, () =>
+    [
+      fichas([
+        ['Marca blanca', m.activa ? 'encendida' : 'apagada'],
+        ['Nombre', m.nombre],
+        ['Dirección', m.urlBase],
+        ['Color', m.color],
+        ['Logo', m.logo ? 'sí' : 'no'],
+        ['Soporte', [m.correoSoporte, m.whatsappSoporte].filter(Boolean).join(' · ')],
+      ]),
+      ...(m.dominios?.length
+        ? [
+            '',
+            tabla(
+              ['dominio propio', 'estado'],
+              m.dominios.map((d) => [d.host, d.estado]),
+            ),
+          ]
+        : []),
+      '',
+      CAMBIOS_EN_PANEL,
+    ].join('\n'),
+  )
+  return undefined
+}
+
+async function dominiosList(ctx: Contexto): Promise<undefined> {
+  const { datos } = await ctx.apiPropia().pedir<{
+    disponible: boolean
+    limite: number
+    dominios: DominioPropio[]
+  }>('GET', `${RUTA_MARCA}/dominios`)
+  mostrar(ctx, datos, () =>
+    !datos.disponible
+      ? 'Los dominios propios no están habilitados en este servidor.'
+      : datos.dominios.length
+        ? tabla(
+            ['dominio', 'estado', 'id'],
+            datos.dominios.map((d) => [d.host, d.estado, d.id]),
+          )
+        : `Todavía no tienes dominios propios (hasta ${datos.limite}). ${CAMBIOS_EN_PANEL}`,
+  )
+  return undefined
+}
+
 export const GRUPOS: Record<string, string> = {
   clientes: 'Clientes guardados',
   productos: 'Productos y servicios guardados',
@@ -1438,6 +1513,9 @@ export const GRUPOS: Record<string, string> = {
   contingencia: 'Documentos emitidos en contingencia',
   certificacion: 'Pruebas mínimas ante Hacienda para autorizarse como emisor (Open Factura Cloud)',
   plataforma: 'Las empresas de tus clientes, cada una en su espacio (Open Factura Cloud)',
+  'marca-blanca':
+    'Tu marca para tus clientes: nombre, logo, color y subdominio (Open Factura Cloud)',
+  dominios: 'Dominios propios de tu marca blanca (Open Factura Cloud)',
   webhooks: 'Notificaciones firmadas a tu sistema cuando cambia un documento',
   registros: 'Peticiones hechas con claves de API (últimos 30 días)',
   mcp: 'Servidor MCP por stdio y conexión con agentes de IA',
@@ -1684,6 +1762,23 @@ export const COMANDOS: Comando[] = [
     opciones: ['nombre', 'live', 'yes'],
     args: [1, 1],
     accion: plataformaClave,
+  },
+  {
+    nombre: 'marca-blanca estado',
+    uso: 'marca-blanca estado',
+    resumen:
+      'Tu marca blanca: si está encendida, nombre, dirección y dominios (se cambia en el panel)',
+    opciones: [],
+    args: [0, 0],
+    accion: marcaEstado,
+  },
+  {
+    nombre: 'dominios list',
+    uso: 'dominios list',
+    resumen: 'Tus dominios propios y su estado (se agregan en el panel)',
+    opciones: [],
+    args: [0, 0],
+    accion: dominiosList,
   },
   {
     nombre: 'usar',

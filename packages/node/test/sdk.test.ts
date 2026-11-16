@@ -102,6 +102,19 @@ describe('cliente', () => {
     expect(llamadas[0]?.headers.get('Authorization')).toBe(`Bearer ${otra}`)
   })
 
+  it('marca blanca (sólo lectura): GET /api/v1/ext/marca/plataforma y sus dominios', async () => {
+    const { of, llamadas } = cliente([
+      json({ activa: true, urlBase: 'https://tu-marca.ejemplo.net', dominios: [] }),
+      json({ disponible: true, limite: 3, destino: null, dominios: [] }),
+    ])
+    await of.marcaBlanca.obtener()
+    await of.marcaBlanca.dominios()
+    expect(llamadas.map((l) => `${l.metodo} ${l.url.pathname}`)).toEqual([
+      'GET /api/v1/ext/marca/plataforma',
+      'GET /api/v1/ext/marca/plataforma/dominios',
+    ])
+  })
+
   it('pdf devuelve los bytes', async () => {
     const { of } = cliente([new Response(new Uint8Array([37, 80, 68, 70]), { status: 200 })])
     const bytes = new Uint8Array(await of.dte.pdf('ABC'))

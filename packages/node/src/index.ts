@@ -203,6 +203,16 @@ export class OpenFactura {
     quitarLogo: () => this.t.llamar('marca_logo_quitar', {}),
   }
 
+  /**
+   * Open Factura Cloud · marca blanca de tu plataforma (plan Platform), sólo lectura: lo que ven tus
+   * clientes, dónde entran y tus dominios propios. Se cambia en el panel. Usa la clave de la
+   * plataforma, no la de un cliente.
+   */
+  marcaBlanca = {
+    obtener: () => this.t.llamar('marca_plataforma_obtener', {}),
+    dominios: () => this.t.llamar('marca_dominios_listar', {}),
+  }
+
   /** Open Factura Cloud · envío de DTE por correo con su PDF y JSON. */
   correo = {
     enviar: (codigo: string, datos: C<'dte_enviar_correo'> = {}) =>
@@ -224,3 +234,5 @@ export type Documento = Nucleo['Documento']
 export type DocumentoDetalle = Nucleo['DocumentoDetalle']
 export type Emision = Nucleo['Emision']
 export type ClientePlataforma = Cloud['ClientePlataforma']
+export type MarcaPlataforma = Cloud['MarcaPlataforma']
+export type DominioPropio = Cloud['DominioPropio']

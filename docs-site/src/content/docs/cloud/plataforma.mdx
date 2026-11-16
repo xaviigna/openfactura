@@ -160,10 +160,15 @@ curl -X PUT https://app.openfactura.co/api/v1/ext/marca/plataforma \
   -d '{ "nombre": "Tu Marca", "color": "#3b82f6", "correoSoporte": "soporte@tumarca.com", "activa": true }'
 ```
 
+**Encenderla no pide nada.** La primera vez basta con `{ "activa": true }`: el nombre es el de tu
+negocio y el subdominio es uno aleatorio con sabor salvadoreño, como `torogoz-izalco` (si choca con
+otro se elige otro y, al final, se le agregan dos cifras: `torogoz-izalco-10`). Los dos se cambian
+después con `nombre` y `slug`, o en el panel con el lápiz junto a la dirección.
+
 | Campo | Reglas |
 |---|---|
 | `nombre` | 2 a 40 caracteres, sólo letras latinas, números y `. , ' & ( ) + ! ? -`, sin enlaces. Se rechazan las imitaciones de Open Factura o de Hacienda (letras de otro alfabeto, números por letras, separadores). |
-| `slug` | Minúsculas, números y guiones (3 a 32). Algunos están reservados. Único: `409 slug_en_uso` si otra plataforma lo tiene. |
+| `slug` | Minúsculas, números y guiones (3 a 32). Algunos están reservados. Único: `409 slug_en_uso` si otra plataforma lo tiene. Si no lo envías la primera vez, se asigna uno aleatorio. |
 | `color` | `#rrggbb`, con contraste suficiente sobre fondo oscuro. |
 | Logo | `PUT /plataforma/logo` con `{ "base64": "…" }`: PNG o JPG, hasta 200 KB y 2000 px. Sin SVG. |
 | Soporte | `correoSoporte` y `whatsappSoporte`: sólo correo y teléfono. |
@@ -233,7 +238,9 @@ Tu portal puede vivir en un subdominio tuyo, por ejemplo `facturas.tumarca.com`.
 
 <Steps>
 
-1. **Agrégalo.** En el panel, modo *Desarrollador*: *Marca → Dominio propio*. O por API:
+1. **Agrégalo.** En el panel, modo *Desarrollador*: *Marca → Dominio propio → Configurar*. Un
+   asistente de tres pasos te pide el dominio, te muestra los registros (Host, Tipo y Valor, con
+   botón para copiar) y los verifica uno por uno. O por API:
 
    ```bash
    curl -X POST https://app.openfactura.co/api/v1/ext/marca/plataforma/dominios \
@@ -246,7 +253,9 @@ Tu portal puede vivir en un subdominio tuyo, por ejemplo `facturas.tumarca.com`.
    te muestra el panel (o `destino` en `GET …/dominios`).
 
 3. **Agrega los registros TXT** que aparezcan (verificación de propiedad y de certificado), si hay.
-   Cada registro del campo `dns` trae su tipo, nombre y valor.
+   Cada registro del campo `dns` trae su `tipo`, `nombre`, `valor` y `listo` (`true` cuando el
+   proveedor ya lo dio por bueno: el CNAME y el TXT de propiedad al activarse el dominio, el TXT de
+   certificado al activarse el certificado).
 
 4. **Espera a que diga «Activo».** Puede tardar unos minutos. Para no esperar, pulsa *Revisar
    ahora* (`POST …/dominios/:id/revisar`). Estados: `pendiente`, `verificando`, `activo`, `error`.

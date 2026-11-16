@@ -323,6 +323,7 @@ export async function ejecutar(argv: string[], ent: Entorno): Promise<number> {
     })
     let cliente: ClienteApi | undefined
     let plataforma: ClienteApi | undefined
+    let propia: ClienteApi | undefined
     const ctx: Contexto = {
       ent,
       version: VERSION,
@@ -371,6 +372,22 @@ export async function ejecutar(argv: string[], ent: Entorno): Promise<number> {
           base: '/cloud/plataforma',
         })
         return plataforma
+      },
+      apiPropia: () => {
+        if (!cfg.apiKeyPropia) {
+          throw new ErrorCli(
+            'No hay una clave de API. Ejecuta `openfactura login` con la clave de tu plataforma.',
+            'no_autenticado',
+            SALIDA.noAutenticado,
+          )
+        }
+        propia ??= new ClienteApi({
+          url: cfg.url,
+          apiKey: cfg.apiKeyPropia,
+          version: VERSION,
+          fetch: ent.fetch,
+        })
+        return propia
       },
     }
     return (await comando.accion(ctx)) ?? SALIDA.ok

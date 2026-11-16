@@ -138,6 +138,17 @@ with confirmation) and saves it in your profile with `0600` permissions. Switchi
 create new keys. `whoami` shows who you are acting as. When `OPENFACTURA_API_KEY` is set, that key
 wins and the customer in use is ignored.
 
+### Your white label
+
+With [white label](/en/cloud/plataforma/) (Platform plan) you can check from the terminal how your
+customers see it, always with **your** key. It's read-only: turning it on, changing the name,
+subdomain or logo, and adding domains are done in the dashboard (*Brand*).
+
+```bash
+openfactura marca-blanca estado   # on or off, name, address and domains
+openfactura dominios list         # your custom domains and their status
+```
+
 ## In scripts
 
 ```bash

@@ -1,6 +1,6 @@
 {
   "name": "@openfactura/cli",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Cliente de línea de comandos y servidor MCP (stdio) de Open Factura: facturación electrónica de El Salvador (DTE).",
   "license": "MIT",
   "repository": {

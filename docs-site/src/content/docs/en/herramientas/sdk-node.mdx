@@ -53,3 +53,10 @@ await of.comoCliente(clave).dte.emitir({ tipoDte: '01', datos }) // in THEIR spa
 ```
 
 Store each customer's key in your database: it is shown only once.
+
+Your [white label](/en/cloud/plataforma/), read-only (it's changed in the dashboard):
+
+```ts
+const marca = await of.marcaBlanca.obtener() // activa, nombre, urlBase, dominios…
+const { dominios } = await of.marcaBlanca.dominios()
+```
