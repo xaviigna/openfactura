@@ -27,7 +27,7 @@ Open Factura emite los documentos tributarios electrónicos de El Salvador (DTE,
 construye, los firma y los transmite al Ministerio de Hacienda (MH), resuelve la contingencia y la
 invalidación, y genera el PDF. Este repositorio es el núcleo abierto: la API, el servidor MCP, la CLI,
 los SDK y las habilidades para agentes. Despliégalo en tu propia cuenta de Cloudflare, o usa
-[Open Factura Cloud](https://openfactura.co), que corre esta misma API y suma el panel, la facturación
+[Open Factura Cloud](https://openfactura.co/api), que corre esta misma API y suma el panel, la facturación
 por WhatsApp y la certificación guiada ante Hacienda.
 
 > **Probado en la realidad.** Yaya Technologies, S.A.S. de C.V., la empresa que opera Open Factura Cloud,
