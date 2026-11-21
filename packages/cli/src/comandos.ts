@@ -544,6 +544,33 @@ async function productosAdd(ctx: Contexto): Promise<undefined> {
 
 // ───────────────────────────── DTE ─────────────────────────────
 
+async function dteConsultarMh(ctx: Contexto): Promise<undefined> {
+  const nit = ctx.op('nit')
+  const tipo = ctx.op('tipo')
+  if (!nit || !tipo)
+    throw new ErrorUso(
+      'Indica --nit y --tipo, por ejemplo: dte consultar-mh <codigoGeneracion> --nit 06142907861023 --tipo 03',
+    )
+  const { datos } = await ctx.api().pedir<Registro>('POST', '/dte/consultar-mh', {
+    cuerpo: {
+      nitEmisor: nit,
+      tipoDte: tipo,
+      codigoGeneracion: ctx.args[0],
+      selloRecibido: ctx.op('sello'),
+    },
+  })
+  mostrar(ctx, datos, () =>
+    fichas([
+      ['Veredicto', datos.veredicto],
+      ['Estado en el MH', datos.estado],
+      ['Sello coincide', datos.selloCoincide],
+      ['Procesado', datos.fechaProcesamiento],
+      ['Ambiente', datos.ambiente],
+    ]),
+  )
+  return undefined
+}
+
 async function dteValidar(ctx: Contexto): Promise<number> {
   const cuerpo = await leerEmision(ctx, ctx.args[0] as string)
   const { datos } = await ctx
@@ -759,6 +786,22 @@ async function dtePdf(ctx: Contexto): Promise<undefined> {
     ctx,
     { archivo: destino, bytes: bytes.length },
     () => `PDF guardado en ${destino} (${bytes.length} bytes)`,
+  )
+  return undefined
+}
+
+async function dteInvalidacion(ctx: Contexto): Promise<undefined> {
+  const { datos } = await ctx
+    .api()
+    .pedir<Registro>('GET', `/dte/${segmento(ctx.args[0] as string)}/invalidacion`)
+  mostrar(ctx, datos, () =>
+    fichas([
+      ['Puede invalidar', datos.puedeInvalidar],
+      ['Bloqueos', (datos.bloqueos as string[]).join(', ') || null],
+      ['Hasta (aprox.)', datos.limite],
+      ['Fuera de plazo', datos.fueraDePlazo],
+      ['Responsable configurado', datos.responsableConfigurado],
+    ]),
   )
   return undefined
 }
@@ -1336,6 +1379,96 @@ async function plataformaEnlace(ctx: Contexto): Promise<undefined> {
   return undefined
 }
 
+/**
+ * Activa a un cliente en modo servicio: tu plataforma lo administra en su nombre, sin una persona
+ * dueña. Es una garantía: dices que tienes la aceptación de los términos del negocio, así que
+ * ambos datos son obligatorios y se pide confirmación (o --yes).
+ */
+async function plataformaActivar(ctx: Contexto): Promise<undefined> {
+  const cliente = await buscarCliente(ctx, ctx.args[0] as string)
+  const version = ctx.op('terminos-version')
+  const aceptado = ctx.op('aceptado')
+  if (!version || !aceptado) {
+    throw new ErrorUso(
+      'Falta --terminos-version y --aceptado: garantizas que el negocio aceptó los términos y se guarda como evidencia.',
+    )
+  }
+  const ms = Date.parse(aceptado)
+  if (!/^\d{4}-\d{2}-\d{2}/.test(aceptado) || Number.isNaN(ms)) {
+    throw new ErrorUso('--aceptado debe ser AAAA-MM-DD o una fecha y hora ISO 8601')
+  }
+  if (!ctx.si) {
+    if (!ctx.ent.esTTY) {
+      throw new ErrorUso(
+        `Vas a activar a ${cliente.nombre} en modo servicio y no hay una terminal para confirmar: agrega --yes.`,
+      )
+    }
+    const respuesta = await ctx.ent.preguntar(
+      `Vas a administrar a ${cliente.nombre} sin una persona dueña y garantizas que aceptó los términos (versión ${version}, ${aceptado}). ¿Continuar? [s/N] `,
+    )
+    if (!/^(s|si|sí|y|yes)$/i.test(respuesta.trim()))
+      throw new ErrorCli('Operación cancelada.', 'cancelado')
+  }
+  const { datos } = await ctx
+    .apiPlataforma()
+    .pedir<ClientePlataforma>('POST', `/clientes/${segmento(cliente.id)}/activar`, {
+      cuerpo: { modo: 'servicio', aceptacion: { fecha: ms, terminosVersion: version } },
+    })
+  mostrar(ctx, datos, () =>
+    [
+      `${datos.nombre} quedó activo en modo servicio: lo administra tu plataforma y cada acción tuya sobre él se audita.`,
+      `Su dueño real puede reclamar la empresa cuando quiera; no puedes impedirlo.`,
+    ].join('\n'),
+  )
+  return undefined
+}
+
+/** Interruptor de apagado: deja de administrar al cliente (definitivo para tu plataforma). */
+async function plataformaDesactivar(ctx: Contexto): Promise<undefined> {
+  const cliente = await buscarCliente(ctx, ctx.args[0] as string)
+  if (!ctx.si) {
+    if (!ctx.ent.esTTY) {
+      throw new ErrorUso(
+        `Vas a desactivar a ${cliente.nombre} y no hay una terminal para confirmar: agrega --yes.`,
+      )
+    }
+    const respuesta = await ctx.ent.preguntar(
+      `Vas a desactivar a ${cliente.nombre}: pierdes su acceso y se revocan tus claves en su espacio. ¿Continuar? [s/N] `,
+    )
+    if (!/^(s|si|sí|y|yes)$/i.test(respuesta.trim()))
+      throw new ErrorCli('Operación cancelada.', 'cancelado')
+  }
+  const { datos } = await ctx
+    .apiPlataforma()
+    .pedir<ClientePlataforma>('POST', `/clientes/${segmento(cliente.id)}/desactivar`, {
+      cuerpo: {},
+    })
+  mostrar(ctx, datos, () => `${datos.nombre} quedó desactivado.`)
+  return undefined
+}
+
+/** Comprueba contra el MH las credenciales de un ambiente del cliente (sólo lee). */
+async function plataformaProbar(ctx: Contexto): Promise<undefined> {
+  const cliente = await buscarCliente(ctx, ctx.args[0] as string)
+  const ambiente = ctx.op('ambiente') ?? '00'
+  if (ambiente !== '00' && ambiente !== '01') {
+    throw new ErrorUso('--ambiente debe ser 00 (pruebas) o 01 (producción)')
+  }
+  const { datos } = await ctx
+    .apiPlataforma()
+    .pedir<{ ok: boolean; ambiente: string; mensaje: string }>(
+      'POST',
+      `/clientes/${segmento(cliente.id)}/credenciales/${ambiente}/probar`,
+    )
+  mostrar(ctx, datos, () =>
+    datos.ok
+      ? `${cliente.nombre}: conexión con Hacienda correcta en ${ambiente === '01' ? 'producción' : 'pruebas'}. ${datos.mensaje}`
+      : `${cliente.nombre}: Hacienda no aceptó las credenciales de ${ambiente === '01' ? 'producción' : 'pruebas'}. ${datos.mensaje}`,
+  )
+  if (!datos.ok) throw new ErrorCli('La conexión con Hacienda falló.', 'conexion_fallida')
+  return undefined
+}
+
 /** Crea una clave en el espacio del cliente. */
 async function claveDeCliente(ctx: Contexto, cliente: ClientePlataforma, nombre: string) {
   const live = ctx.bandera('live')
@@ -1434,7 +1567,7 @@ async function usar(ctx: Contexto): Promise<undefined> {
 
 // ───────────────────────────── marca blanca ─────────────────────────────
 //
-// Open Factura Cloud (plan Platform): lo que ven tus clientes y dónde entran. Sólo lectura: los
+// Open Factura Cloud (planes Pro y Platform): lo que ven tus clientes y dónde entran. Sólo lectura: los
 // cambios (encenderla, nombre, subdominio, logo, dominios) se hacen en el panel. Usa siempre TU
 // clave, aunque estés usando un cliente.
 
@@ -1463,7 +1596,7 @@ async function marcaEstado(ctx: Contexto): Promise<undefined> {
   mostrar(ctx, m, () =>
     [
       fichas([
-        ['Marca blanca', m.activa ? 'encendida' : 'apagada'],
+        ['White label', m.activa ? 'encendido' : 'apagado'],
         ['Nombre', m.nombre],
         ['Dirección', m.urlBase],
         ['Color', m.color],
@@ -1515,7 +1648,7 @@ export const GRUPOS: Record<string, string> = {
   plataforma: 'Las empresas de tus clientes, cada una en su espacio (Open Factura Cloud)',
   'marca-blanca':
     'Tu marca para tus clientes: nombre, logo, color y subdominio (Open Factura Cloud)',
-  dominios: 'Dominios propios de tu marca blanca (Open Factura Cloud)',
+  dominios: 'Dominios propios de tu white label (Open Factura Cloud)',
   webhooks: 'Notificaciones firmadas a tu sistema cuando cambia un documento',
   registros: 'Peticiones hechas con claves de API (últimos 30 días)',
   mcp: 'Servidor MCP por stdio y conexión con agentes de IA',
@@ -1565,7 +1698,7 @@ export const COMANDOS: Comando[] = [
   {
     nombre: 'clientes list',
     uso: 'clientes list [--q <texto>]',
-    resumen: 'Lista o busca clientes (sólo en producción)',
+    resumen: 'Lista o busca clientes',
     opciones: ['q'],
     args: [0, 0],
     accion: clientesList,
@@ -1573,7 +1706,7 @@ export const COMANDOS: Comando[] = [
   {
     nombre: 'clientes add',
     uso: 'clientes add --file <cliente.json> | --tipo-documento <36|13|03|02|37> --num-documento <n> --nombre <nombre> […]',
-    resumen: 'Crea un cliente (sólo en producción)',
+    resumen: 'Crea un cliente',
     opciones: ['file', ...Object.keys(CAMPOS_CLIENTE)],
     args: [0, 0],
     accion: clientesAdd,
@@ -1609,6 +1742,14 @@ export const COMANDOS: Comando[] = [
     opciones: [],
     args: [1, 1],
     accion: dteValidar,
+  },
+  {
+    nombre: 'dte consultar-mh',
+    uso: 'dte consultar-mh <codigoGeneracion> --nit <NIT del emisor> --tipo <01|03…> [--sello <selloRecibido>]',
+    resumen: 'Consulta al MH si un DTE de un tercero (una compra) está registrado',
+    opciones: ['nit', 'tipo', 'sello'],
+    args: [1, 1],
+    accion: dteConsultarMh,
   },
   {
     nombre: 'dte emitir',
@@ -1649,6 +1790,15 @@ export const COMANDOS: Comando[] = [
     opciones: ['output'],
     args: [1, 1],
     accion: dtePdf,
+  },
+  {
+    nombre: 'dte invalidacion',
+    uso: 'dte invalidacion <codigoGeneracion>',
+    resumen:
+      'Dice si un DTE se puede invalidar, hasta cuándo y qué pide cada motivo (no transmite)',
+    opciones: [],
+    args: [1, 1],
+    accion: dteInvalidacion,
   },
   {
     nombre: 'dte invalidar',
@@ -1756,6 +1906,31 @@ export const COMANDOS: Comando[] = [
     accion: plataformaEnlace,
   },
   {
+    nombre: 'plataforma activar',
+    uso: 'plataforma activar <cliente> --terminos-version <versión> --aceptado <fecha> [--yes]',
+    resumen:
+      'Activa al cliente en modo servicio, sin una persona dueña (garantizas su aceptación de los términos)',
+    opciones: ['terminos-version', 'aceptado', 'yes'],
+    args: [1, 1],
+    accion: plataformaActivar,
+  },
+  {
+    nombre: 'plataforma desactivar',
+    uso: 'plataforma desactivar <cliente> [--yes]',
+    resumen: 'Interruptor de apagado: dejas de administrar al cliente y se revocan tus claves',
+    opciones: ['yes'],
+    args: [1, 1],
+    accion: plataformaDesactivar,
+  },
+  {
+    nombre: 'plataforma probar',
+    uso: 'plataforma probar <cliente> [--ambiente <00|01>]',
+    resumen: 'Comprueba que las credenciales del cliente inician sesión en Hacienda (sólo lee)',
+    opciones: ['ambiente'],
+    args: [1, 1],
+    accion: plataformaProbar,
+  },
+  {
     nombre: 'plataforma clave',
     uso: 'plataforma clave <cliente> [--nombre <texto>] [--live]',
     resumen: 'Crea una clave para el sistema del cliente (sólo emite a su nombre)',
@@ -1767,7 +1942,7 @@ export const COMANDOS: Comando[] = [
     nombre: 'marca-blanca estado',
     uso: 'marca-blanca estado',
     resumen:
-      'Tu marca blanca: si está encendida, nombre, dirección y dominios (se cambia en el panel)',
+      'Tu white label: si está encendido, nombre, dirección y dominios (se cambia en el panel)',
     opciones: [],
     args: [0, 0],
     accion: marcaEstado,

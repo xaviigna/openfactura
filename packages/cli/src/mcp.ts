@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { ErrorApi, ErrorCli } from './errores'
 import {
   cliente,
+  consultaDteTercero,
   ESTADOS_DTE,
   EVENTOS_WEBHOOK,
   invalidacion,
@@ -22,7 +23,7 @@ const listaTipos = Object.entries(TIPOS_DTE)
 
 const DATOS_DTE = `Datos del documento. Campos habituales:
 - items: [{ descripcion, cantidad, precioUni, tipoItem?: 1 bien | 2 servicio, codigo?, uniMedida?: 59 unidad, descuento?, tipoVenta?: 'gravada'|'exenta'|'noSujeta' }]. En Factura (01) precioUni INCLUYE IVA; en CCF (03), notas y remisión va SIN IVA.
-- receptor: { nit o tipoDocumento+numDocumento, nrc, nombre, codActividad, descActividad, direccion: { departamento, municipio, distrito, complemento }, telefono, correo }. En Factura es opcional bajo USD 25,000. Puede omitirse si envías clienteId (sólo en producción).
+- receptor: { nit o tipoDocumento+numDocumento, nrc, nombre, codActividad, descActividad, direccion: { departamento, municipio, distrito, complemento }, telefono, correo }. En Factura es opcional bajo USD 25,000. Puede omitirse si envías clienteId.
 - condicionOperacion?: 1 contado | 2 crédito | 3 otro; pagos?; credito?: { plazo, periodo }.
 - documentosRelacionados (notas de crédito/débito): [{ tipoDocumento, tipoGeneracion: 2, numeroDocumento: <código de generación>, fechaEmision }].
 - Comprobante de Liquidación (08): documentos: [{ tipoDte: 01|03|05|06|11|18, numeroDocumento, fechaEmision, ventaNoSuj?, ventaExenta?, ventaGravada? (sin IVA), exportaciones?, iva? (sólo F y Retorno), tributos?: [{ codigo, valor }], ivaPercibido?, anulado? }], montos en positivo. Receptor = mandante.
@@ -34,12 +35,7 @@ Los códigos de catálogo se consultan con catalogo_buscar.`
 const entradaEmision = {
   tipoDte: tipoDte.describe(`Tipo de documento: ${listaTipos}`),
   datos: z.record(z.string(), z.unknown()).describe(DATOS_DTE),
-  clienteId: z
-    .string()
-    .optional()
-    .describe(
-      'Id de un cliente guardado para usarlo como receptor. Los clientes guardados sólo existen en producción; en pruebas envía datos.receptor.',
-    ),
+  clienteId: z.string().optional().describe('Id de un cliente guardado para usarlo como receptor'),
   puntoVentaId: z.string().optional().describe('Punto de venta emisor; por defecto el primero'),
 }
 
@@ -116,8 +112,7 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
     'clientes_buscar',
     {
       title: 'Buscar clientes',
-      description:
-        'Busca clientes guardados por nombre o número de documento. El directorio de clientes sólo existe en producción: en pruebas responde clientes_solo_produccion y el receptor va en datos.receptor.',
+      description: 'Busca clientes guardados por nombre o número de documento.',
       inputSchema: z.object({ q: z.string().optional() }),
       annotations: lectura,
     },
@@ -129,7 +124,7 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
     {
       title: 'Crear cliente',
       description:
-        'Guarda un cliente para reutilizarlo como receptor. Sólo en producción: en pruebas no hay directorio de clientes (clientes_solo_produccion). tipoDocumento: 36 NIT, 13 DUI, 03 pasaporte, 02 carné de residente, 37 otro.',
+        'Guarda un cliente para reutilizarlo como receptor. tipoDocumento: 36 NIT, 13 DUI, 03 pasaporte, 02 carné de residente, 37 otro.',
       inputSchema: cliente,
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
@@ -169,6 +164,18 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
       annotations: lectura,
     },
     (entrada) => responder(() => api.pedir('POST', '/dte/validar', { cuerpo: entrada })),
+  )
+
+  servidor.registerTool(
+    'dte_consultar_mh',
+    {
+      title: 'Consultar un DTE de un tercero en el MH',
+      description:
+        'Pregunta al MH, con las credenciales de esta organización, si un DTE recibido (de un proveedor) está registrado: devuelve veredicto (encontrado, no_encontrado, discrepancia), estado y, si envías selloRecibido, si coincide. No guarda el documento. Tiene tope por clave y por organización.',
+      inputSchema: consultaDteTercero,
+      annotations: lectura,
+    },
+    (entrada) => responder(() => api.pedir('POST', '/dte/consultar-mh', { cuerpo: entrada })),
   )
 
   servidor.registerTool(
@@ -237,11 +244,24 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
   )
 
   servidor.registerTool(
+    'dte_invalidacion_evaluar',
+    {
+      title: 'Evaluar si un DTE se puede invalidar',
+      description:
+        'Antes de invalidar: dice si el DTE se puede invalidar (puedeInvalidar y bloqueos: estado_invalido, retorno_vigente), hasta cuándo (limite, fueraDePlazo; es una aproximación sin asuetos), qué motivos piden DTE de reemplazo o texto y si el emisor ya tiene «Responsable de anulaciones». No transmite nada.',
+      inputSchema: z.object({ codigoGeneracion: z.string() }),
+      annotations: lectura,
+    },
+    ({ codigoGeneracion }) =>
+      responder(() => api.pedir('GET', `/dte/${ruta(codigoGeneracion)}/invalidacion`)),
+  )
+
+  servidor.registerTool(
     'dte_invalidar',
     {
       title: 'Invalidar un DTE',
       description:
-        'Transmite el evento de invalidación de un DTE procesado, o de un evento de retorno u operaciones especiales (usa su código de generación). Un DTE con retorno vigente exige invalidar antes el retorno. Es irreversible y tiene efecto fiscal: confirma con el usuario. tipoAnulacion: 1 error en la información (requiere codigoGeneracionReemplazo), 2 rescindir la operación, 3 otro (requiere motivo y reemplazo).',
+        'Transmite el evento de invalidación de un DTE procesado, o de un evento de retorno u operaciones especiales (usa su código de generación). Un DTE con retorno vigente exige invalidar antes el retorno. Es irreversible y tiene efecto fiscal: confirma con el usuario. tipoAnulacion: 1 error en la información (requiere codigoGeneracionReemplazo), 2 rescindir la operación, 3 otro (requiere motivo y reemplazo). Sin `responsable` usa el «Responsable de anulaciones» del emisor; si no lo tiene responde 409 responsable_no_configurado (se configura en el panel, no por clave). Consulta antes dte_invalidacion_evaluar.',
       inputSchema: z.object({ codigoGeneracion: z.string(), ...invalidacion.shape }),
       annotations: {
         readOnlyHint: false,
@@ -300,13 +320,13 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
 
   const MARCA = '/ext/marca/plataforma'
   const SOLO_PLATFORM =
-    'Sólo en Open Factura Cloud con el plan Platform y la clave de la plataforma (no la de un cliente).'
+    'Sólo en Open Factura Cloud con el plan Pro o Platform y la clave de la plataforma (no la de un cliente).'
 
   servidor.registerTool(
     'marca_blanca_obtener',
     {
-      title: 'Ver la marca blanca',
-      description: `Marca blanca de la plataforma: si está encendida, nombre, color, logo, soporte, dirección donde entran sus clientes (urlBase) y dominios propios con su estado. ${SOLO_PLATFORM}`,
+      title: 'Ver el white label',
+      description: `White label de la plataforma: si está encendida, nombre, color, logo, soporte, dirección donde entran sus clientes (urlBase) y dominios propios con su estado. ${SOLO_PLATFORM}`,
       inputSchema: z.object({}),
       annotations: lectura,
     },
@@ -317,7 +337,7 @@ export function crearServidorMcp(api: ClienteApi, version: string): McpServer {
     'marca_dominios_listar',
     {
       title: 'Ver los dominios propios',
-      description: `Dominios propios de la marca blanca, su estado (pendiente, verificando, activo, error) y los registros DNS de cada uno. ${SOLO_PLATFORM}`,
+      description: `Dominios propios del white label, su estado (pendiente, verificando, activo, error) y los registros DNS de cada uno. ${SOLO_PLATFORM}`,
       inputSchema: z.object({}),
       annotations: lectura,
     },

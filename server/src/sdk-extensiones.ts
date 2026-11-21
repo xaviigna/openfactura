@@ -44,7 +44,14 @@ export {
   transmitirContingencia,
   type VistaDocumento,
 } from './services/dte'
-export { ambienteActivo } from './services/emisor'
+export {
+  ambienteActivo,
+  guardarCredenciales,
+  guardarEmisor,
+  guardarResponsable,
+  obtenerEmisor,
+  probarConexion,
+} from './services/emisor'
 export {
   archivoEvento,
   informarOperacionesEspeciales,

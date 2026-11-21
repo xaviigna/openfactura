@@ -14,13 +14,15 @@ import type {
   esquemaEmisor,
   esquemaEstablecimiento,
   esquemaPuntoVenta,
+  ResponsableAnulacionesEntrada,
 } from 'shared'
 import type { z } from 'zod'
 import { ambienteDeModo, type Ctx, exigir } from '../contexto'
 import { credencialMh, documento, emisor, establecimiento, puntoVenta } from '../db'
-import { aleatorioBase62, cifrar, descifrar, nuevoId } from '../lib/crypto'
+import { aleatorioBase62, cifrar, descifrar, nuevoId, sha256Hex } from '../lib/crypto'
 import { AppError, conflicto, invalido, mensajeDe, noEncontrado } from '../lib/errors'
 import { registrar } from './auditoria'
+import { personaDelActor } from './responsable'
 import { simuladorPara } from './simulador'
 
 const AMBIENTES: Ambiente[] = ['00', '01']
@@ -55,6 +57,9 @@ async function estadoCredenciales(ctx: Ctx) {
           apiPassword: !!f?.apiPasswordEnc,
           certificado: !!f?.certificadoEnc && !!f?.certPasswordEnc,
           certificadoNit: f?.certNit ?? null,
+          certificadoSerie: f?.certSerie ?? null,
+          certificadoVence: f?.certVence?.getTime() ?? null,
+          certificadoHuella: f?.certHuella ?? null,
           simuladas: !!f?.simulada,
           actualizado: f?.actualizado?.getTime() ?? null,
         },
@@ -66,6 +71,12 @@ async function estadoCredenciales(ctx: Ctx) {
       apiPassword: boolean
       certificado: boolean
       certificadoNit: string | null
+      /** Id del certificado en el MH (no es un secreto). Nulo si se cargó antes de guardarlo o no lo trae. */
+      certificadoSerie: string | null
+      /** Vencimiento (ms Unix). Nulo si el .crt no lo trae o se cargó antes de guardarlo. */
+      certificadoVence: number | null
+      /** SHA-256 (hex) del .crt completo. */
+      certificadoHuella: string | null
       simuladas: boolean
       actualizado: number | null
     }
@@ -96,7 +107,41 @@ export async function obtenerEmisor(ctx: Ctx) {
     listarEstablecimientos(ctx),
     estadoCredenciales(ctx),
   ])
-  return { emisor: fila, establecimientos, credenciales, ambienteActivo: await ambienteActivo(ctx) }
+  // El número del responsable sólo lo ve quien puede editarlo; los demás, enmascarado.
+  const visible =
+    fila?.responsableNumDoc && !ctx.actor.permisos.has('emisor:write')
+      ? { ...fila, responsableNumDoc: enmascarar(fila.responsableNumDoc) }
+      : fila
+  return {
+    emisor: visible,
+    establecimientos,
+    credenciales,
+    ambienteActivo: await ambienteActivo(ctx),
+  }
+}
+
+const enmascarar = (v: string) => `${'•'.repeat(Math.max(v.length - 3, 0))}${v.slice(-3)}`
+
+/**
+ * Sólo el «Responsable de anulaciones» (lo usa `invalidar` cuando la solicitud no trae responsable).
+ * Es un ajuste del emisor: pide `emisor:write`. En la bitácora queda la bandera, no el valor.
+ */
+export async function guardarResponsable(ctx: Ctx, datos: ResponsableAnulacionesEntrada) {
+  exigir(ctx, 'emisor:write')
+  if (!(await filaEmisor(ctx))) {
+    throw conflicto('emisor_no_configurado', 'Configura primero los datos del emisor')
+  }
+  await ctx.db
+    .update(emisor)
+    .set({
+      responsableNombre: datos.nombre,
+      responsableTipoDoc: datos.tipoDocumento,
+      responsableNumDoc: datos.numDocumento,
+      actualizado: new Date(),
+    })
+    .where(eq(emisor.organizationId, ctx.actor.organizationId))
+  await registrar(ctx, 'emisor.responsable', 'emisor', null, { responsableCambiado: true })
+  return obtenerEmisor(ctx)
 }
 
 export async function guardarEmisor(ctx: Ctx, datos: z.infer<typeof esquemaEmisor>) {
@@ -114,6 +159,23 @@ export async function guardarEmisor(ctx: Ctx, datos: z.infer<typeof esquemaEmiso
       throw conflicto('nit_bloqueado', 'El NIT no puede cambiarse después de emitir documentos')
     }
   }
+  // El responsable de anulaciones se rellena solo, la primera vez, con los datos de quien configura
+  // el negocio (su nombre y el documento de su perfil); se edita después en los ajustes.
+  if (!existente && !datos.responsableNombre && !datos.responsableNumDoc) {
+    const persona = await personaDelActor(ctx)
+    if (persona) {
+      datos = {
+        ...datos,
+        responsableNombre: persona.nombre,
+        responsableTipoDoc: persona.tipoDocumento,
+        responsableNumDoc: persona.numDocumento,
+      }
+    }
+  }
+  const cambioResponsable =
+    (existente?.responsableNombre ?? null) !== (datos.responsableNombre ?? null) ||
+    (existente?.responsableTipoDoc ?? null) !== (datos.responsableTipoDoc ?? null) ||
+    (existente?.responsableNumDoc ?? null) !== (datos.responsableNumDoc ?? null)
   if (existente) {
     await ctx.db
       .update(emisor)
@@ -142,6 +204,8 @@ export async function guardarEmisor(ctx: Ctx, datos: z.infer<typeof esquemaEmiso
   }
   await registrar(ctx, existente ? 'emisor.actualizar' : 'emisor.crear', 'emisor', null, {
     ambiente: datos.ambiente ?? existente?.ambiente ?? '00',
+    // Sólo la bandera: nombre y número del responsable no van a la bitácora.
+    ...(cambioResponsable ? { responsableCambiado: true } : {}),
   })
   return obtenerEmisor(ctx)
 }
@@ -191,6 +255,9 @@ export async function guardarCredenciales(
       datos.certificadoPassword,
     )
     cambios.certNit = nitCertificado
+    cambios.certSerie = certificado.serie
+    cambios.certVence = certificado.vence === null ? null : new Date(certificado.vence)
+    cambios.certHuella = await sha256Hex(datos.certificado)
   }
 
   await ctx.db
@@ -203,6 +270,12 @@ export async function guardarCredenciales(
   await registrar(ctx, 'credenciales.guardar', 'credencial_mh', ambiente, {
     apiPassword: !!datos.apiPassword,
     certificado: !!datos.certificado,
+    // Sólo metadatos no secretos del certificado nuevo (ADR-019 d).
+    ...(datos.certificado && {
+      certificadoSerie: cambios.certSerie ?? null,
+      certificadoVence: cambios.certVence?.getTime() ?? null,
+      certificadoHuella: cambios.certHuella,
+    }),
   })
   return (await estadoCredenciales(ctx))[ambiente]
 }

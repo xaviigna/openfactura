@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { crearDb } from '../src/db'
 import {
   entregarPendientes,
+  hostsPermitidos,
   hostsPropios,
   MAX_INTENTOS,
   RETRASOS_MINUTOS,
@@ -520,6 +521,31 @@ describe('filtro de destinos (NV04)', () => {
         hostsPropios: ['openfactura.co'],
       }),
     ).toBeNull()
+  })
+
+  it('WEBHOOKS_HOSTS_PERMITIDOS exime sólo esos hosts exactos del bloqueo del dominio propio', () => {
+    const permitidos = hostsPermitidos({
+      WEBHOOKS_HOSTS_PERMITIDOS: ' Facturas.openfactura.co , mal/ruta, https://x.y, ,',
+    })
+    expect(permitidos).toEqual(['facturas.openfactura.co'])
+    const o = {
+      permitirLocal: false,
+      hostsPropios: hostsPropios({ APP_URL: 'https://app.openfactura.co' }),
+      hostsPermitidos: permitidos,
+    }
+    expect(
+      problemaUrlWebhook('https://facturas.openfactura.co/api/webhooks/openfactura', o),
+    ).toBeNull()
+    // Sólo el host exacto: ni el padre, ni hermanos, ni hijos.
+    for (const u of [
+      'https://openfactura.co/x',
+      'https://app.openfactura.co/x',
+      'https://x.facturas.openfactura.co/x',
+    ])
+      expect(problemaUrlWebhook(u, o), u).not.toBeNull()
+    // Las demás reglas siguen: https obligatorio.
+    expect(problemaUrlWebhook('http://facturas.openfactura.co/x', o)).not.toBeNull()
+    expect(hostsPermitidos({})).toEqual([])
   })
 
   it('bloquea el dominio del despliegue y su padre, no otros', () => {

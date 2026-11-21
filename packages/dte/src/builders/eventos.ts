@@ -12,6 +12,9 @@ export interface Persona { nombre: string; /** CAT-022 */ tipoDocumento: string;
 
 /** Documentos cuyo reemplazo NO se informa aunque el motivo sea 1 o 3 (Manual Funcional, VII). */
 const SIN_REEMPLAZO = new Set(['05', '08', '17', '18'])
+/** ¿La invalidación de este tipo y motivo informa un DTE de reemplazo? (motivos 1 y 3, salvo 05, 08 y eventos). */
+export const requiereReemplazo = (tipoDte: string, tipoAnulacion: 1 | 2 | 3): boolean =>
+  tipoAnulacion !== 2 && !SIN_REEMPLAZO.has(tipoDte)
 /** FE, FEXE, FSEE y eventos: la fecha de la invalidación es la del día, no la del documento (Anexo V, campo 9). */
 const FECHA_EVENTO_LIBRE = new Set(['01', '11', '14', '17', '18'])
 
@@ -48,8 +51,8 @@ export interface InvalidacionInput {
 
 export function construirInvalidacion(input: InvalidacionInput): Dte {
   const d = input.documento
-  const requiereReemplazo = input.tipoAnulacion !== 2 && !SIN_REEMPLAZO.has(d.tipoDte)
-  if (requiereReemplazo && !input.codigoGeneracionReemplazo) throw new Error('Los motivos 1 y 3 requieren `codigoGeneracionReemplazo`: primero emita y selle el DTE que corrige la operación')
+  const necesitaReemplazo = requiereReemplazo(d.tipoDte, input.tipoAnulacion)
+  if (necesitaReemplazo && !input.codigoGeneracionReemplazo) throw new Error('Los motivos 1 y 3 requieren `codigoGeneracionReemplazo`: primero emita y selle el DTE que corrige la operación')
   if (input.tipoAnulacion === 3 && !input.motivoAnulacion) throw new Error('El motivo 3 (otro) requiere `motivoAnulacion`')
   const { fecha, hora } = fechaHoraSV(input.fecha)
   const persona = (p: Persona) => normalizarDocumento(p.tipoDocumento, p.numDocumento)!
@@ -79,7 +82,7 @@ export function construirInvalidacion(input: InvalidacionInput): Dte {
       selloRecibido: d.selloRecibido,
       numeroControl: d.numeroControl ?? null,
       fecEmi: d.fecEmi,
-      codigoGeneracionR: requiereReemplazo ? input.codigoGeneracionReemplazo! : null,
+      codigoGeneracionR: necesitaReemplazo ? input.codigoGeneracionReemplazo! : null,
       tipoDocumento: d.tipoDocumento ?? null,
       numDocumento: normalizarDocumento(d.tipoDocumento, d.numDocumento),
       nombre: d.nombre ?? null,

@@ -6,7 +6,6 @@ import { cliente } from '../db'
 import { nuevoId } from '../lib/crypto'
 import { conflicto, noEncontrado } from '../lib/errors'
 import { registrar } from './auditoria'
-import { ambienteActivo } from './emisor'
 
 type Datos = z.infer<typeof esquemaCliente>
 
@@ -20,28 +19,13 @@ const normalizar = (d: Datos): Datos => ({
   nrc: d.nrc ? d.nrc.replace(/[^0-9]/g, '') : null,
 })
 
-/**
- * Los clientes guardados sólo existen en producción: en pruebas no hay directorio y el receptor viaja
- * en `datos.receptor`. Una clave de pruebas queda fuera aunque la organización esté en producción; una
- * sesión de persona depende del ambiente que tiene activo.
- */
-export async function exigirDirectorio(ctx: Ctx) {
-  // `ambienteActivo` resuelve el modo de la clave antes que el ambiente de la organización.
-  if ((await ambienteActivo(ctx)) !== '01') {
-    throw conflicto(
-      'clientes_solo_produccion',
-      'Los clientes guardados sólo existen en producción. En pruebas, envía los datos del receptor en datos.receptor.',
-    )
-  }
-}
-
+/** Un solo directorio por organización, compartido por pruebas y producción. */
 export const clientesVisibles = (ctx: Ctx) => eq(cliente.organizationId, ctx.actor.organizationId)
 
 const propio = (ctx: Ctx, id: string) => and(eq(cliente.id, id), clientesVisibles(ctx))
 
 export async function listarClientes(ctx: Ctx, opciones: { q?: string; limite?: number } = {}) {
   exigir(ctx, 'clientes:read')
-  await exigirDirectorio(ctx)
   const q = opciones.q?.trim()
   const patron = q ? `%${q.replace(/[%_]/g, '')}%` : null
   return ctx.db
@@ -65,7 +49,6 @@ export async function listarClientes(ctx: Ctx, opciones: { q?: string; limite?: 
 
 export async function obtenerCliente(ctx: Ctx, id: string) {
   exigir(ctx, 'clientes:read')
-  await exigirDirectorio(ctx)
   const [fila] = await ctx.db.select().from(cliente).where(propio(ctx, id))
   if (!fila) throw noEncontrado('El cliente')
   return fila
@@ -73,7 +56,6 @@ export async function obtenerCliente(ctx: Ctx, id: string) {
 
 export async function crearCliente(ctx: Ctx, datos: Datos) {
   exigir(ctx, 'clientes:write')
-  await exigirDirectorio(ctx)
   const id = nuevoId()
   const valores = normalizar(datos)
   try {
@@ -94,7 +76,6 @@ export async function crearCliente(ctx: Ctx, datos: Datos) {
 
 export async function actualizarCliente(ctx: Ctx, id: string, datos: Datos) {
   exigir(ctx, 'clientes:write')
-  await exigirDirectorio(ctx)
   await obtenerCliente(ctx, id)
   try {
     await ctx.db.update(cliente).set(normalizar(datos)).where(propio(ctx, id))
@@ -107,7 +88,6 @@ export async function actualizarCliente(ctx: Ctx, id: string, datos: Datos) {
 
 export async function eliminarCliente(ctx: Ctx, id: string) {
   exigir(ctx, 'clientes:write')
-  await exigirDirectorio(ctx)
   await obtenerCliente(ctx, id)
   await ctx.db.delete(cliente).where(propio(ctx, id))
   await registrar(ctx, 'cliente.eliminar', 'cliente', id)

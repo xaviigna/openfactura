@@ -52,6 +52,10 @@ export class OpenFactura {
     /** El PDF (representación gráfica). */
     pdf: (codigo: string) =>
       this.t.llamar('dte_pdf', { params: { codigo } }) as Promise<ArrayBuffer>,
+    /** Plazo, motivos que piden reemplazo y bloqueos de una invalidación; no transmite nada. */
+    evaluarInvalidacion: (codigo: string) =>
+      this.t.llamar('dte_invalidacion_evaluar', { params: { codigo } }),
+    /** Sin `responsable` usa el «Responsable de anulaciones» del emisor (`emisor.responsable`). */
     invalidar: (codigo: string, datos: C<'dte_invalidar'>, o: Opciones = {}) =>
       this.t.llamar('dte_invalidar', {
         params: { codigo },
@@ -86,6 +90,9 @@ export class OpenFactura {
   emisor = {
     obtener: () => this.t.llamar('emisor_obtener', {}),
     guardar: (datos: C<'emisor_guardar'>) => this.t.llamar('emisor_guardar', { cuerpo: datos }),
+    /** Configura sólo el responsable de anulaciones (nombre, tipo de documento, número). */
+    responsable: (datos: C<'emisor_responsable_guardar'>) =>
+      this.t.llamar('emisor_responsable_guardar', { cuerpo: datos }),
     credenciales: (ambiente: '00' | '01', datos: C<'emisor_credenciales_guardar'>) =>
       this.t.llamar('emisor_credenciales_guardar', { params: { ambiente }, cuerpo: datos }),
     /** Credenciales del simulador del MH (para probar sin trámites). */
@@ -168,8 +175,18 @@ export class OpenFactura {
       listar: (query?: Q<'plataforma_clientes_listar'>) =>
         this.t.llamar('plataforma_clientes_listar', { query }),
       obtener: (id: string) => this.t.llamar('plataforma_cliente_obtener', { params: { id } }),
-      /** Pendiente: lo borra. Activo: lo desactiva y retira tus accesos (sus datos siguen suyos). */
+      /** Lo quita de tu lista; si estaba activo, antes retira tus accesos (sus datos siguen suyos). */
       eliminar: (id: string) => this.t.llamar('plataforma_cliente_eliminar', { params: { id } }),
+      /**
+       * Activa al cliente en modo servicio: tu plataforma lo administra sin una persona dueña.
+       * Garantizas que tienes su aceptación de los términos (`aceptacion`); se guarda como evidencia.
+       * Sólo con clave de producción. Repetible.
+       */
+      activar: (id: string, datos: C<'plataforma_cliente_activar'>) =>
+        this.t.llamar('plataforma_cliente_activar', { params: { id }, cuerpo: datos }),
+      /** Interruptor de apagado: dejas de administrar al cliente y se revocan tus claves en su espacio. */
+      desactivar: (id: string) =>
+        this.t.llamar('plataforma_cliente_desactivar', { params: { id } }),
       /** Enlace de un solo uso para que el cliente active su cuenta. */
       enlace: (id: string, datos: C<'plataforma_cliente_enlace'> = {}) =>
         this.t.llamar('plataforma_cliente_enlace', { params: { id }, cuerpo: datos }),
@@ -183,6 +200,26 @@ export class OpenFactura {
         listar: (id: string) => this.t.llamar('plataforma_cliente_claves', { params: { id } }),
         revocar: (id: string, clave: string) =>
           this.t.llamar('plataforma_cliente_clave_revocar', { params: { id, clave } }),
+      },
+      /** Requieren que la clave tenga el permiso `plataforma:emisor`. Nunca devuelven secretos. */
+      emisor: {
+        obtener: (id: string) =>
+          this.t.llamar('plataforma_cliente_emisor_obtener', { params: { id } }),
+        guardar: (id: string, datos: C<'plataforma_cliente_emisor_guardar'>) =>
+          this.t.llamar('plataforma_cliente_emisor_guardar', { params: { id }, cuerpo: datos }),
+        /** Contraseña de la API del MH y/o certificado con su contraseña, por ambiente. */
+        credenciales: (
+          id: string,
+          ambiente: '00' | '01',
+          datos: C<'plataforma_cliente_credenciales_guardar'>,
+        ) =>
+          this.t.llamar('plataforma_cliente_credenciales_guardar', {
+            params: { id, ambiente },
+            cuerpo: datos,
+          }),
+        /** Autentica contra Hacienda con lo ya cargado de ese ambiente: `{ ok, ambiente, mensaje }`. */
+        probarCredenciales: (id: string, ambiente: '00' | '01') =>
+          this.t.llamar('plataforma_cliente_credenciales_probar', { params: { id, ambiente } }),
       },
       webhooks: {
         crear: (id: string, datos: C<'plataforma_cliente_webhook_crear'>) =>
@@ -204,7 +241,7 @@ export class OpenFactura {
   }
 
   /**
-   * Open Factura Cloud · marca blanca de tu plataforma (plan Platform), sólo lectura: lo que ven tus
+   * Open Factura Cloud · white label de tu plataforma (planes Pro y Platform), sólo lectura: lo que ven tus
    * clientes, dónde entran y tus dominios propios. Se cambia en el panel. Usa la clave de la
    * plataforma, no la de un cliente.
    */

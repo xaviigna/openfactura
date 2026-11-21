@@ -82,14 +82,16 @@ If you already ran `openfactura login` on that machine, you can omit `env`.
 | --------------------------------- | ----------------------------------------------- | ---------------- |
 | `emisor_obtener`                  | Issuer, active environment, points of sale      | `emisor:read`    |
 | `catalogo_buscar`                 | Searches MH catalogs (CAT-xxx)                  | —                |
-| `clientes_buscar`                 | Searches saved customers (production only)      | `clientes:read`  |
-| `cliente_crear`                   | Saves a customer (production only)              | `clientes:write` |
+| `clientes_buscar`                 | Searches saved customers                        | `clientes:read`  |
+| `cliente_crear`                   | Saves a customer                                | `clientes:write` |
 | `productos_buscar`                | Searches the key environment's products         | `productos:read` |
 | `producto_crear`                  | Saves a product (price without VAT)             | `productos:write` |
 | `dte_validar`                     | Validates without issuing; returns problems and total | `dte:emit` |
+| `dte_consultar_mh`                | Checks a third party's DTE (a purchase) with the MH | `dte:read`   |
 | `dte_emitir`                      | Issues (requires `idempotencyKey`)              | `dte:emit`       |
 | `dte_listar`                      | Lists documents in the active environment       | `dte:read`       |
 | `dte_obtener`                     | Status, stamp, MH response, and events          | `dte:read`       |
+| `dte_invalidacion_evaluar`        | Says whether a document can be invalidated, and until when | `dte:invalidate` |
 | `dte_invalidar`                   | Invalidates a document or an event              | `dte:invalidate` |
 | `dte_retorno`                     | Return event (requires `idempotencyKey`)        | `dte:emit`       |
 | `operaciones_especiales_informar` | Event 17 (requires `idempotencyKey`)            | `dte:emit`       |
@@ -113,8 +115,11 @@ If you already ran `openfactura login` on that machine, you can omit `env`.
 | `plataforma_cliente_crear`        | Adds a customer (with prefilled data)           | Key enabled for Plataforma |
 | `plataforma_cliente_enlace`       | Their onboarding link                           | Key enabled for Plataforma |
 | `plataforma_cliente_clave_crear`  | An API key in the customer's space              | Key enabled for Plataforma |
-| `marca_blanca_obtener`            | Your white label: name, address and domains (read-only) | `emisor:read`, Platform plan |
-| `marca_dominios_listar`           | Your custom domains and their status (read-only) | `emisor:read`, Platform plan |
+| `plataforma_cliente_activar`      | Activates them in service mode, no human owner  | Production key enabled for Plataforma |
+| `plataforma_cliente_desactivar`   | Kill switch for an active customer              | Key enabled for Plataforma |
+| `plataforma_cliente_credenciales_probar` | Check that a customer's credentials for one environment log in to the MH (read-only) | Key enabled for Plataforma with `plataforma:emisor` |
+| `marca_blanca_obtener`            | Your white label: name, address and domains (read-only) | `emisor:read`, Pro or Platform plan |
+| `marca_dominios_listar`           | Your custom domains and their status (read-only) | `emisor:read`, Pro or Platform plan |
 
 White label is changed in the dashboard (*Brand*), not with an API key.
 

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://openfactura.co">Sitio</a> ·
+  <a href="https://openfactura.co/api">Sitio</a> ·
   <a href="https://docs.openfactura.co">Documentación</a> ·
   <a href="https://app.openfactura.co/auth/registro">Crea tu cuenta en Open Factura Cloud</a>
 </p>
@@ -84,7 +84,7 @@ Todos los nombres, NIT y montos de las capturas son inventados.
 
 |                          | Open Factura Cloud                                              | En tu servidor                                         |
 | ------------------------ | --------------------------------------------------------------- | ------------------------------------------------------ |
-| Precio                   | Desde $9 al mes con 2,000 DTE, luego $0.01 por DTE              | Gratis, más tu plan de pago de Cloudflare Workers      |
+| Precio                   | Desde $49 al mes con 25,000 DTE, luego $0.01 por DTE            | Gratis, más tu plan de pago de Cloudflare Workers      |
 | Cómo se usa              | Panel, WhatsApp, API, MCP y CLI                                 | API, MCP y CLI (sin panel)                             |
 | Ser emisor               | Guiado: las pruebas mínimas de Hacienda en un clic              | Haces las pruebas tú ([guía](docs/ser-emisor.md))      |
 | Empresas de tus clientes | Pro y Platform: un espacio por cliente, cada uno con sus claves | Una organización por empresa, creada con `ADMIN_TOKEN` |
@@ -146,23 +146,24 @@ pruebas mínimas. El paso a paso completo está en [`docs/self-hosting.md`](docs
 
 ### Variables
 
-| Variable                  | Qué hace                                                                                                            |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `APP_URL`                 | URL pública del servicio                                                                                            |
-| `BETTER_AUTH_SECRET`      | Firma las sesiones. 32+ caracteres aleatorios                                                                       |
-| `CRED_KEK_V1`             | Llave maestra AES-256 (32 bytes, base64) para las credenciales del MH. Se rota con `CRED_KEK_V2`                    |
-| `ADMIN_TOKEN`             | La credencial del operador: crea y administra organizaciones. 32+ caracteres, o la administración queda desactivada |
-| `LIMITE_CLAVE_POR_MINUTO` | Peticiones por minuto por clave de API (120)                                                                        |
-| `TRUSTED_ORIGINS`         | Orígenes adicionales de confianza, separados por coma                                                               |
-| `GITHUB_CLIENT_ID`        | «Ingresar con GitHub»: Client ID de una GitHub App (opcional)                                                       |
-| `GITHUB_CLIENT_SECRET`    | Client secret de esa GitHub App (secreto); sin los dos no se ofrece el ingreso con GitHub                           |
-| `URL_MCP`                 | URL pública del MCP si no es `<APP_URL>/mcp` (la devuelve `GET /api/v1/yo`)                                         |
-| `MH_BASE_URL`             | Sustituye la URL del MH (sólo para pruebas)                                                                         |
-| `MH_SIMULADO`             | `1` activa el simulador del MH en el ambiente de pruebas                                                            |
-| `WEBHOOKS_LOCAL`          | `1` permite webhooks a `http://localhost`. Sólo en desarrollo                                                       |
-| `TURNSTILE_SECRET`        | Cloudflare Turnstile (opcional, secreto): exige el token del widget al registrarse, entrar y recuperar              |
-| `TURNSTILE_SITE_KEY`      | Clave pública del widget (var o secreto); el panel la recibe en `GET /api/v1/acceso`                                |
-| `TURNSTILE_HOSTNAMES`     | Dominios del widget, separados por coma (var o secreto); sin ellos, con el secreto, se rechaza todo                 |
+| Variable                    | Qué hace                                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `APP_URL`                   | URL pública del servicio                                                                                            |
+| `BETTER_AUTH_SECRET`        | Firma las sesiones. 32+ caracteres aleatorios                                                                       |
+| `CRED_KEK_V1`               | Llave maestra AES-256 (32 bytes, base64) para las credenciales del MH. Se rota con `CRED_KEK_V2`                    |
+| `ADMIN_TOKEN`               | La credencial del operador: crea y administra organizaciones. 32+ caracteres, o la administración queda desactivada |
+| `LIMITE_CLAVE_POR_MINUTO`   | Peticiones por minuto por clave de API (120)                                                                        |
+| `TRUSTED_ORIGINS`           | Orígenes adicionales de confianza, separados por coma                                                               |
+| `GITHUB_CLIENT_ID`          | «Ingresar con GitHub»: Client ID de una GitHub App (opcional)                                                       |
+| `GITHUB_CLIENT_SECRET`      | Client secret de esa GitHub App (secreto); sin los dos no se ofrece el ingreso con GitHub                           |
+| `URL_MCP`                   | URL pública del MCP si no es `<APP_URL>/mcp` (la devuelve `GET /api/v1/yo`)                                         |
+| `MH_BASE_URL`               | Sustituye la URL del MH (sólo para pruebas)                                                                         |
+| `MH_SIMULADO`               | `1` activa el simulador del MH en el ambiente de pruebas                                                            |
+| `WEBHOOKS_LOCAL`            | `1` permite webhooks a `http://localhost`. Sólo en desarrollo                                                       |
+| `WEBHOOKS_HOSTS_PERMITIDOS` | Hosts exactos, separados por coma, del dominio propio que sí reciben webhooks (las demás reglas siguen)             |
+| `TURNSTILE_SECRET`          | Cloudflare Turnstile (opcional, secreto): exige el token del widget al registrarse, entrar y recuperar              |
+| `TURNSTILE_SITE_KEY`        | Clave pública del widget (var o secreto); el panel la recibe en `GET /api/v1/acceso`                                |
+| `TURNSTILE_HOSTNAMES`       | Dominios del widget, separados por coma (var o secreto); sin ellos, con el secreto, se rechaza todo                 |
 
 ## API, MCP y agentes
 

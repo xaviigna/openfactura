@@ -20,9 +20,8 @@ Todos los documentos se emiten con la misma ruta, `POST /dte`, y se validan ante
 - `tipoDte`: el tipo de documento (tabla abajo).
 - `datos`: la entrada del constructor del SDK [`@openfactura/dte`](/herramientas/sdk/) para ese tipo
   (`FacturaInput`, `CreditoFiscalInput`, `NotaInput`…).
-- `clienteId`: si lo envías y falta `datos.receptor`, el receptor se toma del cliente guardado. Sólo
-  en producción: los clientes guardados no existen en pruebas, donde responde
-  `409 clientes_solo_produccion` y el receptor va en `datos.receptor`.
+- `clienteId`: si lo envías y falta `datos.receptor`, el receptor se toma del cliente guardado.
+  Funciona en los dos ambientes: los clientes guardados son los mismos en pruebas y en producción.
 - `puntoVentaId`: punto de venta que emite; por defecto el primero del emisor.
 
 <Aside type="tip">

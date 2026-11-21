@@ -98,9 +98,14 @@ export interface Extension {
   antesDeAtender?: (ctx: Ctx, peticion: { metodo: string; ruta: string }) => Promise<void>
   /**
    * Antes de invitar a alguien, de que acepte la invitación, de quitar a un miembro o de cambiarle
-   * el rol. Lanza AppError para impedirlo.
+   * el rol. `cambio.accion` dice si es una invitación o una aceptación (p. ej. para un cupo de
+   * personas); falta en los demás cambios. Lanza AppError para impedirlo.
    */
-  antesDeCambiarEquipo?: (env: Bindings, organizationId: string) => Promise<void>
+  antesDeCambiarEquipo?: (
+    env: Bindings,
+    organizationId: string,
+    cambio?: { accion: 'invitar' | 'aceptar' },
+  ) => Promise<void>
   /**
    * Herramientas propias en el MCP remoto (`/mcp`). Se registran después de las del núcleo, con el
    * `ctx` de la petición; envuelva cada una con `responder` para el mismo formato de errores.

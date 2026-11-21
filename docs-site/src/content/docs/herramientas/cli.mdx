@@ -62,7 +62,7 @@ Todos aceptan `--json` (el JSON de la API en stdout), `--url`, `--profile` y `--
 openfactura whoami                      # actor, permisos, ambiente
 openfactura emisor                      # datos fiscales, establecimientos, credenciales cargadas
 
-openfactura clientes list --q "contribuyente"   # clientes: sólo en producción
+openfactura clientes list --q "contribuyente"   # clientes: los mismos en los dos ambientes
 openfactura clientes add --file cliente.json
 openfactura productos list --q licencia
 openfactura productos add --codigo LIC-001 --descripcion "Licencia anual" --precio 100 --tipo-item 2
@@ -70,11 +70,13 @@ openfactura productos add --codigo LIC-001 --descripcion "Licencia anual" --prec
 openfactura catalogos CAT-013 --departamento 06
 
 openfactura dte validar factura.json
+openfactura dte consultar-mh <codigoGeneracion> --nit 06142907861023 --tipo 03 [--sello <selloRecibido>]
 openfactura dte emitir factura.json [--idempotency-key <clave>]
 openfactura dte list --tipo 01 --estado procesado --desde 2026-11-01 --hasta 2026-11-30
 openfactura dte get <codigo>
 openfactura dte json <codigo> -o dte.json
 openfactura dte pdf <codigo> -o factura.pdf
+openfactura dte invalidacion <codigo>
 openfactura dte invalidar <codigo> --tipo 2 --motivo "Operación rescindida"
 openfactura dte retorno <codigo> retorno.json
 
@@ -102,9 +104,8 @@ openfactura certificacion ejecutar --completo [--desde-cero]  # todos los docume
 El archivo de `dte emitir` es el mismo cuerpo de `POST /api/v1/dte` (ve
 [Emitir documentos](/guias/emitir/)). `-` lee de la entrada estándar.
 
-Los clientes guardados sólo existen en producción: con una clave de pruebas, `clientes` responde
-`clientes_solo_produccion` y el receptor va en `datos.receptor`. Los productos y los webhooks son los
-del ambiente de la clave. En `certificacion ejecutar`, `--receptor` es `openfactura` (recomendado) o
+Los clientes guardados son uno solo por organización: `clientes` funciona igual con una clave de
+pruebas o de producción. Los productos y los webhooks son los del ambiente de la clave. En `certificacion ejecutar`, `--receptor` es `openfactura` (recomendado) o
 un JSON (archivo o `-`) con los datos de otro contribuyente; ve
 [Certificación](/guias/certificacion/).
 
@@ -124,6 +125,10 @@ cambia de contexto, como las cuentas de `gh` o los contextos de `kubectl`:
 openfactura plataforma add "Casa Barista" --external-id cb-1 --nit 0614-290786-102-3
 openfactura plataforma enlace cb-1             # su enlace para activar la cuenta
 openfactura plataforma list                    # estado y qué le falta (→ el que usas)
+openfactura plataforma activar cb-1 --terminos-version 2026-11-16 --aceptado 2026-11-16 --yes
+                                               # modo servicio: lo administras tú, sin persona dueña
+openfactura plataforma desactivar cb-1 --yes   # interruptor de apagado
+openfactura plataforma probar cb-1 --ambiente 01  # ¿sus credenciales inician sesión en Hacienda? (00 pruebas, 01 producción)
 
 openfactura usar cb-1                          # desde aquí actúas como Casa Barista
 openfactura dte emitir factura.json            # se emite en SU espacio, con su numeración
@@ -138,9 +143,9 @@ producción, con confirmación) y la guarda en tu perfil con permisos `0600`. Al
 no se crean claves nuevas. `whoami` muestra con quién actúas. Con `OPENFACTURA_API_KEY` definida,
 manda esa clave y se ignora el cliente en uso.
 
-### Tu marca blanca
+### Tu white label
 
-Con [marca blanca](/cloud/plataforma/) (plan Platform) puedes consultar desde la terminal cómo la ven
+Con [white label](/cloud/plataforma/) (planes Pro y Platform) puedes consultar desde la terminal cómo la ven
 tus clientes, siempre con **tu** clave. Es sólo lectura: encenderla, cambiar el nombre, el subdominio,
 el logo o agregar dominios se hace en el panel (*Marca*).
 

@@ -15,9 +15,12 @@ description: Cuántas peticiones admite cada clave, los encabezados RateLimit y 
 | Enlaces para recuperar la contraseña  | 3 por correo y hora; luego no se envían más (la respuesta no cambia) |
 | Intentos con contraseña al confirmar el correo | 5 por cuenta y hora; 10 cada 5 minutos por IP |
 | Organizaciones propias por persona    | 10                              |
+| `POST /dte/consultar-mh`, por clave   | 20 por minuto                   |
+| `POST /dte/consultar-mh`, por organización | 1000 por día               |
 | Tamaño del cuerpo                     | 512 KB                          |
 
-En una instalación propia, el límite por clave se cambia con la variable `LIMITE_CLAVE_POR_MINUTO`.
+En una instalación propia, el límite por clave se cambia con la variable `LIMITE_CLAVE_POR_MINUTO`; los de `consultar-mh`, con `CONSULTA_TERCERO_POR_MINUTO` y
+`CONSULTA_TERCERO_POR_DIA`.
 
 Los topes por correo sólo existen si la instalación envía correos de cuenta. Los de `/api/auth/*`
 responden con el formato de Better Auth (`{ "code", "message" }`).

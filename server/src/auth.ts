@@ -197,10 +197,13 @@ export function createAuth(
     }
   }
   /** Una extensión puede impedir los cambios del equipo: su AppError llega como error de la API. */
-  const antesDeCambiarEquipo = async (organizationId: string) => {
+  const antesDeCambiarEquipo = async (
+    organizationId: string,
+    cambio?: { accion: 'invitar' | 'aceptar' },
+  ) => {
     for (const e of extensiones) {
       try {
-        await e.antesDeCambiarEquipo?.(env, organizationId)
+        await e.antesDeCambiarEquipo?.(env, organizationId, cambio)
       } catch (error) {
         throw new APIError('FORBIDDEN', {
           code: error instanceof AppError ? error.code : 'no_se_puede_cambiar',
@@ -377,7 +380,17 @@ export function createAuth(
             })
           }
           const existente = await ctx.context.internalAdapter.findUserByEmail(direccion)
-          if (!existente || existente.user.emailVerified) return
+          if (!existente) return
+          // Con la confirmación obligatoria, Better Auth respondería «revisa tu correo» aunque la
+          // dirección ya tenga cuenta, y su dueña no recibe nada. Se dice claramente (decisión del
+          // producto: la claridad pesa más que ocultar qué correos tienen cuenta; los topes por
+          // dirección y por IP frenan el sondeo).
+          const yaHayCuenta = () =>
+            new APIError('UNPROCESSABLE_ENTITY', {
+              code: 'USER_ALREADY_EXISTS',
+              message: 'Ya hay una cuenta asociada a este correo',
+            })
+          if (existente.user.emailVerified) throw yaHayCuenta()
           // Sin sesiones ni equipo: una cuenta vieja (de antes de exigir la confirmación) que ya se
           // usa no se toca.
           const uso = await env.DB.prepare(
@@ -386,7 +399,7 @@ export function createAuth(
           )
             .bind(existente.user.id)
             .first<{ n: number }>()
-          if (!uso || uso.n > 0) return
+          if (!uso || uso.n > 0) throw yaHayCuenta()
           await ctx.context.internalAdapter.deleteUser(existente.user.id)
           await env.DB.prepare('DELETE FROM verification WHERE value = ?1')
             .bind(existente.user.id)
@@ -438,9 +451,10 @@ export function createAuth(
               }
             }
           },
-          beforeCreateInvitation: ({ organization: org }) => antesDeCambiarEquipo(org.id),
+          beforeCreateInvitation: ({ organization: org }) =>
+            antesDeCambiarEquipo(org.id, { accion: 'invitar' }),
           beforeAcceptInvitation: async ({ organization: org, invitation }) => {
-            await antesDeCambiarEquipo(org.id)
+            await antesDeCambiarEquipo(org.id, { accion: 'aceptar' })
             // La invitación vale mientras quien invitó siga en el equipo y pueda invitar.
             const invitador = await env.DB.prepare(
               'SELECT role FROM member WHERE organization_id = ?1 AND user_id = ?2',

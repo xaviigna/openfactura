@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:test'
 import { describe, expect, it, vi } from 'vitest'
-import { Cliente, cambiarAmbiente, EMISOR, FACTURA, nuevaClave, nuevaOrganizacion } from './ayudas'
+import { Cliente, EMISOR, FACTURA, nuevaClave, nuevaOrganizacion } from './ayudas'
 
 /** Contribuyente receptor tal como viaja en `datos.receptor` (NIT y NRC sin guiones). */
 const RECEPTOR = {
@@ -423,9 +423,7 @@ describe('aislamiento entre organizaciones', () => {
     // La clave de A sigue viendo sólo lo de A.
     expect((await claveA.cliente.json('GET', '/api/v1/dte')).cuerpo.total).toBe(1)
 
-    // Clientes: el directorio sólo existe en producción, así que ambas pasan a ese ambiente.
-    await cambiarAmbiente(a.cliente, '01')
-    await cambiarAmbiente(b.cliente, '01')
+    // Clientes: un directorio por organización (en ambos ambientes).
     const { cuerpo: cliente } = await a.cliente.json('POST', '/api/v1/clientes', {
       tipoDocumento: '13',
       numDocumento: '01234567-8',
@@ -434,14 +432,12 @@ describe('aislamiento entre organizaciones', () => {
     expect((await b.cliente.pedir('GET', `/api/v1/clientes/${cliente.id}`)).status).toBe(404)
     expect((await b.cliente.json('GET', '/api/v1/clientes')).cuerpo).toHaveLength(0)
     expect((await b.cliente.pedir('DELETE', `/api/v1/clientes/${cliente.id}`)).status).toBe(404)
-    // Tampoco puede usar un cliente ajeno como receptor (sin credenciales de producción, se valida).
+    // Tampoco puede usar un cliente ajeno como receptor.
     const ajeno = await b.cliente.json('POST', '/api/v1/dte/validar', {
       ...FACTURA,
       clienteId: cliente.id,
     })
     expect(ajeno.status).toBe(404)
-    await cambiarAmbiente(a.cliente, '00')
-    await cambiarAmbiente(b.cliente, '00')
 
     // Webhooks y sus entregas: B no los ve, no los prueba, no los cambia ni los borra.
     const envios = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('ok'))
@@ -519,6 +515,40 @@ describe('claves de API', () => {
       scopes: ['claves:manage'],
     })
     expect(r.status).toBe(400)
+  })
+
+  it('elimina para siempre sólo claves revocadas o expiradas, y sólo las de su organización', async () => {
+    const { cliente } = await nuevaOrganizacion({ emisor: true })
+    const { id, cliente: conClave } = await nuevaClave(cliente, ['dte:read'])
+    await conClave.json('GET', '/api/v1/dte') // deja un registro de petición
+    const activa = await cliente.json('DELETE', `/api/v1/claves/${id}/definitivo`)
+    expect(activa.status).toBe(409)
+    expect(activa.cuerpo.error.code).toBe('clave_activa')
+
+    expect((await cliente.json('DELETE', `/api/v1/claves/${id}`)).status).toBe(200)
+    const ajena = await nuevaOrganizacion()
+    expect((await ajena.cliente.pedir('DELETE', `/api/v1/claves/${id}/definitivo`)).status).toBe(
+      404,
+    )
+
+    const r = await cliente.json('DELETE', `/api/v1/claves/${id}/definitivo`)
+    expect(r.status).toBe(200)
+    expect(r.cuerpo).toEqual({ eliminada: true })
+    expect((await cliente.json('GET', '/api/v1/claves')).cuerpo).toHaveLength(0)
+    const registros = await env.DB.prepare(
+      'SELECT COUNT(*) AS n FROM registro_api WHERE clave_id = ?1',
+    )
+      .bind(id)
+      .first<{ n: number }>()
+    expect(registros?.n).toBe(0)
+
+    const expirada = await nuevaClave(cliente, ['dte:read'], { expiraEnDias: 1 })
+    await env.DB.prepare('UPDATE clave_api SET expira = ?1 WHERE id = ?2')
+      .bind(Date.now() - 1000, expirada.id)
+      .run()
+    expect((await cliente.json('DELETE', `/api/v1/claves/${expirada.id}/definitivo`)).status).toBe(
+      200,
+    )
   })
 
   it('rechaza claves revocadas, expiradas, inventadas o mal formadas', async () => {
@@ -644,6 +674,7 @@ describe('MCP', () => {
       expect.arrayContaining([
         'dte_emitir',
         'dte_validar',
+        'dte_invalidacion_evaluar',
         'dte_invalidar',
         'catalogo_buscar',
         'dte_retorno',

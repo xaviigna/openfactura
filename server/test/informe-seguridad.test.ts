@@ -24,22 +24,7 @@ import {
 const CLIENTE = { tipoDocumento: '13', numDocumento: '01234567-8', nombre: 'Cliente de producción' }
 const PRODUCTO = { codigo: 'P-1', descripcion: 'Producto de producción', precioUnitario: 10 }
 
-/** Las cinco rutas de clientes y la emisión con `clienteId`: todas responden lo mismo en pruebas. */
-async function rutasDeClientes(c: Cliente, id: string) {
-  return [
-    await c.json('GET', '/api/v1/clientes'),
-    await c.json('GET', `/api/v1/clientes/${id}`),
-    await c.json('POST', '/api/v1/clientes', { ...CLIENTE, numDocumento: '09876543-2' }),
-    await c.json('PUT', `/api/v1/clientes/${id}`, { ...CLIENTE, nombre: 'Robado' }),
-    await c.json('DELETE', `/api/v1/clientes/${id}`),
-    await c.json('POST', '/api/v1/dte', { tipoDte: '01', clienteId: id, datos: FACTURA.datos }),
-  ]
-}
-
-const esSoloProduccion = (r: { status: number; cuerpo: any }) =>
-  r.status === 409 && r.cuerpo.error.code === 'clientes_solo_produccion'
-
-describe('clientes sólo en producción', () => {
+describe('clientes en ambos ambientes', () => {
   const PERMISOS_CLAVE = [
     'clientes:read',
     'clientes:write',
@@ -48,25 +33,41 @@ describe('clientes sólo en producción', () => {
     'dte:emit',
   ]
 
-  it('una clave de pruebas no usa el directorio aunque la organización esté en producción', async () => {
+  it('las claves de pruebas y de producción comparten el directorio; los productos no', async () => {
     const { cliente } = await nuevaOrganizacion({ emisor: true })
-    await cambiarAmbiente(cliente, '01')
     const live = await nuevaClave(cliente, PERMISOS_CLAVE, { modo: 'live' })
     const test = await nuevaClave(cliente, PERMISOS_CLAVE, { modo: 'test' })
 
-    // La clave de producción sí usa el directorio.
-    const c = await live.cliente.json('POST', '/api/v1/clientes', CLIENTE)
+    // Lo que se guarda con la clave de pruebas aparece con la de producción, y al revés.
+    const c = await test.cliente.json('POST', '/api/v1/clientes', CLIENTE)
     expect(c.status).toBe(201)
     expect(c.cuerpo).not.toHaveProperty('ambiente')
-    expect((await live.cliente.json('GET', '/api/v1/clientes')).cuerpo).toHaveLength(1)
-    expect((await live.cliente.json('GET', `/api/v1/clientes/${c.cuerpo.id}`)).status).toBe(200)
-
-    for (const r of await rutasDeClientes(test.cliente, c.cuerpo.id)) {
-      expect(esSoloProduccion(r), JSON.stringify(r.cuerpo)).toBe(true)
+    const otro = await live.cliente.json('POST', '/api/v1/clientes', {
+      ...CLIENTE,
+      numDocumento: '09876543-2',
+    })
+    expect(otro.status).toBe(201)
+    for (const clave of [test, live]) {
+      expect((await clave.cliente.json('GET', '/api/v1/clientes')).cuerpo).toHaveLength(2)
     }
-    // El cliente de producción quedó intacto.
+    const editado = await test.cliente.json('PUT', `/api/v1/clientes/${c.cuerpo.id}`, {
+      ...CLIENTE,
+      nombre: 'Editado en pruebas',
+    })
+    expect(editado.status).toBe(200)
     expect((await live.cliente.json('GET', `/api/v1/clientes/${c.cuerpo.id}`)).cuerpo.nombre).toBe(
-      CLIENTE.nombre,
+      'Editado en pruebas',
+    )
+
+    // Emitir en pruebas con `clienteId`: el receptor sale del cliente guardado.
+    const emitido = await test.cliente.json('POST', '/api/v1/dte', {
+      tipoDte: '01',
+      clienteId: c.cuerpo.id,
+      datos: FACTURA.datos,
+    })
+    expect(emitido.status, JSON.stringify(emitido.cuerpo)).toBeLessThan(300)
+    expect((await test.cliente.json('DELETE', `/api/v1/clientes/${otro.cuerpo.id}`)).status).toBe(
+      200,
     )
 
     // Los productos siguen separados por ambiente.
@@ -75,39 +76,20 @@ describe('clientes sólo en producción', () => {
     expect((await test.cliente.json('GET', '/api/v1/productos')).cuerpo).toHaveLength(0)
     expect((await test.cliente.json('GET', `/api/v1/productos/${p.id}`)).status).toBe(404)
     expect((await test.cliente.json('DELETE', `/api/v1/productos/${p.id}`)).status).toBe(404)
-    expect(
-      (
-        await test.cliente.json('PUT', `/api/v1/productos/${p.id}`, {
-          ...PRODUCTO,
-          descripcion: 'Robado',
-        })
-      ).status,
-    ).toBe(404)
     const propio = await test.cliente.json('POST', '/api/v1/productos', PRODUCTO)
     expect(propio.status).toBe(201)
     expect(propio.cuerpo.ambiente).toBe('00')
-    expect((await cliente.json('GET', '/api/v1/productos')).cuerpo).toHaveLength(2)
   })
 
-  it('una sesión con la organización en pruebas recibe el mismo error', async () => {
+  it('una sesión con la organización en pruebas administra los clientes', async () => {
     const { cliente } = await nuevaOrganizacion({ emisor: true })
-    await cambiarAmbiente(cliente, '01')
-    const c = (await cliente.json('POST', '/api/v1/clientes', CLIENTE)).cuerpo
-    await cambiarAmbiente(cliente, '00')
-    for (const r of await rutasDeClientes(cliente, c.id)) {
-      expect(esSoloProduccion(r), JSON.stringify(r.cuerpo)).toBe(true)
-    }
-  })
-
-  it('pasar de producción a pruebas y volver conserva los clientes', async () => {
-    const { cliente } = await nuevaOrganizacion({ emisor: true })
-    await cambiarAmbiente(cliente, '01')
-    const c = (await cliente.json('POST', '/api/v1/clientes', CLIENTE)).cuerpo
-    await cambiarAmbiente(cliente, '00')
-    expect(esSoloProduccion(await cliente.json('GET', '/api/v1/clientes'))).toBe(true)
+    const c = await cliente.json('POST', '/api/v1/clientes', CLIENTE)
+    expect(c.status).toBe(201)
     await cambiarAmbiente(cliente, '01')
     const lista = (await cliente.json('GET', '/api/v1/clientes')).cuerpo
-    expect(lista.map((x: { id: string }) => x.id)).toEqual([c.id])
+    expect(lista.map((x: { id: string }) => x.id)).toEqual([c.cuerpo.id])
+    await cambiarAmbiente(cliente, '00')
+    expect((await cliente.json('GET', `/api/v1/clientes/${c.cuerpo.id}`)).status).toBe(200)
   })
 })
 

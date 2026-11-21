@@ -54,6 +54,17 @@ await of.comoCliente(clave).dte.emitir({ tipoDte: '01', datos }) // in THEIR spa
 
 Store each customer's key in your database: it is shown only once.
 
+Without a link, in service mode (you warrant the business's acceptance of the terms; production only):
+
+```ts
+await of.plataforma.clientes.activar(cliente.id, {
+  modo: 'servicio',
+  aceptacion: { fecha: Date.parse('2026-11-16'), terminosVersion: '2026-11-16' },
+})
+await of.plataforma.clientes.desactivar(cliente.id) // kill switch
+await of.plataforma.clientes.probarCredenciales(cliente.id, '01') // do they log in to the MH? { ok, ambiente, mensaje }
+```
+
 Your [white label](/en/cloud/plataforma/), read-only (it's changed in the dashboard):
 
 ```ts

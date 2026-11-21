@@ -30,8 +30,8 @@
       "name": "Certificación"
     },
     {
-      "name": "Marca blanca",
-      "description": "Para plataformas (plan Platform): tus clientes ven tu marca y tu dominio en lugar de Open Factura."
+      "name": "White label",
+      "description": "Para plataformas (planes Pro y Platform): tus clientes ven tu marca y tu dominio en lugar de Open Factura."
     }
   ],
   "paths": {
@@ -106,7 +106,7 @@
         "operationId": "plataforma_clientes_listar",
         "tags": ["Plataforma"],
         "summary": "Listar clientes",
-        "description": "Tus clientes con su estado, qué tan listos están para emitir (`preparacion`) y qué les falta (`falta`).",
+        "description": "Tus clientes, del más reciente al más antiguo, con su estado, qué tan listos están para emitir (`preparacion`) y qué les falta (`falta`). Devuelve hasta 200; para recorrer más, pide páginas con `limite` y `despuesDe` (el `id` del último cliente recibido).",
         "responses": {
           "200": {
             "description": "Clientes.",
@@ -120,6 +120,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
           },
           "402": {
             "$ref": "#/components/responses/E402"
@@ -147,6 +150,26 @@
               "type": "string"
             },
             "description": "Busca por tu id."
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "description": "Clientes por página (1 a 200; por defecto 200)."
+          },
+          {
+            "name": "despuesDe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "`id` del último cliente de la página anterior. Sin él, la primera página. Una página con menos clientes que `limite` es la última."
           }
         ],
         "security": [
@@ -203,8 +226,8 @@
       "delete": {
         "operationId": "plataforma_cliente_eliminar",
         "tags": ["Plataforma"],
-        "summary": "Eliminar o desactivar un cliente",
-        "description": "Pendiente: se elimina con su espacio. Activo: se desactiva; pierdes el acceso, se revocan tus claves y webhooks en su espacio, y sus datos siguen siendo suyos.",
+        "summary": "Eliminar un cliente",
+        "description": "Lo quita de tu lista. Pendiente: se elimina con su espacio. Activo: antes se desactiva (igual que `POST …/desactivar`); pierdes el acceso, se revocan tus claves y webhooks en su espacio. Desactivado: sólo sale de la lista. Su empresa, sus DTE y su cuenta de Hacienda siguen siendo suyos. Responde `{ eliminado: true }`; después, el id da 404. Para conservarlo en la lista como desactivado, usa `POST …/desactivar`.",
         "responses": {
           "200": {
             "description": "Hecho."
@@ -293,6 +316,154 @@
                 }
               }
             }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/activar": {
+      "post": {
+        "operationId": "plataforma_cliente_activar",
+        "tags": ["Plataforma"],
+        "summary": "Activar en modo servicio (sin persona dueña)",
+        "description": "Activa a un cliente pendiente sin que una persona acepte el enlace: tu plataforma lo administra en nombre del negocio (modo custodio). Garantizas que tienes la aceptación de los términos del negocio y la dejas asentada: `aceptacion.fecha` (cuándo aceptó, en ms) y `aceptacion.terminosVersion`. El cliente queda `activo`, sin dueño y con `administradoPorPlataforma: true`; cualquier enlace pendiente deja de servir. Toda acción tuya sobre un cliente así queda en la bitácora de tu organización y en la del cliente, y su dueño real puede reclamar la empresa cuando quiera (no puedes impedirlo). Sólo con clave de producción; tope de 60 activaciones y desactivaciones por hora. Repetirla sobre un cliente ya activo en modo servicio lo devuelve igual y conserva la evidencia original.",
+        "responses": {
+          "200": {
+            "description": "Cliente activo, administrado por tu plataforma.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientePlataforma"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "409": {
+            "description": "`cliente_con_dueno` (ya activó su cuenta con su propia sesión) o `cliente_desactivado`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["modo", "aceptacion"],
+                "additionalProperties": false,
+                "properties": {
+                  "modo": {
+                    "type": "string",
+                    "enum": ["servicio"]
+                  },
+                  "aceptacion": {
+                    "type": "object",
+                    "required": ["fecha", "terminosVersion"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "fecha": {
+                        "type": "integer",
+                        "description": "Cuándo aceptó el negocio los términos, en ms desde 1970 (no futura)."
+                      },
+                      "terminosVersion": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "pattern": "^[0-9A-Za-z._-]{1,40}$",
+                        "example": "2026-11-16",
+                        "description": "Versión de los términos que aceptó."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/desactivar": {
+      "post": {
+        "operationId": "plataforma_cliente_desactivar",
+        "tags": ["Plataforma"],
+        "summary": "Desactivar un cliente (interruptor de apagado)",
+        "description": "Corta el vínculo con un cliente activo (en modo servicio o no): dejas de administrarlo, pierdes todo acceso a su espacio y se revocan las claves y webhooks que creaste. Definitivo para tu plataforma; los datos siguen siendo del negocio. Equivale a `DELETE` sobre un cliente activo. Un cliente pendiente no se desactiva: se elimina con `DELETE`. Tope de 60 activaciones y desactivaciones por hora.",
+        "responses": {
+          "200": {
+            "description": "Cliente desactivado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientePlataforma"
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
           }
         },
         "parameters": [
@@ -740,6 +911,233 @@
         ]
       }
     },
+    "/cloud/plataforma/clientes/{id}/emisor": {
+      "get": {
+        "operationId": "plataforma_cliente_emisor_obtener",
+        "tags": ["Plataforma"],
+        "summary": "Ver el emisor del cliente",
+        "description": "Datos fiscales del emisor, establecimientos y estado de las credenciales del MH de cada ambiente (con serie y vencimiento del certificado). Nunca devuelve contraseñas ni el contenido del certificado. Requiere el permiso `plataforma:emisor` en la clave.",
+        "responses": {
+          "200": {
+            "description": "Emisor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmisorClienteVista"
+                }
+              }
+            }
+          },
+          "E402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "E403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "E404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "E429": {
+            "$ref": "#/components/responses/E429"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "plataforma_cliente_emisor_guardar",
+        "tags": ["Plataforma"],
+        "summary": "Guardar el emisor del cliente",
+        "description": "Crea o actualiza los datos fiscales del emisor del cliente. Requiere el permiso `plataforma:emisor` en la clave (sólo producción). Máximo 30 por hora por cliente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmisorCliente"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Emisor guardado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Emisor guardado."
+                }
+              }
+            }
+          },
+          "E400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "E402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "E403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "E404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "E429": {
+            "$ref": "#/components/responses/E429"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/credenciales/{ambiente}": {
+      "put": {
+        "operationId": "plataforma_cliente_credenciales_guardar",
+        "tags": ["Plataforma"],
+        "summary": "Guardar las credenciales del MH del cliente",
+        "description": "Contraseña de la API del MH y/o certificado (.crt en texto, hasta 20 000 caracteres) con la contraseña de su llave privada, para un ambiente. Se validan y se guardan cifradas; nada se devuelve ni se registra salvo la serie, el vencimiento y la huella del certificado. Requiere el permiso `plataforma:emisor`. Cuerpo hasta 40 KB; 10 por hora por cliente y 120 por hora por plataforma.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredencialesCliente"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado de las credenciales de ese ambiente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoCredencialesCliente"
+                }
+              }
+            }
+          },
+          "E400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "E402": {
+            "$ref": "#/components/responses/E402"
+          },
+          "E403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "E404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "E429": {
+            "$ref": "#/components/responses/E429"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          },
+          {
+            "name": "ambiente",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["00", "01"]
+            },
+            "description": "`00` pruebas, `01` producción"
+          }
+        ],
+        "security": [
+          {
+            "plataforma": []
+          }
+        ]
+      }
+    },
+    "/cloud/plataforma/clientes/{id}/credenciales/{ambiente}/probar": {
+      "post": {
+        "operationId": "plataforma_cliente_credenciales_probar",
+        "tags": ["Plataforma"],
+        "summary": "Probar la conexión con el MH de un ambiente del cliente",
+        "description": "Autentica contra Hacienda con las credenciales que el cliente ya cargó para ese ambiente (NIT y contraseña de la API del MH) y dice si las aceptó. No valida que el certificado firme bien: eso lo confirma el primer documento. No lleva cuerpo, nunca devuelve contraseñas ni el certificado, y queda en la bitácora. Requiere el permiso `plataforma:emisor`. 20 por hora por cliente y 240 por hora por plataforma.",
+        "responses": {
+          "200": {
+            "description": "Resultado de la prueba (`ok: false` con el motivo en `mensaje` si Hacienda las rechazó).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["ok", "ambiente", "mensaje"],
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "ambiente": { "type": "string", "enum": ["00", "01"] },
+                    "mensaje": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "E400": { "$ref": "#/components/responses/E400" },
+          "E402": { "$ref": "#/components/responses/E402" },
+          "E403": { "$ref": "#/components/responses/E403" },
+          "E404": { "$ref": "#/components/responses/E404" },
+          "E429": { "$ref": "#/components/responses/E429" }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Id del cliente (`cli_…` o uuid)"
+          },
+          {
+            "name": "ambiente",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "enum": ["00", "01"] },
+            "description": "`00` pruebas, `01` producción"
+          }
+        ],
+        "security": [{ "plataforma": [] }]
+      }
+    },
     "/api/v1/ext/marca": {
       "get": {
         "operationId": "marca_obtener",
@@ -1165,12 +1563,12 @@
     "/api/v1/ext/marca/plataforma": {
       "get": {
         "operationId": "marca_plataforma_obtener",
-        "tags": ["Marca blanca"],
-        "summary": "Ver tu marca blanca",
-        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Permiso `emisor:read`.",
+        "tags": ["White label"],
+        "summary": "Ver tu white label",
+        "description": "Requiere el plan Pro o Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Permiso `emisor:read`.",
         "responses": {
           "200": {
-            "description": "Marca blanca.",
+            "description": "White label.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1192,12 +1590,12 @@
       },
       "put": {
         "operationId": "marca_plataforma_actualizar",
-        "tags": ["Marca blanca"],
-        "summary": "Configurar tu marca blanca",
-        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Todos los campos son opcionales: la primera vez basta con `{ \"activa\": true }`; el nombre sale del de tu negocio y el `slug` es uno aleatorio (`torogoz-izalco`), y los dos se cambian después. `activa` la enciende o apaga; al apagarla, o si el plan vence, nada se borra y todo vuelve a la marca de Open Factura. Permiso `emisor:write`.",
+        "tags": ["White label"],
+        "summary": "Configurar tu white label",
+        "description": "Requiere el plan Pro o Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Todos los campos son opcionales: la primera vez basta con `{ \"activa\": true }`; el nombre sale del de tu negocio y el `slug` es uno aleatorio (`torogoz-izalco`), y los dos se cambian después. `activa` la enciende o apaga; al apagarla, o si el plan vence, nada se borra y todo vuelve a la marca de Open Factura. Permiso `emisor:write`.",
         "responses": {
           "200": {
-            "description": "Marca blanca.",
+            "description": "White label.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1273,12 +1671,12 @@
     "/api/v1/ext/marca/plataforma/logo": {
       "put": {
         "operationId": "marca_plataforma_logo_subir",
-        "tags": ["Marca blanca"],
+        "tags": ["White label"],
         "summary": "Subir el logo de tu marca",
-        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). PNG o JPG de hasta 200 KB y 2000 px, en base64. Permiso `emisor:write`.",
+        "description": "Requiere el plan Pro o Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). PNG o JPG de hasta 200 KB y 2000 px, en base64. Permiso `emisor:write`.",
         "responses": {
           "200": {
-            "description": "Marca blanca.",
+            "description": "White label.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1319,12 +1717,12 @@
       },
       "delete": {
         "operationId": "marca_plataforma_logo_quitar",
-        "tags": ["Marca blanca"],
+        "tags": ["White label"],
         "summary": "Quitar el logo de tu marca",
-        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Permiso `emisor:write`.",
+        "description": "Requiere el plan Pro o Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Permiso `emisor:write`.",
         "responses": {
           "200": {
-            "description": "Marca blanca.",
+            "description": "White label.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1348,9 +1746,9 @@
     "/api/v1/ext/marca/vigente": {
       "get": {
         "operationId": "marca_vigente_obtener",
-        "tags": ["Marca blanca"],
+        "tags": ["White label"],
         "summary": "Ver la marca que ve tu cuenta",
-        "description": "La marca blanca de la plataforma que administra a la cuenta de quien llama, si está activa y su plan vigente; si no, `null`. Permiso `emisor:read`.",
+        "description": "El white label de la plataforma que administra a la cuenta de quien llama, si está activa y su plan vigente; si no, `null`. Permiso `emisor:read`.",
         "responses": {
           "200": {
             "description": "Marca o `null`.",
@@ -1374,7 +1772,7 @@
     "/api/v1/ext/marca/vigente/logo": {
       "get": {
         "operationId": "marca_vigente_logo_obtener",
-        "tags": ["Marca blanca"],
+        "tags": ["White label"],
         "summary": "El logo de la marca que ve tu cuenta",
         "description": "Los bytes del logo de la plataforma que administra a la cuenta de quien llama. `404` si no hay marca o no tiene logo. Permiso `emisor:read`.",
         "responses": {
@@ -1410,9 +1808,9 @@
     "/api/v1/ext/marca/plataforma/dominios": {
       "get": {
         "operationId": "marca_dominios_listar",
-        "tags": ["Marca blanca"],
+        "tags": ["White label"],
         "summary": "Listar tus dominios propios",
-        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Los dominios propios son subdominios (hasta 3). `disponible: false` si el servidor no los tiene habilitados. Permiso `emisor:read`.",
+        "description": "Requiere el plan Pro o Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Los dominios propios son subdominios (hasta 3). `disponible: false` si el servidor no los tiene habilitados. Permiso `emisor:read`.",
         "responses": {
           "200": {
             "description": "Dominios.",
@@ -1437,9 +1835,9 @@
       },
       "post": {
         "operationId": "marca_dominio_agregar",
-        "tags": ["Marca blanca"],
+        "tags": ["White label"],
         "summary": "Agregar un dominio propio",
-        "description": "Requiere el plan Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Crea el dominio en estado `pendiente` y devuelve los registros DNS que debes crear. Errores: `400 host_invalido`, `409 dominio_en_uso`, `409 limite_dominios`, `429 limite_excedido`, `502 cloudflare_no_disponible`, `503 dominios_no_disponibles`. Permiso `emisor:write`.",
+        "description": "Requiere el plan Pro o Platform y una cuenta que no sea administrada por otra plataforma (si no, `402 plan_requerido`). Crea el dominio en estado `pendiente` y devuelve los registros DNS que debes crear. Errores: `400 host_invalido`, `409 dominio_en_uso`, `409 limite_dominios`, `429 limite_excedido`, `502 cloudflare_no_disponible`, `503 dominios_no_disponibles`. Permiso `emisor:write`.",
         "responses": {
           "201": {
             "description": "Dominio creado.",
@@ -1498,7 +1896,7 @@
     "/api/v1/ext/marca/plataforma/dominios/{id}/revisar": {
       "post": {
         "operationId": "marca_dominio_revisar",
-        "tags": ["Marca blanca"],
+        "tags": ["White label"],
         "summary": "Revisar un dominio ahora",
         "description": "Consulta el estado actual del dominio y lo actualiza (`pendiente`, `verificando`, `activo` o `error`). Permiso `emisor:write`.",
         "responses": {
@@ -1549,7 +1947,7 @@
     "/api/v1/ext/marca/plataforma/dominios/{id}": {
       "delete": {
         "operationId": "marca_dominio_eliminar",
-        "tags": ["Marca blanca"],
+        "tags": ["White label"],
         "summary": "Eliminar un dominio propio",
         "description": "Deja de servir ese dominio. Permiso `emisor:write`.",
         "responses": {
@@ -1617,6 +2015,207 @@
       }
     },
     "schemas": {
+      "EmisorCliente": {
+        "type": "object",
+        "properties": {
+          "nit": {
+            "type": "string"
+          },
+          "nrc": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          },
+          "nombreComercial": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "codActividad": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 6
+          },
+          "descActividad": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "departamento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2
+          },
+          "municipio": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2
+          },
+          "distrito": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2
+          },
+          "complemento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "telefono": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 30
+          },
+          "correo": {
+            "type": "string",
+            "maxLength": 100,
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "ambiente": {
+            "type": "string",
+            "enum": ["00", "01"]
+          },
+          "responsableNombre": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "responsableTipoDoc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "responsableNumDoc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "nit",
+          "nrc",
+          "nombre",
+          "codActividad",
+          "descActividad",
+          "departamento",
+          "municipio",
+          "distrito",
+          "complemento",
+          "telefono",
+          "correo"
+        ]
+      },
+      "CredencialesCliente": {
+        "type": "object",
+        "properties": {
+          "apiPassword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "certificado": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "certificadoPassword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      },
+      "EstadoCredencialesCliente": {
+        "type": "object",
+        "properties": {
+          "apiPassword": {
+            "type": "boolean"
+          },
+          "certificado": {
+            "type": "boolean"
+          },
+          "certificadoNit": {
+            "type": ["string", "null"]
+          },
+          "certificadoSerie": {
+            "type": ["string", "null"],
+            "description": "Id del certificado en el MH (`<_id>` del .crt; no es un secreto). Nulo si el archivo no lo trae o se cargó antes de guardarlo."
+          },
+          "certificadoVence": {
+            "type": ["integer", "null"],
+            "description": "Vencimiento del certificado, en milisegundos Unix (`notAfter` del .crt). Nulo si no viene o se cargó antes de guardarlo."
+          },
+          "certificadoHuella": {
+            "type": ["string", "null"],
+            "description": "SHA-256 (hex) del contenido completo del .crt. No permite reconstruirlo."
+          },
+          "simuladas": {
+            "type": "boolean",
+            "description": "Generadas para el simulador del MH: los documentos no llegan a Hacienda."
+          },
+          "actualizado": {
+            "type": ["integer", "null"]
+          }
+        }
+      },
+      "EmisorClienteVista": {
+        "type": "object",
+        "properties": {
+          "emisor": {
+            "type": ["object", "null"],
+            "description": "Datos fiscales; nulo si no está configurado."
+          },
+          "establecimientos": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "credenciales": {
+            "type": "object",
+            "properties": {
+              "00": {
+                "$ref": "#/components/schemas/EstadoCredencialesCliente"
+              },
+              "01": {
+                "$ref": "#/components/schemas/EstadoCredencialesCliente"
+              }
+            }
+          },
+          "ambienteActivo": {
+            "type": "string",
+            "enum": ["00", "01"]
+          }
+        }
+      },
       "DatosCliente": {
         "type": ["object", "null"],
         "description": "Lo que ya sabes del cliente; prellena su alta.",
@@ -1679,10 +2278,23 @@
             "type": ["integer", "null"]
           },
           "aceptado": {
-            "type": ["integer", "null"]
+            "type": ["integer", "null"],
+            "description": "Cuándo aceptó el negocio (ms). En modo servicio, la fecha que declaraste al activar."
           },
           "creado": {
             "type": "integer"
+          },
+          "administradoPorPlataforma": {
+            "type": "boolean",
+            "description": "Tu plataforma lo administra en nombre del negocio, sin una persona dueña (modo servicio). Es `false` cuando el cliente activó su cuenta con su propia sesión o ya está desactivado; se borra al reclamar la empresa su dueño."
+          },
+          "terminosVersion": {
+            "type": ["string", "null"],
+            "description": "Versión de los términos que, según declaraste, aceptó el negocio (modo servicio)."
+          },
+          "activado": {
+            "type": ["integer", "null"],
+            "description": "Cuándo se activó en modo servicio (ms, reloj de Open Factura)."
           }
         }
       },
@@ -2140,7 +2752,7 @@
         "properties": {
           "disponible": {
             "type": "boolean",
-            "description": "Si tu plan incluye marca blanca."
+            "description": "Si tu plan incluye white label."
           },
           "activa": {
             "type": "boolean"

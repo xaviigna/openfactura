@@ -21,6 +21,10 @@ export interface Nucleo {
     responsableTipoDoc?: string | null
     responsableNumDoc?: string | null
   }
+  DocumentoMiembro: {
+    tipoDocumento: "13" | "36" | "02" | "03"
+    numDocumento: string
+  }
   Credenciales: {
     apiPassword?: string
     certificado?: string
@@ -42,6 +46,11 @@ export interface Nucleo {
     nombre: string
     codMh: string
     codInterno?: string | null
+  }
+  ResponsableAnulaciones: {
+    nombre: string
+    tipoDocumento?: "13" | "36" | "02" | "03"
+    numDocumento: string
   }
   ClienteEntrada: {
     tipoDocumento: "13" | "36" | "37" | "03" | "02"
@@ -101,6 +110,12 @@ export interface Nucleo {
       flete?: number
     }>
   }
+  ConsultaDteTercero: {
+    nitEmisor: string
+    tipoDte: "11" | "14" | "15" | "01" | "03" | "04" | "05" | "06" | "07" | "08" | "09"
+    codigoGeneracion: string
+    selloRecibido?: string
+  }
   OperacionesEspeciales: {
     tipoDocumento: "97" | "02"
     fecha?: string
@@ -136,7 +151,7 @@ export interface Nucleo {
   }
   Error: {
     error: {
-      code: "datos_invalidos" | "dte_invalido" | "no_autenticado" | "plan_requerido" | "sin_permiso" | "origen_no_permitido" | "no_encontrado" | "sin_organizacion" | "sin_organizacion_activa" | "nit_bloqueado" | "emisor_no_configurado" | "credenciales_incompletas" | "sin_punto_venta" | "estado_invalido" | "ambiente_distinto" | "retorno_excedido" | "retorno_vigente" | "idempotencia_distinta" | "idempotencia_en_curso" | "cliente_repetido" | "clientes_solo_produccion" | "producto_repetido" | "codigo_repetido" | "sin_archivo" | "limite_webhooks" | "simulador_inactivo" | "dte_rechazado" | "invalidacion_rechazada" | "contingencia_rechazada" | "evento_rechazado" | "limite_excedido" | "limite_plan" | "error_interno" | "mh_credenciales_rechazadas" | "mh_no_disponible" | "emision_fallida" | "emision_incierta" | "evento_incierto"
+      code: "datos_invalidos" | "dte_invalido" | "no_autenticado" | "plan_requerido" | "sin_permiso" | "origen_no_permitido" | "no_encontrado" | "sin_organizacion" | "sin_organizacion_activa" | "nit_bloqueado" | "emisor_no_configurado" | "credenciales_incompletas" | "sin_punto_venta" | "estado_invalido" | "ambiente_distinto" | "retorno_excedido" | "retorno_vigente" | "responsable_no_configurado" | "idempotencia_distinta" | "idempotencia_en_curso" | "cliente_repetido" | "producto_repetido" | "codigo_repetido" | "sin_archivo" | "limite_webhooks" | "simulador_inactivo" | "dte_rechazado" | "invalidacion_rechazada" | "contingencia_rechazada" | "evento_rechazado" | "limite_excedido" | "limite_plan" | "error_interno" | "mh_credenciales_rechazadas" | "mh_no_disponible" | "mh_respuesta_inesperada" | "emision_fallida" | "emision_incierta" | "evento_incierto"
       message: string
       /** Detalle según el código; puede faltar. */
       details?: Record<string, unknown>
@@ -176,6 +191,15 @@ export interface Nucleo {
     pagina: number
     porPagina: number
     ambiente: "00" | "01"
+  }
+  ConsultaDteTerceroResultado: {
+    veredicto: "encontrado" | "no_encontrado" | "discrepancia"
+    /** `procesado`, `invalidado` u otro del MH. */
+    estado: string | null
+    selloCoincide: boolean | null
+    fechaProcesamiento: string | null
+    ambiente: "00" | "01"
+    cache: boolean
   }
   Validacion: {
     dte: Record<string, unknown>
@@ -291,6 +315,12 @@ export interface Nucleo {
     apiPassword?: boolean
     certificado?: boolean
     certificadoNit?: string | null
+    /** Id del certificado en el MH (`<_id>` del .crt; no es un secreto). Nulo si el archivo no lo trae o se cargó antes de guardarlo. */
+    certificadoSerie?: string | null
+    /** Vencimiento del certificado, en milisegundos Unix (`notAfter` del .crt). Nulo si no viene o se cargó antes de guardarlo. */
+    certificadoVence?: number | null
+    /** SHA-256 (hex) del contenido completo del .crt. No permite reconstruirlo. */
+    certificadoHuella?: string | null
     /** Generadas para el simulador del MH: los documentos no llegan a Hacienda. */
     simuladas?: boolean
     actualizado?: number | null
@@ -406,6 +436,53 @@ export interface Nucleo {
 }
 
 export interface Cloud {
+  EmisorCliente: {
+    nit: string
+    nrc: string
+    nombre: string
+    nombreComercial?: string | null
+    codActividad: string
+    descActividad: string
+    departamento: string
+    municipio: string
+    distrito: string
+    complemento: string
+    telefono: string
+    correo: string
+    ambiente?: "00" | "01"
+    responsableNombre?: string | null
+    responsableTipoDoc?: string | null
+    responsableNumDoc?: string | null
+  }
+  CredencialesCliente: {
+    apiPassword?: string
+    certificado?: string
+    certificadoPassword?: string
+  }
+  EstadoCredencialesCliente: {
+    apiPassword?: boolean
+    certificado?: boolean
+    certificadoNit?: string | null
+    /** Id del certificado en el MH (`<_id>` del .crt; no es un secreto). Nulo si el archivo no lo trae o se cargó antes de guardarlo. */
+    certificadoSerie?: string | null
+    /** Vencimiento del certificado, en milisegundos Unix (`notAfter` del .crt). Nulo si no viene o se cargó antes de guardarlo. */
+    certificadoVence?: number | null
+    /** SHA-256 (hex) del contenido completo del .crt. No permite reconstruirlo. */
+    certificadoHuella?: string | null
+    /** Generadas para el simulador del MH: los documentos no llegan a Hacienda. */
+    simuladas?: boolean
+    actualizado?: number | null
+  }
+  EmisorClienteVista: {
+    /** Datos fiscales; nulo si no está configurado. */
+    emisor?: Record<string, unknown> | null
+    establecimientos?: Array<Record<string, unknown>>
+    credenciales?: {
+      "00"?: Cloud["EstadoCredencialesCliente"]
+      "01"?: Cloud["EstadoCredencialesCliente"]
+    }
+    ambienteActivo?: "00" | "01"
+  }
   DatosCliente: {
     nit?: string
     nrc?: string
@@ -425,8 +502,15 @@ export interface Cloud {
     preparacion?: "conectado" | "pruebas" | "produccion" | null
     falta?: string | null
     enlaceExpira?: number | null
+    /** Cuándo aceptó el negocio (ms). En modo servicio, la fecha que declaraste al activar. */
     aceptado?: number | null
     creado?: number
+    /** Tu plataforma lo administra en nombre del negocio, sin una persona dueña (modo servicio). Es `false` cuando el cliente activó su cuenta con su propia sesión o ya está desactivado; se borra al reclamar la empresa su dueño. */
+    administradoPorPlataforma?: boolean
+    /** Versión de los términos que, según declaraste, aceptó el negocio (modo servicio). */
+    terminosVersion?: string | null
+    /** Cuándo se activó en modo servicio (ms, reloj de Open Factura). */
+    activado?: number | null
   }
   EmpresaCliente: {
     nit?: string
@@ -551,7 +635,7 @@ export interface Cloud {
     aviso: string | null
   })
   MarcaPlataforma: {
-    /** Si tu plan incluye marca blanca. */
+    /** Si tu plan incluye white label. */
     disponible?: boolean
     activa?: boolean
     /** 2 a 40 caracteres. */
@@ -623,6 +707,26 @@ export interface Operaciones {
     cuerpo: never
     respuesta: Nucleo["Yo"]
   }
+  /** Estado de mi documento de identidad */
+  yo_documento_obtener: {
+    params: never
+    query: never
+    cuerpo: never
+    respuesta: {
+      documentoRegistrado: boolean
+      tipoDocumento: string | null
+    }
+  }
+  /** Registrar mi documento de identidad */
+  yo_documento_guardar: {
+    params: never
+    query: never
+    cuerpo: Nucleo["DocumentoMiembro"]
+    respuesta: {
+      documentoRegistrado: boolean
+      tipoDocumento: string
+    }
+  }
   /** Resumen del tablero */
   resumen_obtener: {
     params: never
@@ -649,6 +753,13 @@ export interface Operaciones {
     params: never
     query: never
     cuerpo: Nucleo["Emisor"]
+    respuesta: Nucleo["EmisorVista"]
+  }
+  /** Configurar el responsable de anulaciones */
+  emisor_responsable_guardar: {
+    params: never
+    query: never
+    cuerpo: Nucleo["ResponsableAnulaciones"]
     respuesta: Nucleo["EmisorVista"]
   }
   /** Guardar credenciales del MH */
@@ -799,6 +910,13 @@ export interface Operaciones {
     cuerpo: Nucleo["Emision"]
     respuesta: Nucleo["Validacion"]
   }
+  /** Consultar al MH un DTE de un tercero */
+  dte_consultar_mh: {
+    params: never
+    query: never
+    cuerpo: Nucleo["ConsultaDteTercero"]
+    respuesta: Nucleo["ConsultaDteTerceroResultado"]
+  }
   /** Obtener un documento */
   dte_obtener: {
     params: { codigo: string }
@@ -819,6 +937,28 @@ export interface Operaciones {
     query: never
     cuerpo: never
     respuesta: ArrayBuffer
+  }
+  /** Evaluar si un documento puede invalidarse */
+  dte_invalidacion_evaluar: {
+    params: { codigo: string }
+    query: never
+    cuerpo: never
+    respuesta: {
+      codigoGeneracion: string
+      tipoDte: string
+      estado: string
+      puedeInvalidar: boolean
+      bloqueos: Array<string>
+      limite: string
+      fueraDePlazo: boolean
+      limiteAproximado: boolean
+      motivos: Array<{
+        tipoAnulacion: number
+        requiereReemplazo: boolean
+        requiereMotivo: boolean
+      }>
+      responsableConfigurado: boolean
+    }
   }
   /** Invalidar un documento o un evento */
   dte_invalidar: {
@@ -930,6 +1070,15 @@ export interface Operaciones {
       revocada: true
     }
   }
+  /** Eliminar una clave revocada o expirada */
+  clave_eliminar: {
+    params: { id: string }
+    query: never
+    cuerpo: never
+    respuesta: {
+      eliminada: true
+    }
+  }
   /** Listar webhooks */
   webhooks_listar: {
     params: never
@@ -1022,7 +1171,7 @@ export interface Operaciones {
   /** Listar clientes */
   plataforma_clientes_listar: {
     params: never
-    query: { estado?: "pendiente" | "activo" | "desactivado"; externalId?: string }
+    query: { estado?: "pendiente" | "activo" | "desactivado"; externalId?: string; limite?: number; despuesDe?: string }
     cuerpo: never
     respuesta: Array<Cloud["ClientePlataforma"]>
   }
@@ -1033,7 +1182,7 @@ export interface Operaciones {
     cuerpo: never
     respuesta: Cloud["ClientePlataforma"]
   }
-  /** Eliminar o desactivar un cliente */
+  /** Eliminar un cliente */
   plataforma_cliente_eliminar: {
     params: { id: string }
     query: never
@@ -1052,6 +1201,28 @@ export interface Operaciones {
       /** ms desde 1970 */
       expira?: number
     }
+  }
+  /** Activar en modo servicio (sin persona dueña) */
+  plataforma_cliente_activar: {
+    params: { id: string }
+    query: never
+    cuerpo: {
+      modo: "servicio"
+      aceptacion: {
+        /** Cuándo aceptó el negocio los términos, en ms desde 1970 (no futura). */
+        fecha: number
+        /** Versión de los términos que aceptó. */
+        terminosVersion: string
+      }
+    }
+    respuesta: Cloud["ClientePlataforma"]
+  }
+  /** Desactivar un cliente (interruptor de apagado) */
+  plataforma_cliente_desactivar: {
+    params: { id: string }
+    query: never
+    cuerpo: never
+    respuesta: Cloud["ClientePlataforma"]
   }
   /** Ver su empresa ante Hacienda */
   plataforma_cliente_empresa: {
@@ -1111,6 +1282,38 @@ export interface Operaciones {
     query: never
     cuerpo: never
     respuesta: ArrayBuffer
+  }
+  /** Ver el emisor del cliente */
+  plataforma_cliente_emisor_obtener: {
+    params: { id: string }
+    query: never
+    cuerpo: never
+    respuesta: Cloud["EmisorClienteVista"]
+  }
+  /** Guardar el emisor del cliente */
+  plataforma_cliente_emisor_guardar: {
+    params: { id: string }
+    query: never
+    cuerpo: Cloud["EmisorCliente"]
+    respuesta: Record<string, unknown>
+  }
+  /** Guardar las credenciales del MH del cliente */
+  plataforma_cliente_credenciales_guardar: {
+    params: { id: string; ambiente: string }
+    query: never
+    cuerpo: Cloud["CredencialesCliente"]
+    respuesta: Cloud["EstadoCredencialesCliente"]
+  }
+  /** Probar la conexión con el MH de un ambiente del cliente */
+  plataforma_cliente_credenciales_probar: {
+    params: { id: string; ambiente: string }
+    query: never
+    cuerpo: never
+    respuesta: {
+      ok: boolean
+      ambiente: "00" | "01"
+      mensaje: string
+    }
   }
   /** Ver la marca */
   marca_obtener: {
@@ -1203,14 +1406,14 @@ export interface Operaciones {
     cuerpo: never
     respuesta: Cloud["AvanceCertificacion"]
   }
-  /** Ver tu marca blanca */
+  /** Ver tu white label */
   marca_plataforma_obtener: {
     params: never
     query: never
     cuerpo: never
     respuesta: Cloud["MarcaPlataforma"]
   }
-  /** Configurar tu marca blanca */
+  /** Configurar tu white label */
   marca_plataforma_actualizar: {
     params: never
     query: never
@@ -1293,10 +1496,13 @@ export type IdOperacion = keyof Operaciones
 
 export const RUTAS: Record<IdOperacion, { metodo: string; ruta: string; binaria?: true }> = {
   yo_obtener: { metodo: 'GET', ruta: '/api/v1/yo' },
+  yo_documento_obtener: { metodo: 'GET', ruta: '/api/v1/yo/documento' },
+  yo_documento_guardar: { metodo: 'PUT', ruta: '/api/v1/yo/documento' },
   resumen_obtener: { metodo: 'GET', ruta: '/api/v1/resumen' },
   uso_obtener: { metodo: 'GET', ruta: '/api/v1/uso' },
   emisor_obtener: { metodo: 'GET', ruta: '/api/v1/emisor' },
   emisor_guardar: { metodo: 'PUT', ruta: '/api/v1/emisor' },
+  emisor_responsable_guardar: { metodo: 'PUT', ruta: '/api/v1/emisor/responsable' },
   emisor_credenciales_guardar: { metodo: 'PUT', ruta: '/api/v1/emisor/credenciales/:ambiente' },
   emisor_credenciales_prueba: { metodo: 'POST', ruta: '/api/v1/emisor/credenciales-prueba' },
   emisor_probar: { metodo: 'POST', ruta: '/api/v1/emisor/probar' },
@@ -1317,9 +1523,11 @@ export const RUTAS: Record<IdOperacion, { metodo: string; ruta: string; binaria?
   dte_listar: { metodo: 'GET', ruta: '/api/v1/dte' },
   dte_emitir: { metodo: 'POST', ruta: '/api/v1/dte' },
   dte_validar: { metodo: 'POST', ruta: '/api/v1/dte/validar' },
+  dte_consultar_mh: { metodo: 'POST', ruta: '/api/v1/dte/consultar-mh' },
   dte_obtener: { metodo: 'GET', ruta: '/api/v1/dte/:codigo' },
   dte_json: { metodo: 'GET', ruta: '/api/v1/dte/:codigo/json' },
   dte_pdf: { metodo: 'GET', ruta: '/api/v1/dte/:codigo/pdf', binaria: true },
+  dte_invalidacion_evaluar: { metodo: 'GET', ruta: '/api/v1/dte/:codigo/invalidacion' },
   dte_invalidar: { metodo: 'POST', ruta: '/api/v1/dte/:codigo/invalidar' },
   dte_retorno: { metodo: 'POST', ruta: '/api/v1/dte/:codigo/retorno' },
   contingencia_transmitir: { metodo: 'POST', ruta: '/api/v1/contingencia/transmitir' },
@@ -1333,6 +1541,7 @@ export const RUTAS: Record<IdOperacion, { metodo: string; ruta: string; binaria?
   claves_listar: { metodo: 'GET', ruta: '/api/v1/claves' },
   clave_crear: { metodo: 'POST', ruta: '/api/v1/claves' },
   clave_revocar: { metodo: 'DELETE', ruta: '/api/v1/claves/:id' },
+  clave_eliminar: { metodo: 'DELETE', ruta: '/api/v1/claves/:id/definitivo' },
   webhooks_listar: { metodo: 'GET', ruta: '/api/v1/webhooks' },
   webhook_crear: { metodo: 'POST', ruta: '/api/v1/webhooks' },
   webhook_actualizar: { metodo: 'PATCH', ruta: '/api/v1/webhooks/:id' },
@@ -1348,6 +1557,8 @@ export const RUTAS: Record<IdOperacion, { metodo: string; ruta: string; binaria?
   plataforma_cliente_obtener: { metodo: 'GET', ruta: '/cloud/plataforma/clientes/:id' },
   plataforma_cliente_eliminar: { metodo: 'DELETE', ruta: '/cloud/plataforma/clientes/:id' },
   plataforma_cliente_enlace: { metodo: 'POST', ruta: '/cloud/plataforma/clientes/:id/enlace' },
+  plataforma_cliente_activar: { metodo: 'POST', ruta: '/cloud/plataforma/clientes/:id/activar' },
+  plataforma_cliente_desactivar: { metodo: 'POST', ruta: '/cloud/plataforma/clientes/:id/desactivar' },
   plataforma_cliente_empresa: { metodo: 'GET', ruta: '/cloud/plataforma/clientes/:id/empresa' },
   plataforma_cliente_uso: { metodo: 'GET', ruta: '/cloud/plataforma/clientes/:id/uso' },
   plataforma_cliente_clave_crear: { metodo: 'POST', ruta: '/cloud/plataforma/clientes/:id/claves' },
@@ -1356,6 +1567,10 @@ export const RUTAS: Record<IdOperacion, { metodo: string; ruta: string; binaria?
   plataforma_cliente_webhook_crear: { metodo: 'POST', ruta: '/cloud/plataforma/clientes/:id/webhooks' },
   plataforma_cliente_webhooks: { metodo: 'GET', ruta: '/cloud/plataforma/clientes/:id/webhooks' },
   plataforma_cliente_webhook_eliminar: { metodo: 'DELETE', ruta: '/cloud/plataforma/clientes/:id/webhooks/:webhook' },
+  plataforma_cliente_emisor_obtener: { metodo: 'GET', ruta: '/cloud/plataforma/clientes/:id/emisor' },
+  plataforma_cliente_emisor_guardar: { metodo: 'PUT', ruta: '/cloud/plataforma/clientes/:id/emisor' },
+  plataforma_cliente_credenciales_guardar: { metodo: 'PUT', ruta: '/cloud/plataforma/clientes/:id/credenciales/:ambiente' },
+  plataforma_cliente_credenciales_probar: { metodo: 'POST', ruta: '/cloud/plataforma/clientes/:id/credenciales/:ambiente/probar' },
   marca_obtener: { metodo: 'GET', ruta: '/api/v1/ext/marca' },
   marca_actualizar: { metodo: 'PUT', ruta: '/api/v1/ext/marca' },
   marca_logo_subir: { metodo: 'PUT', ruta: '/api/v1/ext/marca/logo' },

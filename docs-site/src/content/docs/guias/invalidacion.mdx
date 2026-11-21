@@ -33,8 +33,18 @@ La invalidación es **irreversible** y tiene efecto fiscal. Requiere el permiso 
 La Nota de Crédito (05), el Comprobante de Liquidación (08) y los eventos no llevan documento de
 reemplazo: se invalidan y después se emite el correcto, así que `codigoGeneracionReemplazo` se ignora.
 
-Opcionales: `solicitante` (por defecto, el receptor del documento) y `responsable` (por defecto, el
-configurado en el emisor), cada uno `{ nombre, tipoDocumento, numDocumento }`.
+Opcionales, cada uno `{ nombre, tipoDocumento, numDocumento }`:
+
+- `responsable`: quien realiza la anulación. Por defecto se usa el **Responsable de anulaciones** del
+  emisor, un único ajuste (nombre, tipo de documento —DUI por defecto— y número) que se rellena solo
+  con los datos de quien configura el negocio y se edita en los ajustes o con
+  `PUT /emisor/responsable`. Nunca se pregunta al anular; si falta, la API responde
+  `409 responsable_no_configurado`: pídelo una vez, guárdalo y reintenta.
+- `solicitante`: por defecto, la persona con sesión que anula (si registró su documento con
+  `PUT /yo/documento`) y, si no, el receptor del documento.
+
+`GET /dte/{codigo}/invalidacion` evalúa sin transmitir: si se puede invalidar, el plazo
+(aproximado, sin asuetos), qué motivos piden reemplazo y si hay responsable configurado.
 
 ## Invalidar
 
@@ -52,6 +62,7 @@ curl https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/
 <TabItem label="CLI">
 
 ```bash
+openfactura dte invalidacion 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4
 openfactura dte invalidar 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 --tipo 2 --motivo "Operación rescindida"
 openfactura dte invalidar <codigo> --tipo 1 --reemplazo <codigo-del-dte-que-lo-corrige>
 ```
@@ -59,7 +70,7 @@ openfactura dte invalidar <codigo> --tipo 1 --reemplazo <codigo-del-dte-que-lo-c
 </TabItem>
 <TabItem label="MCP">
 
-`dte_invalidar` con `codigoGeneracion`, `tipoAnulacion` y, si aplica, `motivoAnulacion` y
+`dte_invalidacion_evaluar` (antes de invalidar) y `dte_invalidar` con `codigoGeneracion`, `tipoAnulacion` y, si aplica, `motivoAnulacion` y
 `codigoGeneracionReemplazo`. El asistente debe resumirte la operación y pedirte un "sí" explícito.
 
 </TabItem>

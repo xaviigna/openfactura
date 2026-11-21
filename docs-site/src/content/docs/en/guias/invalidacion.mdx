@@ -35,8 +35,17 @@ Invalidation is **irreversible** and has fiscal effect. It requires the `dte:inv
 Credit Notes (05), Settlement Receipts (08), and events take no replacement document: they are
 invalidated and the correct one is issued afterwards, so `codigoGeneracionReemplazo` is ignored.
 
-Optional: `solicitante` (defaults to the document's recipient) and `responsable` (defaults to the one
-configured on the issuer), each `{ nombre, tipoDocumento, numDocumento }`.
+Optional, each `{ nombre, tipoDocumento, numDocumento }`:
+
+- `responsable`: who performs the cancellation. It defaults to the issuer's **cancellation officer**, a
+  single setting (name, document type, DUI by default, and number) that is pre-filled from whoever sets
+  the business up and edited in settings or with `PUT /emisor/responsable`. Nobody is asked at cancel
+  time; if it is missing the API returns `409 responsable_no_configurado`: ask once, save it and retry.
+- `solicitante`: defaults to the signed-in person cancelling (if they registered their document with
+  `PUT /yo/documento`) and otherwise to the document's recipient.
+
+`GET /dte/{codigo}/invalidacion` evaluates without transmitting: whether it can be cancelled, the
+deadline (approximate, no holidays), which reasons need a replacement and whether an officer is set.
 
 ## Invalidate
 
@@ -54,6 +63,7 @@ curl https://app.openfactura.co/api/v1/dte/0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4/
 <TabItem label="CLI">
 
 ```bash
+openfactura dte invalidacion 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4
 openfactura dte invalidar 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 --tipo 2 --motivo "Operación rescindida"
 openfactura dte invalidar <codigo> --tipo 1 --reemplazo <code-of-the-dte-that-corrects-it>
 ```
@@ -61,7 +71,7 @@ openfactura dte invalidar <codigo> --tipo 1 --reemplazo <code-of-the-dte-that-co
 </TabItem>
 <TabItem label="MCP">
 
-`dte_invalidar` with `codigoGeneracion`, `tipoAnulacion` and, where applicable, `motivoAnulacion` and
+`dte_invalidacion_evaluar` (before invalidating) and `dte_invalidar` with `codigoGeneracion`, `tipoAnulacion` and, where applicable, `motivoAnulacion` and
 `codigoGeneracionReemplazo`. The assistant must summarize the operation and ask you for an explicit
 "yes".
 

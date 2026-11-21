@@ -7,10 +7,12 @@ import {
   esquemaCliente,
   esquemaConsultaAuditoria,
   esquemaConsultaCatalogo,
+  esquemaConsultaDteTercero,
   esquemaConsultaEventos,
   esquemaConsultaRegistros,
   esquemaConsultaUso,
   esquemaCredenciales,
+  esquemaDocumentoMiembro,
   esquemaEmision,
   esquemaEmisor,
   esquemaEstablecimiento,
@@ -19,6 +21,7 @@ import {
   esquemaOperacionesEspeciales,
   esquemaProducto,
   esquemaPuntoVenta,
+  esquemaResponsableAnulaciones,
   esquemaRetorno,
   esquemaWebhook,
   esquemaWebhookCambios,
@@ -30,7 +33,7 @@ import { invalido } from '../lib/errors'
 import { autenticar, type Entorno } from '../middleware/actor'
 import { listarAuditoria } from '../services/auditoria'
 import { consultarCatalogo, listarCatalogos } from '../services/catalogos'
-import { crearClave, listarClaves, revocarClave } from '../services/claves'
+import { crearClave, eliminarClave, listarClaves, revocarClave } from '../services/claves'
 import {
   actualizarCliente,
   crearCliente,
@@ -38,9 +41,11 @@ import {
   listarClientes,
   obtenerCliente,
 } from '../services/clientes'
+import { consultarDteTercero } from '../services/consulta-tercero'
 import {
   archivoJson,
   emitir,
+  evaluarInvalidacion,
   invalidar,
   listar,
   obtener,
@@ -57,6 +62,7 @@ import {
   crearPuntoVenta,
   guardarCredenciales,
   guardarEmisor,
+  guardarResponsable,
   listarEstablecimientos,
   obtenerEmisor,
   probarConexion,
@@ -79,6 +85,7 @@ import {
   obtenerProducto,
 } from '../services/productos'
 import { listarRegistros } from '../services/registros'
+import { guardarMiDocumento, obtenerMiDocumento } from '../services/responsable'
 import { obtenerUso } from '../services/uso'
 import {
   actualizarWebhook,
@@ -131,6 +138,10 @@ export const v1 = new Hono<Entorno>()
       eventosWebhook: eventosDeExtensiones(c.var.extensiones),
     })
   })
+  .get('/yo/documento', async (c) => c.json(await obtenerMiDocumento(c.var.ctx)))
+  .put('/yo/documento', validar('json', esquemaDocumentoMiembro), async (c) =>
+    c.json(await guardarMiDocumento(c.var.ctx, c.req.valid('json'))),
+  )
   .get('/resumen', async (c) => c.json(await resumenTablero(c.var.ctx)))
   .get('/uso', validar('query', esquemaConsultaUso), async (c) =>
     c.json(await obtenerUso(c.var.ctx, c.req.valid('query'))),
@@ -140,6 +151,9 @@ export const v1 = new Hono<Entorno>()
   .get('/emisor', async (c) => c.json(await obtenerEmisor(c.var.ctx)))
   .put('/emisor', validar('json', esquemaEmisor), async (c) =>
     c.json(await guardarEmisor(c.var.ctx, c.req.valid('json'))),
+  )
+  .put('/emisor/responsable', validar('json', esquemaResponsableAnulaciones), async (c) =>
+    c.json(await guardarResponsable(c.var.ctx, c.req.valid('json'))),
   )
   .put(
     '/emisor/credenciales/:ambiente',
@@ -218,6 +232,9 @@ export const v1 = new Hono<Entorno>()
   .post('/dte/validar', validar('json', esquemaEmision), async (c) =>
     c.json(await previsualizar(c.var.ctx, c.req.valid('json'))),
   )
+  .post('/dte/consultar-mh', validar('json', esquemaConsultaDteTercero), async (c) =>
+    c.json(await consultarDteTercero(c.var.ctx, c.req.valid('json'))),
+  )
   .get('/dte/:codigo', async (c) => c.json(await obtener(c.var.ctx, c.req.param('codigo'))))
   .get('/dte/:codigo/json', async (c) => {
     const archivo = await archivoJson(c.var.ctx, c.req.param('codigo'))
@@ -234,6 +251,9 @@ export const v1 = new Hono<Entorno>()
       'Content-Disposition': `inline; filename="${nombre}"`,
     })
   })
+  .get('/dte/:codigo/invalidacion', async (c) =>
+    c.json(await evaluarInvalidacion(c.var.ctx, c.req.param('codigo'))),
+  )
   .post('/dte/:codigo/invalidar', validar('json', esquemaInvalidacion), async (c) =>
     c.json(await invalidar(c.var.ctx, c.req.param('codigo'), c.req.valid('json'))),
   )
@@ -305,6 +325,9 @@ export const v1 = new Hono<Entorno>()
     c.json(await crearClave(c.var.ctx, c.req.valid('json')), 201),
   )
   .delete('/claves/:id', async (c) => c.json(await revocarClave(c.var.ctx, c.req.param('id'))))
+  .delete('/claves/:id/definitivo', async (c) =>
+    c.json(await eliminarClave(c.var.ctx, c.req.param('id'))),
+  )
 
   // --- Webhooks (`webhooks:manage`) ----------------------------------------
   .get('/webhooks', async (c) => c.json(await listarWebhooks(c.var.ctx)))

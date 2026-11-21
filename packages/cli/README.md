@@ -90,8 +90,8 @@ Permisos:     dte:read, dte:emit, dte:invalidate, clientes:read, …
 
 ### Clientes
 
-Los clientes guardados sólo existen en producción: con una clave de pruebas estos comandos responden
-`clientes_solo_produccion` y el receptor va en `datos.receptor`.
+Los clientes guardados son un solo directorio por organización: estos comandos funcionan igual con una
+clave de pruebas o de producción.
 
 ```bash
 openfactura clientes list
@@ -152,7 +152,7 @@ El archivo de emisión es el mismo cuerpo de `POST /api/v1/dte`:
   Liquidación, `11` Factura de Exportación, `14` Sujeto Excluido, `15` Comprobante de Donación.
 - `datos`: `items`, `receptor`, `condicionOperacion`, `pagos`, `documentosRelacionados`… En Factura,
   `precioUni` **incluye** IVA; en Crédito Fiscal, notas y remisión va **sin** IVA.
-- `clienteId` (opcional, sólo en producción): usa un cliente guardado como receptor. `puntoVentaId` (opcional): punto de
+- `clienteId` (opcional): usa un cliente guardado como receptor. `puntoVentaId` (opcional): punto de
   venta que emite; por defecto el primero.
 
 Un Crédito Fiscal para un cliente guardado (en producción):
@@ -226,6 +226,7 @@ openfactura dte pdf 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 -o factura.pdf
 #### Invalidar
 
 ```bash
+openfactura dte invalidacion 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4
 openfactura dte invalidar 0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4 --tipo 2 --motivo "Operación rescindida"
 openfactura dte invalidar <codigo> --tipo 1 --reemplazo <codigo-del-dte-que-lo-corrige>
 ```
@@ -412,7 +413,7 @@ clientes que no pueden enviar un encabezado HTTP fijo al servidor MCP remoto (`/
 herramientas que el remoto y las ejecuta llamando a la API REST con tu clave:
 
 `emisor_obtener`, `catalogo_buscar`, `clientes_buscar`, `cliente_crear`, `productos_buscar`,
-`producto_crear`, `dte_validar`, `dte_emitir`, `dte_listar`, `dte_obtener`, `dte_invalidar`,
+`producto_crear`, `dte_validar`, `dte_emitir`, `dte_listar`, `dte_obtener`, `dte_invalidacion_evaluar`, `dte_invalidar`,
 `dte_retorno`, `operaciones_especiales_informar`, `eventos_listar`, `evento_obtener`,
 `webhooks_listar`, `webhook_crear`, `webhook_eliminar`, `webhook_probar`, `uso_obtener`,
 `registros_listar`, y en Open Factura Cloud `certificacion_estado`, `certificacion_avanzar`,

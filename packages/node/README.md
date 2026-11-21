@@ -1,6 +1,6 @@
 # @openfactura/node
 
-SDK de la API de [Open Factura](https://openfactura.co): facturación electrónica de El Salvador
+SDK de la API de [Open Factura](https://openfactura.co/api): facturación electrónica de El Salvador
 (DTE). Tipado desde la especificación OpenAPI, **sin dependencias**: corre en Node 20+, Bun, Deno,
 Cloudflare Workers y el navegador.
 

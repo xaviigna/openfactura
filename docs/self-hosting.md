@@ -1,7 +1,7 @@
 # Desplegar en tu propia cuenta de Cloudflare
 
 Open Factura corre como un solo Worker con una base D1: la API REST, el servidor MCP, los webhooks y
-el cron de conciliación. No trae panel web (el panel es parte de [Open Factura Cloud](https://openfactura.co)):
+el cron de conciliación. No trae panel web (el panel es parte de [Open Factura Cloud](https://openfactura.co/api)):
 se administra con la API, la CLI o tu agente. Necesitas una cuenta de Cloudflare y
 [Wrangler](https://developers.cloudflare.com/workers/wrangler/) con sesión iniciada (`wrangler login`).
 
@@ -101,23 +101,24 @@ con `ADMIN_TOKEN`. El token no vale en el MCP.
 
 ## Variables
 
-| Nombre                    | Tipo    | Descripción                                                                      |
-| ------------------------- | ------- | -------------------------------------------------------------------------------- |
-| `APP_URL`                 | var     | URL pública del servicio                                                         |
-| `BETTER_AUTH_SECRET`      | secreto | Firma de sesiones                                                                |
-| `ADMIN_TOKEN`             | secreto | Credencial del operador (32+ caracteres); sin ella no hay administración         |
-| `CRED_KEK_V1` (`V2`, …)   | secreto | Llave maestra AES-256, 32 bytes en base64                                        |
-| `LIMITE_CLAVE_POR_MINUTO` | var     | Peticiones por minuto por clave de API (120)                                     |
-| `TRUSTED_ORIGINS`         | var     | Orígenes adicionales de confianza, separados por coma                            |
-| `GITHUB_CLIENT_ID`        | var     | «Ingresar con GitHub»: Client ID de una GitHub App (opcional)                    |
-| `GITHUB_CLIENT_SECRET`    | secreto | Client secret de esa GitHub App; sin los dos no se ofrece el ingreso con GitHub  |
-| `URL_MCP`                 | var     | URL pública del MCP si no es `<APP_URL>/mcp` (la devuelve `GET /api/v1/yo`)      |
-| `MH_BASE_URL`             | var     | Sustituye la URL del MH (sólo para pruebas)                                      |
-| `MH_SIMULADO`             | var     | `1` permite `POST /emisor/credenciales-prueba` (simulador del MH, ambiente `00`) |
-| `WEBHOOKS_LOCAL`          | var     | `1` permite webhooks a `http://localhost` (sólo desarrollo)                      |
-| `TURNSTILE_SECRET`        | secreto | Cloudflare Turnstile (opcional): exige el token del widget; ver más abajo        |
-| `TURNSTILE_SITE_KEY`      | var     | Clave pública del widget (o secreto); la da `GET /api/v1/acceso`                 |
-| `TURNSTILE_HOSTNAMES`     | var     | Dominios del widget, por coma (o secreto); sin ellos, con el secreto, todo falla |
+| Nombre                      | Tipo    | Descripción                                                                        |
+| --------------------------- | ------- | ---------------------------------------------------------------------------------- |
+| `APP_URL`                   | var     | URL pública del servicio                                                           |
+| `BETTER_AUTH_SECRET`        | secreto | Firma de sesiones                                                                  |
+| `ADMIN_TOKEN`               | secreto | Credencial del operador (32+ caracteres); sin ella no hay administración           |
+| `CRED_KEK_V1` (`V2`, …)     | secreto | Llave maestra AES-256, 32 bytes en base64                                          |
+| `LIMITE_CLAVE_POR_MINUTO`   | var     | Peticiones por minuto por clave de API (120)                                       |
+| `TRUSTED_ORIGINS`           | var     | Orígenes adicionales de confianza, separados por coma                              |
+| `GITHUB_CLIENT_ID`          | var     | «Ingresar con GitHub»: Client ID de una GitHub App (opcional)                      |
+| `GITHUB_CLIENT_SECRET`      | secreto | Client secret de esa GitHub App; sin los dos no se ofrece el ingreso con GitHub    |
+| `URL_MCP`                   | var     | URL pública del MCP si no es `<APP_URL>/mcp` (la devuelve `GET /api/v1/yo`)        |
+| `MH_BASE_URL`               | var     | Sustituye la URL del MH (sólo para pruebas)                                        |
+| `MH_SIMULADO`               | var     | `1` permite `POST /emisor/credenciales-prueba` (simulador del MH, ambiente `00`)   |
+| `WEBHOOKS_LOCAL`            | var     | `1` permite webhooks a `http://localhost` (sólo desarrollo)                        |
+| `WEBHOOKS_HOSTS_PERMITIDOS` | var     | Hosts exactos del dominio propio que sí reciben webhooks (las demás reglas siguen) |
+| `TURNSTILE_SECRET`          | secreto | Cloudflare Turnstile (opcional): exige el token del widget; ver más abajo          |
+| `TURNSTILE_SITE_KEY`        | var     | Clave pública del widget (o secreto); la da `GET /api/v1/acceso`                   |
+| `TURNSTILE_HOSTNAMES`       | var     | Dominios del widget, por coma (o secreto); sin ellos, con el secreto, todo falla   |
 
 ### Cloudflare Turnstile (opcional)
 

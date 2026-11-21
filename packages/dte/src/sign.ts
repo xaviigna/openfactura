@@ -39,6 +39,13 @@ export interface CertificadoMH {
   llavePublica: Uint8Array<ArrayBuffer> | null
   /** SHA-512 (hex) de la contraseña de la llave privada. */
   hashClavePrivada: string
+  /**
+   * Identificador del certificado en el MH (`<_id>` del XML). OJO: el `<serial>` del XML del MH es el
+   * OID del algoritmo de firma, no una serie. Nulo si el archivo no trae `<_id>` o no tiene forma de id.
+   */
+  serie: string | null
+  /** Vencimiento (`<certificado>…<validity><notAfter>`), en milisegundos Unix. Nulo si no viene. */
+  vence: number | null
 }
 
 /**
@@ -71,6 +78,20 @@ const sinBloques = (xml: string, nombre: string): string => {
   return salida + xml.slice(desde)
 }
 
+/**
+ * Fecha del MH a milisegundos Unix. El MH escribe segundos Unix con fracción (`1952231522.436000000`);
+ * por si algún certificado trae ISO 8601 también se acepta. Cualquier otra cosa: nulo.
+ */
+const fechaMh = (texto: string | undefined): number | null => {
+  if (!texto || texto.length > 40) return null
+  const segundos = Number(texto)
+  if (Number.isFinite(segundos)) return segundos > 0 && segundos < 1e11 ? Math.round(segundos * 1000) : null
+  const iso = Date.parse(texto)
+  return Number.isNaN(iso) ? null : iso
+}
+
+const FORMA_SERIE = /^[0-9A-Za-z._-]{1,64}$/
+
 /** Lee el archivo .crt descargado del portal de Hacienda. */
 export function leerCertificadoMH(xml: string): CertificadoMH {
   const privada = etiqueta(xml, 'privateKey')
@@ -80,7 +101,19 @@ export function leerCertificadoMH(xml: string): CertificadoMH {
   if (!nit || !encodied || !clave) throw new Error('Certificado inválido: se esperaba el XML <CertificadoMH> del MH con <nit> y <privateKey><encodied>/<clave>')
   const publica = etiqueta(xml, 'publicKey')
   const publicaB64 = publica && etiqueta(publica, 'encodied')
-  return { nit, llavePrivada: base64ABytes(encodied), llavePublica: publicaB64 ? base64ABytes(publicaB64) : null, hashClavePrivada: clave }
+  // Metadatos no secretos, fuera de los bloques de llaves: el id y la vigencia del certificado.
+  const sinLlaves = sinBloques(sinBloques(xml, 'privateKey'), 'publicKey')
+  const idMh = etiqueta(sinLlaves, '_id')
+  const certificado = etiqueta(sinLlaves, 'certificado')
+  const validez = certificado && etiqueta(certificado, 'validity')
+  return {
+    nit,
+    llavePrivada: base64ABytes(encodied),
+    llavePublica: publicaB64 ? base64ABytes(publicaB64) : null,
+    hashClavePrivada: clave,
+    serie: idMh && FORMA_SERIE.test(idMh) ? idMh : null,
+    vence: fechaMh(validez ? etiqueta(validez, 'notAfter') : undefined),
+  }
 }
 
 /** Comprueba la contraseña de la llave privada (igual que el firmador oficial). */
@@ -136,10 +169,16 @@ export async function verificarFirma(jws: string, llavePublica: CryptoKey | Uint
 }
 
 /** Genera un certificado de PRUEBA con el formato del MH (para desarrollo y tests; no sirve ante Hacienda). */
-export async function generarCertificadoPrueba(nit: string, password: string): Promise<{ xml: string; certificado: CertificadoMH }> {
+export async function generarCertificadoPrueba(
+  nit: string,
+  password: string,
+  opciones: { serie?: string; vence?: Date } = {},
+): Promise<{ xml: string; certificado: CertificadoMH }> {
   const par = (await crypto.subtle.generateKey({ ...ALGORITMO, modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]) }, true, ['sign', 'verify'])) as CryptoKeyPair
   const privada = bytesABase64(new Uint8Array((await crypto.subtle.exportKey('pkcs8', par.privateKey)) as ArrayBuffer))
   const publica = bytesABase64(new Uint8Array((await crypto.subtle.exportKey('spki', par.publicKey)) as ArrayBuffer))
-  const xml = `<CertificadoMH><nit>${nit}</nit><publicKey><keyType>PUBLIC</keyType><algorithm>RSA</algorithm><encodied>${publica}</encodied><format>X.509</format></publicKey><privateKey><keyType>PRIVATE</keyType><algorithm>RSA</algorithm><encodied>${privada}</encodied><format>PKCS#8</format><clave>${await sha512Hex(password)}</clave></privateKey><activo>true</activo></CertificadoMH>`
+  const serie = opciones.serie ?? [...crypto.getRandomValues(new Uint8Array(12))].map(b => b.toString(16).padStart(2, '0')).join('')
+  const vence = opciones.vence ?? new Date(Date.now() + 5 * 365 * 86_400_000)
+  const xml = `<CertificadoMH><_id>${serie}</_id><nit>${nit}</nit><publicKey><keyType>PUBLIC</keyType><algorithm>RSA</algorithm><encodied>${publica}</encodied><format>X.509</format></publicKey><privateKey><keyType>PRIVATE</keyType><algorithm>RSA</algorithm><encodied>${privada}</encodied><format>PKCS#8</format><clave>${await sha512Hex(password)}</clave></privateKey><activo>true</activo><certificado><basicEstructure><version>2</version><serial>1.2.840.113549.1.1.11</serial><validity><notBefore>${(Date.now() / 1000).toFixed(9)}</notBefore><notAfter>${(vence.getTime() / 1000).toFixed(9)}</notAfter></validity></basicEstructure></certificado></CertificadoMH>`
   return { xml, certificado: leerCertificadoMH(xml) }
 }

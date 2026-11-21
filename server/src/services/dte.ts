@@ -23,8 +23,10 @@ import {
   fechaHoraSV,
   firmar,
   generarCodigoGeneracion,
+  limiteInvalidacion,
   parsearNumeroControl,
   type RespuestaMH,
+  requiereReemplazo,
   transmitirDte,
   transmitirEvento,
   urlConsultaPublica,
@@ -47,9 +49,10 @@ import { antesDeEmitir, type Extension, opcionesPdf } from '../extensiones'
 import { nuevoId } from '../lib/crypto'
 import { AppError, conflicto, invalido, mensajeDe, noEncontrado } from '../lib/errors'
 import { registrar } from './auditoria'
-import { clientesVisibles, exigirDirectorio } from './clientes'
+import { clientesVisibles } from './clientes'
 import { ambienteActivo, type ContextoEmision, contextoEmision, emisorParaDte } from './emisor'
 import type { Respuesta } from './idempotencia'
+import { exigirResponsable, personaDelActor } from './responsable'
 import { publicar } from './webhooks'
 
 const CONSTRUCTORES: Record<TipoDteSoportado, (ctx: Contexto, datos: any) => Dte> = {
@@ -101,7 +104,6 @@ function resumen(dte: Dte) {
 /** Completa `datos.receptor` con el cliente guardado cuando la petición sólo trae `clienteId`. */
 async function prepararDatos(ctx: Ctx, entrada: EmisionEntrada): Promise<Record<string, unknown>> {
   if (!entrada.clienteId) return entrada.datos
-  await exigirDirectorio(ctx)
   const [c] = await ctx.db
     .select()
     .from(tablaCliente)
@@ -692,13 +694,12 @@ async function transmitirInvalidacion(
   documentoId: string | null,
   entrada: InvalidacionEntrada,
 ) {
-  const responsable = entrada.responsable ?? ce.responsable
-  if (!responsable) {
-    throw invalido('Indica el responsable de la invalidación o configúralo en los datos del emisor')
-  }
+  const { responsable } = exigirResponsable(entrada.responsable, ce.responsable)
   const documentoSdk = documentoParaInvalidar(archivo)
+  // Solicitante: el de la solicitud; si no, la persona que anula (su perfil); si no, el receptor.
   const solicitante =
     entrada.solicitante ??
+    (await personaDelActor(ctx)) ??
     (documentoSdk.nombre && documentoSdk.tipoDocumento && documentoSdk.numDocumento
       ? {
           nombre: documentoSdk.nombre,
@@ -832,6 +833,52 @@ export async function invalidar(ctx: Ctx, codigo: string, entrada: InvalidacionE
   })
   // El resultado de su propia acción: quien invalida lo recibe aunque no tenga `dte:read`.
   return detalle(ctx, await fila(ctx, f.id))
+}
+
+/**
+ * Evaluación de una invalidación antes de intentarla: si el documento puede invalidarse, el plazo,
+ * qué motivos piden documento de reemplazo y si hay responsable de anulaciones. Informativa: no
+ * bloquea `invalidar`. El plazo se calcula desde la fecha de emisión (no hay fecha de sello
+ * guardada) y sin asuetos, así que puede quedar antes del real (`limiteAproximado`).
+ */
+export async function evaluarInvalidacion(ctx: Ctx, codigo: string) {
+  exigir(ctx, 'dte:invalidate')
+  const f = await fila(ctx, codigo)
+  const bloqueos: string[] = []
+  if (f.estado !== 'procesado') bloqueos.push('estado_invalido')
+  else {
+    const [retorno] = await ctx.db
+      .select({ id: evento.id })
+      .from(evento)
+      .where(
+        and(
+          eq(evento.organizationId, ctx.actor.organizationId),
+          eq(evento.documentoId, f.id),
+          eq(evento.tipo, 'retorno'),
+          eq(evento.estado, 'procesado'),
+        ),
+      )
+      .limit(1)
+    if (retorno) bloqueos.push('retorno_vigente')
+  }
+  const limite = limiteInvalidacion(f.tipoDte, new Date(`${f.fechaEmision}T${f.horaEmision}-06:00`))
+  const emisorFila = await emisorParaDte(ctx, {}).catch(() => null)
+  return {
+    codigoGeneracion: f.codigoGeneracion,
+    tipoDte: f.tipoDte,
+    estado: f.estado,
+    puedeInvalidar: bloqueos.length === 0,
+    bloqueos,
+    limite: limite.toISOString(),
+    fueraDePlazo: Date.now() > limite.getTime(),
+    limiteAproximado: true,
+    motivos: ([1, 2, 3] as const).map((tipoAnulacion) => ({
+      tipoAnulacion,
+      requiereReemplazo: requiereReemplazo(f.tipoDte, tipoAnulacion),
+      requiereMotivo: tipoAnulacion === 3,
+    })),
+    responsableConfigurado: !!emisorFila?.responsable,
+  }
 }
 
 /** Evento de retorno u operaciones especiales procesado con ese código, de esta organización. */

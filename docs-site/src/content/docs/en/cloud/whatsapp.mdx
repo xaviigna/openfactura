@@ -15,17 +15,11 @@ With **Open Factura Cloud** you can invoice from WhatsApp, without opening the d
 - Receive the PDF in the same conversation and look up your latest documents.
 - The bot acts with the same permissions as your user, in your company's active environment.
 - Add allowed phones so other people can issue on behalf of your company without a dashboard user.
-  Each phone gets a WhatsApp invitation with your company name and the last digits of your NIT, and
-  it only issues once its owner taps «Aceptar» (Accept). The dashboard shows whether it is pending,
-  active or declined, and you can resend the invitation (up to 3 per phone a day). If they decline,
-  you cannot invite them again for 30 days.
-- The name and NIT are what the company declared. The last digits of the NIT only appear if the
-  company uploaded its Hacienda certificate (which is tied to that NIT); otherwise the invitation
-  says «NIT: sin verificar» (not verified).
-- An invitation never blocks the bot: if you already work with another company, you see it once and
-  carry on with your menu.
-- If the phone has not messaged the Open Factura number in the last 24 hours, WhatsApp may not
-  deliver the invitation: ask them to send «hola» to the number and they will see it there.
+  They can issue as soon as you add them, with no invitation or WhatsApp template; removing one from
+  the list cuts its access immediately.
+- If a phone works with several companies, it chooses which one to issue for. Each one shows its
+  name and, if it uploaded its Hacienda certificate, the last digits of its NIT; otherwise «NIT sin
+  verificar» (not verified).
 
 This feature is exclusive to the managed version and is not part of the open-source code. See the
-plans at [openfactura.co](https://openfactura.co).
+plans at [openfactura.co](https://openfactura.co/en/api#precios).

@@ -32,7 +32,7 @@ sus datos siguen siendo suyos.
 
 <Steps>
 
-1. **Habilita una clave tuya para Plataforma.** En el panel: *Clientes → Acceso por API*. Sólo las
+1. **Habilita una clave tuya para Plataforma.** En el panel: *Claves de API → Acceso por API*. Sólo las
    claves que habilites ahí administran clientes. Base de la API: `https://app.openfactura.co/cloud/plataforma`.
 
 2. **Crea el cliente.** Lo que ya sabes de él llega prellenado a su alta.
@@ -99,6 +99,49 @@ sus datos siguen siendo suyos.
 
 </Steps>
 
+## Activar sin una persona dueña (modo servicio)
+
+Si tu cliente no va a tener cuenta en Open Factura (por ejemplo, lo atiendes por WhatsApp y emites a
+su nombre), puedes **activarlo tú**, como su custodio, en lugar de enviarle un enlace:
+
+```bash
+curl -X POST https://app.openfactura.co/cloud/plataforma/clientes/cli_…/activar \
+  -H "Authorization: Bearer $OPENFACTURA_PLATAFORMA" \
+  -H "Content-Type: application/json" \
+  -d '{ "modo": "servicio", "aceptacion": { "fecha": 1763300000000, "terminosVersion": "2026-11-16" } }'
+```
+
+El cliente queda `activo`, **sin dueño** y con `administradoPorPlataforma: true`; todo lo demás (plan,
+emisión en producción, webhooks, marca, `cliente.listo`) funciona igual que con un cliente que
+aceptó el enlace. Cualquier enlace de alta pendiente deja de servir.
+
+- **Tu garantía.** `aceptacion` es obligatoria: garantizas que el negocio aceptó los
+  [Términos](https://openfactura.co/legal/terminos) y nos dices **cuándo** (`fecha`, en ms) y **qué versión**
+  (`terminosVersion`). Lo guardamos como evidencia (`aceptado`, `terminosVersion`) y respondes por su
+  exactitud.
+- **Sólo producción y repetible.** Una clave de pruebas recibe `403 modo_no_permitido`. Repetir la
+  llamada devuelve el mismo cliente y conserva la evidencia original. Un cliente que ya activó su
+  cuenta con su propia sesión responde `409 cliente_con_dueno`; uno desactivado, `409 cliente_desactivado`.
+- **Transparencia.** La marca `administradoPorPlataforma` se ve en la API y en el panel (y el negocio
+  la ve en el suyo). **Cada acción tuya** sobre un cliente así (activar, claves, webhooks, emisor,
+  credenciales, entrar, y hasta consultar su empresa o su uso) queda en la bitácora de tu organización
+  **y** en la del cliente, con la clave que actuó.
+- **Interruptor de apagado.** `POST /clientes/:id/desactivar` (o `DELETE`): dejas de administrarlo,
+  pierdes todo acceso y se revocan las claves y webhooks que creaste. Es definitivo para ti; los datos
+  siguen siendo del negocio.
+- **Topes.** 60 activaciones y desactivaciones por hora por plataforma, y 300 acciones por hora
+  sobre clientes en modo servicio (`429 limite_excedido`, con `reintentarEn`). Emisor y credenciales
+  tienen además sus propios topes.
+- **El dueño real puede reclamar.** La empresa es del negocio: su dueño verificado puede reclamarla y
+  pasar a ser su propietario, **tú no puedes reclamarla a su nombre ni impedirlo**; sólo te avisamos.
+  Tus claves y tu relación siguen mientras él no los revoque. Hoy el reclamo todavía no está
+  disponible (`501 reclamo_no_disponible` en `POST /cloud/reclamar`).
+
+<Aside type="caution">
+  Activar en modo servicio traslada la custodia de la empresa a tu plataforma. Hazlo sólo con la
+  aceptación del negocio en mano, y guárdala: podemos pedírtela.
+</Aside>
+
 ## Sucursales
 
 Cada cliente registra sus establecimientos y puntos de venta (`/api/v1/establecimientos`,
@@ -142,12 +185,15 @@ Con una clave habilitada para Plataforma, el [MCP](/herramientas/mcp/) suma esta
 | `plataforma_cliente_crear` | Agrega un cliente (con datos prellenados) |
 | `plataforma_cliente_enlace` | Su enlace de alta |
 | `plataforma_cliente_clave_crear` | Una clave de API en su espacio |
+| `plataforma_cliente_activar` | Lo activa en modo servicio, sin persona dueña (con la aceptación de los términos) |
+| `plataforma_cliente_desactivar` | Interruptor de apagado: dejas de administrarlo |
+| `plataforma_cliente_credenciales_probar` | Comprueba contra Hacienda las credenciales de un ambiente del cliente (sólo lee; pide `plataforma:emisor`) |
 
 *«Agrega a Casa Barista, NIT 0614-290786-102-3, y dame su enlace de alta.»*
 
-## Marca blanca
+## White label
 
-Con el plan **Platform** tus clientes ven **tu** marca, no la de Open Factura. Tú eliges el nombre,
+Con los planes **Pro** y **Platform** tus clientes ven **tu** marca, no la de Open Factura. Tú eliges el nombre,
 el logo y el color. Abajo está, sin adornos, qué lleva tu marca y qué no.
 
 **Configúrala** en el panel (modo *Desarrollador* → *Marca*) o por API
@@ -221,15 +267,21 @@ Si llega al tope de DTE de su plan, el `429 limite_plan` le pide contactar a su 
 
 ### Plan y vigencia
 
-La marca blanca es del plan Platform. Si el plan vence, **no se borra nada**: tu portal en dominio
+El white label es de los planes Pro y Platform. Si el plan vence, **no se borra nada**: tu portal en dominio
 propio responde «Portal en pausa» de inmediato, y los correos, los PDF y el bot vuelven a la marca
 de Open Factura. Al renovar, todo se restaura. `GET /api/v1/ext/marca/vigente` devuelve la marca que
 ve la cuenta de quien llama (o `null`), con `tieneLogo` en lugar del logo; la imagen está en
 `GET /api/v1/ext/marca/vigente/logo` (`404` si no hay).
 
-El cupo de empresas depende de tu plan (**3** en Pro y **25** en Platform, contando la tuya). El
+El cupo de empresas depende de tu plan (**12** en Pro y **25** en Platform, contando la tuya). El
 panel de *Clientes* muestra cuántas usas; al llegar al cupo, crear un cliente responde
 `429 limite_plan` con el `limite` en `details`. Si necesitas más, escríbenos para ampliarlo.
+Las plataformas aliadas con un acuerdo propio pueden tener un cupo sin límite: lo acordamos contigo y
+lo activamos nosotros; no se compra.
+
+En el panel, la primera fila de *Clientes* es tu propia empresa (con la etiqueta *Tu empresa*): su
+estado ante Hacienda y un acceso directo a *Mi negocio*. No se puede eliminar ni desactivar, y
+sólo existe en el panel: `GET /clientes` sigue devolviendo únicamente a tus clientes.
 
 ## Dominio propio
 
@@ -282,19 +334,20 @@ Reglas del host:
 - Al eliminar una organización de plataforma sin clientes, sus dominios se quitan también del
   proveedor de certificados.
 
-Si tu registro usa verificación anti-bots, avísanos para habilitar tu dominio.
+La verificación anti-bots del registro y del inicio de sesión se habilita sola en tu dominio, unos
+minutos después de que esté activo (ver arriba).
 
 Errores: `400 host_invalido`, `409 dominio_en_uso`, `409 limite_dominios`, `429 limite_excedido`
 (también al borrar o revisar dominios con demasiada frecuencia), `502 cloudflare_no_disponible`,
 `503 dominios_no_disponibles` (el servidor aún no los tiene habilitados).
 
-### Errores de la marca blanca
+### Errores del white label
 
 | Código | Cuándo |
 |---|---|
 | `400 datos_invalidos` | Nombre, `slug`, color, soporte o logo que no cumplen las reglas. |
 | `400 host_invalido` | El dominio no cumple las reglas del host. |
-| `402 plan_requerido` | La cuenta no tiene el plan Platform o la administra otra plataforma. |
+| `402 plan_requerido` | La cuenta no tiene el plan Pro o Platform, o la administra otra plataforma. |
 | `404` | El dominio o el logo no existen. |
 | `409 slug_en_uso` | Otra plataforma ya usa ese `slug`. |
 | `409 dominio_en_uso` | El host ya está reclamado (por ti, o por otra plataforma con un reclamo activo o de menos de 24 h). |
@@ -314,11 +367,14 @@ para Plataforma>`. Errores con el [formato de siempre](/errores/).
 | Método y ruta | Descripción |
 |---|---|
 | `POST /clientes` | Crea un cliente pendiente. Cuerpo: `nombre` (2–120), `externalId?` (único en tu cuenta), `datos?` { `nit`, `nrc`, `razonSocial`, `nombreComercial`, `correo`, `telefono` }. `201`. |
-| `GET /clientes` | Lista. Filtros: `?estado=pendiente\|activo\|desactivado`, `?externalId=`. |
-| `GET /clientes/:id` | Un cliente: `estado`, `preparacion`, `falta`, `enlaceExpira`, `aceptado`, `organizationId`. |
-| `DELETE /clientes/:id` | Pendiente: lo elimina. Activo: lo desactiva (sus datos siguen siendo suyos). |
+| `GET /clientes` | Lista, del más reciente al más antiguo (hasta 200). Filtros: `?estado=pendiente\|activo\|desactivado`, `?externalId=`. Páginas: `?limite=` (1–200) y `?despuesDe=<id del último cliente recibido>`; una página con menos de `limite` clientes es la última. |
+| `GET /clientes/:id` | Un cliente: `estado`, `preparacion`, `falta`, `enlaceExpira`, `aceptado`, `organizationId`, `administradoPorPlataforma`, `terminosVersion`. |
+| `DELETE /clientes/:id` | Lo elimina de tu lista: `{ eliminado: true }` y después el id da `404`. Si está activo, antes se desactiva (se revocan tus claves y tus accesos a su espacio). Su empresa, sus DTE y su cuenta de Hacienda siguen siendo suyos. |
+| `POST /clientes/:id/activar` | Lo activa en modo servicio, sin persona dueña. Cuerpo: `{ modo: "servicio", aceptacion: { fecha, terminosVersion } }`. Sólo producción; repetible. `409 cliente_con_dueno`, `409 cliente_desactivado`. |
+| `POST /clientes/:id/desactivar` | Interruptor de apagado de un cliente activo: se revocan tus claves y accesos, y queda en tu lista como `desactivado` (para quitarlo, `DELETE`). `409 cliente_no_activo` si está pendiente. |
 | `POST /clientes/:id/enlace` | Enlace de alta. Cuerpo opcional `{ expiraEnHoras: 1–168 }`. Uno nuevo invalida al anterior. `409 cliente_no_pendiente` si ya conectó. |
 | `GET /clientes/:id/empresa` | Su empresa ante Hacienda (NIT, NRC, razón social, actividad, ambiente) y qué credenciales cargó. Nunca las credenciales. |
+| `POST /clientes/:id/credenciales/:ambiente/probar` | Comprueba contra Hacienda las credenciales ya cargadas de un ambiente (`00` o `01`): `{ ok, ambiente, mensaje }`. No lleva cuerpo ni devuelve secretos; valida NIT y contraseña de la API, no la firma del certificado. Pide `plataforma:emisor`. |
 | `GET /clientes/:id/uso` | DTE de producción del mes (`?periodo=AAAA-MM`). |
 | `POST /clientes/:id/claves` | Clave en su espacio: `nombre`, `modo` (`test`\|`live`), `scopes`, `expiraEnDias?`. `201`. |
 | `GET /clientes/:id/claves` | Las claves que creaste para él (sin el secreto). |
@@ -329,6 +385,6 @@ para Plataforma>`. Errores con el [formato de siempre](/errores/).
 
 Errores propios: `402 plan_requerido` (Plataforma es de los planes Pro y Platform), `403 clave_sin_plataforma`
 (la clave no está habilitada), `403 modo_no_permitido`, `409 external_id_repetido`, `429
-limite_plan` (empresas del plan).
+limite_plan` (empresas del plan), `429 limite_excedido` (topes del modo servicio y del emisor).
 
 Esta función es exclusiva de la versión administrada y no forma parte del código abierto.

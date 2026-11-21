@@ -74,8 +74,8 @@ validar → autenticar → reservar → firmar y guardar → transmitir.
 - **Claves de API:** implementación propia (`services/claves.ts`). Formato `of_test_` / `of_live_` + 40
   caracteres base62 (≈238 bits). Se guarda el SHA-256; la clave se muestra una vez. Cada clave lleva sus
   permisos y su modo: `test` sólo opera en el ambiente `00` del MH y `live` sólo en `01`. El modo
-  también separa los datos: una clave sólo ve los productos y webhooks de su ambiente, y los clientes
-  guardados sólo existen en producción (`409 clientes_solo_produccion` en pruebas).
+  también separa los datos: una clave sólo ve los productos y webhooks de su ambiente. Los clientes
+  guardados son un solo directorio por organización, compartido por los dos ambientes.
 - **CSRF:** cookies `SameSite=Lax` más comprobación de `Origin` en toda petición con cookie que modifica
   datos.
 

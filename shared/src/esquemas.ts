@@ -12,37 +12,103 @@ const opcional = (max = 250) =>
     .transform((v) => v || null)
 const soloDigitos = (v: string) => v.replace(/[^0-9]/g, '')
 
+/** CAT-022: NIT, DUI, carnet de residente y pasaporte. */
+export const TIPOS_DOCUMENTO_PERSONA = ['36', '13', '02', '03'] as const
+
+/** DUI: 9 dígitos (admite guion) cuyo último es el verificador (módulo 10, pesos 9 a 2). */
+export function duiValido(valor: string): boolean {
+  const d = valor.replace('-', '')
+  if (!/^\d{9}$/.test(d)) return false
+  const suma = [...d.slice(0, 8)].reduce((a, c, i) => a + Number(c) * (9 - i), 0)
+  return (10 - (suma % 10)) % 10 === Number(d[8])
+}
+
 export const esquemaAmbiente = z.enum(['00', '01'])
 
-export const esquemaEmisor = z.object({
-  nit: z
-    .string()
-    .transform(soloDigitos)
-    .refine(
-      (v) => v.length === 14 || v.length === 9,
-      'El NIT debe tener 14 dígitos (o 9 si es DUI homologado)',
-    ),
-  nrc: z
-    .string()
-    .transform(soloDigitos)
-    .refine((v) => v.length >= 2 && v.length <= 8, 'El NRC debe tener de 2 a 8 dígitos'),
-  nombre: texto(),
-  nombreComercial: opcional(150),
-  codActividad: texto(6),
-  descActividad: texto(150),
-  departamento: texto(2),
-  municipio: texto(2),
-  distrito: texto(2),
-  complemento: texto(200),
-  telefono: z.string().trim().min(8).max(30),
-  correo: z.email().max(100),
-  /** Si se omite al actualizar, se conserva el ambiente actual (nuevo emisor: pruebas). */
-  ambiente: esquemaAmbiente.optional(),
-  responsableNombre: opcional(100),
-  responsableTipoDoc: opcional(2),
-  responsableNumDoc: opcional(20),
-})
+type ResponsableCampos = {
+  responsableNombre?: string | null
+  responsableTipoDoc?: string | null
+  responsableNumDoc?: string | null
+}
+
+/** «Responsable de anulaciones»: el MH pide nombre, tipo y número juntos; el DUI lleva dígito verificador. */
+function validarResponsable(d: ResponsableCampos, ctx: z.RefinementCtx) {
+  const campos = [d.responsableNombre, d.responsableTipoDoc, d.responsableNumDoc]
+  if (campos.some(Boolean) && !campos.every(Boolean)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['responsableNombre'],
+      message: 'El responsable de anulaciones necesita nombre, tipo y número de documento',
+    })
+    return
+  }
+  if (!d.responsableTipoDoc || !d.responsableNumDoc) return
+  if (!(TIPOS_DOCUMENTO_PERSONA as readonly string[]).includes(d.responsableTipoDoc)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['responsableTipoDoc'],
+      message:
+        'El tipo de documento debe ser NIT (36), DUI (13), carnet de residente (02) o pasaporte (03)',
+    })
+  } else if (d.responsableTipoDoc === '13' && !duiValido(d.responsableNumDoc)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['responsableNumDoc'],
+      message: 'El DUI no es válido: revisa los 9 dígitos y el dígito verificador',
+    })
+  }
+}
+
+export const esquemaEmisor = z
+  .object({
+    nit: z
+      .string()
+      .transform(soloDigitos)
+      .refine(
+        (v) => v.length === 14 || v.length === 9,
+        'El NIT debe tener 14 dígitos (o 9 si es DUI homologado)',
+      ),
+    nrc: z
+      .string()
+      .transform(soloDigitos)
+      .refine((v) => v.length >= 2 && v.length <= 8, 'El NRC debe tener de 2 a 8 dígitos'),
+    nombre: texto(),
+    nombreComercial: opcional(150),
+    codActividad: texto(6),
+    descActividad: texto(150),
+    departamento: texto(2),
+    municipio: texto(2),
+    distrito: texto(2),
+    complemento: texto(200),
+    telefono: z.string().trim().min(8).max(30),
+    correo: z.email().max(100),
+    /** Si se omite al actualizar, se conserva el ambiente actual (nuevo emisor: pruebas). */
+    ambiente: esquemaAmbiente.optional(),
+    responsableNombre: opcional(100),
+    responsableTipoDoc: opcional(2),
+    responsableNumDoc: opcional(20),
+  })
+  .superRefine(validarResponsable)
 export type EmisorEntrada = z.input<typeof esquemaEmisor>
+
+/** Sólo el «Responsable de anulaciones» del emisor (nombre, tipo CAT-022 y número; DUI por defecto). */
+export const esquemaResponsableAnulaciones = z
+  .object({
+    nombre: texto(100),
+    tipoDocumento: z.enum(TIPOS_DOCUMENTO_PERSONA).default('13'),
+    numDocumento: texto(20),
+  })
+  .superRefine((d, ctx) =>
+    validarResponsable(
+      {
+        responsableNombre: d.nombre,
+        responsableTipoDoc: d.tipoDocumento,
+        responsableNumDoc: d.numDocumento,
+      },
+      ctx,
+    ),
+  )
+export type ResponsableAnulacionesEntrada = z.infer<typeof esquemaResponsableAnulaciones>
 
 export const esquemaCredenciales = z.object({
   /** Contraseña de API del MH (no la del portal ni la del certificado). */
@@ -116,8 +182,8 @@ export const esquemaEmision = z.object({
    */
   datos: z.record(z.string(), z.unknown()),
   /**
-   * Si se indica y `datos.receptor` falta, el receptor se toma del cliente guardado. Los clientes
-   * guardados sólo existen en producción: en pruebas responde `409 clientes_solo_produccion`.
+   * Si se indica y `datos.receptor` falta, el receptor se toma del cliente guardado. Funciona en los
+   * dos ambientes: hay un solo directorio de clientes por organización.
    */
   clienteId: z.string().optional(),
   /** Punto de venta que emite. Por defecto el primero del emisor. */
@@ -131,6 +197,18 @@ const persona = z.object({
   numDocumento: texto(20),
 })
 
+/** Documento de identidad de un propietario o administrador, para firmar invalidaciones. */
+export const esquemaDocumentoMiembro = z
+  .object({
+    tipoDocumento: z.enum(TIPOS_DOCUMENTO_PERSONA),
+    numDocumento: texto(20),
+  })
+  .refine((d) => d.tipoDocumento !== '13' || duiValido(d.numDocumento), {
+    path: ['numDocumento'],
+    message: 'El DUI no es válido: revisa los 9 dígitos y el dígito verificador',
+  })
+export type DocumentoMiembroEntrada = z.infer<typeof esquemaDocumentoMiembro>
+
 export const esquemaInvalidacion = z.object({
   /** CAT-024: 1 error en la información, 2 rescindir la operación, 3 otro. */
   tipoAnulacion: z.union([z.literal(1), z.literal(2), z.literal(3)]),
@@ -139,7 +217,7 @@ export const esquemaInvalidacion = z.object({
   codigoGeneracionReemplazo: opcional(36),
   /** Quien solicita la invalidación. Por defecto, el receptor del documento. */
   solicitante: persona.optional(),
-  /** Quien la realiza. Por defecto, el responsable configurado en el emisor. */
+  /** Quien la realiza. Por defecto, el «Responsable de anulaciones» del emisor; sin él, 409 `responsable_no_configurado`. */
   responsable: persona.optional(),
 })
 export type InvalidacionEntrada = z.infer<typeof esquemaInvalidacion>
@@ -354,7 +432,12 @@ const esDominio = (host: string, base: string) => host === base || host.endsWith
 
 export function problemaUrlWebhook(
   texto: string,
-  opciones: { permitirLocal: boolean; hostsPropios?: readonly string[] },
+  opciones: {
+    permitirLocal: boolean
+    hostsPropios?: readonly string[]
+    /** Hosts exactos que el bloqueo del dominio propio no alcanza (las demás reglas sí). */
+    hostsPermitidos?: readonly string[]
+  },
 ) {
   let url: URL
   try {
@@ -374,7 +457,8 @@ export function problemaUrlWebhook(
     // `a..b` o `host.` esconden el destino real del filtro.
     (!host.startsWith('[') && (bruto.endsWith('.') || host.split('.').some((l) => !l))) ||
     DNS_COMODIN.some((d) => esDominio(host, d)) ||
-    (opciones.hostsPropios ?? []).some((p) => esDominio(host, p.toLowerCase())) ||
+    (!(opciones.hostsPermitidos ?? []).some((p) => p.toLowerCase() === host) &&
+      (opciones.hostsPropios ?? []).some((p) => esDominio(host, p.toLowerCase()))) ||
     host.endsWith('.localhost') ||
     host.endsWith('.local') ||
     host.endsWith('.internal') ||
@@ -431,3 +515,35 @@ export const esquemaWebhookCambios = z
   })
   .refine((c) => Object.values(c).some((v) => v !== undefined), 'Indica al menos un cambio')
 export type WebhookCambios = z.infer<typeof esquemaWebhookCambios>
+
+/**
+ * Consulta al MH del estado de un DTE de un tercero (p. ej. una compra recibida). Sólo los tres datos
+ * que la consulta del MH exige; `selloRecibido` es opcional y sirve para comprobar el sello del
+ * documento que se tiene en mano (la API responde sólo si coincide, nunca devuelve el sello).
+ */
+export const esquemaConsultaDteTercero = z.object({
+  nitEmisor: z
+    .string()
+    .max(20)
+    .transform(soloDigitos)
+    .refine(
+      (v) => v.length === 14 || v.length === 9,
+      'El NIT del emisor debe tener 14 dígitos (o 9 si es DUI homologado)',
+    ),
+  tipoDte: z.enum(tiposDte),
+  codigoGeneracion: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(
+      /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/,
+      'Código de generación inválido (UUID)',
+    ),
+  selloRecibido: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[0-9A-Z]{20,64}$/, 'El sello de recepción no tiene el formato esperado')
+    .optional(),
+})
+export type ConsultaDteTerceroEntrada = z.infer<typeof esquemaConsultaDteTercero>

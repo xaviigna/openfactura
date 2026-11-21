@@ -13,13 +13,15 @@ El MH tiene dos ambientes, y Open Factura los mantiene separados de punta a punt
 | Producción | `01` | `of_live_…`  | Legal        |
 
 - **El prefijo de la clave decide el ambiente.** Una clave de pruebas nunca toca producción, ni al revés.
-- El panel usa el ambiente guardado en el emisor (**Empresa y Hacienda → Datos fiscales → Ambiente**).
+- El panel, WhatsApp y el MCP usan el ambiente guardado en el emisor. El panel lo muestra arriba a la
+  derecha en todas las pantallas: una insignia **Pruebas** hasta que cargas las credenciales de
+  producción y, desde entonces, un selector **Pruebas | Producción** (dueños y administradores).
 - Las credenciales del MH (contraseña de API y certificado) son **distintas en cada ambiente**: las de
   pruebas no sirven en producción.
 - Cada clave ve sólo los documentos, eventos, productos y [webhooks](/guias/webhooks/#ambientes) de su
   ambiente. Las claves de idempotencia también son independientes por ambiente.
-- Los clientes guardados sólo existen en producción. En pruebas, el receptor va en `datos.receptor`
-  (`409 clientes_solo_produccion`).
+- Los clientes guardados son un solo directorio por organización, compartido por los dos ambientes:
+  un cliente que guardas en pruebas también está en producción. Los productos sí van por ambiente.
 - Los PDF del ambiente de pruebas advierten que el documento no tiene valor legal.
 
 Si operas sobre un documento de otro ambiente, la API responde `409 ambiente_distinto`.
@@ -34,7 +36,8 @@ Si operas sobre un documento de otro ambiente, la API responde `409 ambiente_dis
    producción.
 3. En **Empresa y Hacienda → Credenciales del MH**, cárgalos para el ambiente `01`
    (`PUT /api/v1/emisor/credenciales/01`).
-4. Para el panel, cambia el ambiente del emisor a producción. Para integraciones, crea una clave
+4. Para el panel, elige **Producción** en el selector de arriba a la derecha (pide escribir
+   `produccion` para confirmar; volver a Pruebas es un clic). Para integraciones, crea una clave
    `of_live_…` con los permisos mínimos.
 5. Emite un primer documento real y verifica su sello y su `urlConsulta`.
 

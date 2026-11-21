@@ -15,10 +15,12 @@ description: How many requests each key allows, the RateLimit headers, and how t
 | Password-reset links                  | 3 per email per hour; after that none are sent (the response doesn't change) |
 | Password attempts when confirming the email | 5 per account per hour; 10 every 5 minutes per IP |
 | Organizations a person owns           | 10                              |
+| `POST /dte/consultar-mh`, per key     | 20 per minute                   |
+| `POST /dte/consultar-mh`, per organization | 1000 per day               |
 | Body size                             | 512 KB                          |
 
 On a self-hosted installation, the per-key limit is changed with the `LIMITE_CLAVE_POR_MINUTO`
-variable.
+variable; the `consultar-mh` ones with `CONSULTA_TERCERO_POR_MINUTO` and `CONSULTA_TERCERO_POR_DIA`.
 
 ## Headers
 

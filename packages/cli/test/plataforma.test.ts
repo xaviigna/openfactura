@@ -107,6 +107,29 @@ describe('plataforma', () => {
     expect(conYes.llamadas[1]?.cuerpo).toMatchObject({ modo: 'live' })
   })
 
+  it('probar comprueba un ambiente del cliente y falla con código 1 si el MH no acepta', async () => {
+    const e = await conSesion()
+    const bien = crearEntorno({
+      env: e,
+      respuestas: [json([CASA_BARISTA]), json({ ok: true, ambiente: '01', mensaje: 'Listo' })],
+    })
+    expect(await ejecutar(['plataforma', 'probar', 'cb-1', '--ambiente', '01'], bien.ent)).toBe(0)
+    expect(bien.llamadas[1]?.url.pathname).toBe(
+      '/cloud/plataforma/clientes/cli_1/credenciales/01/probar',
+    )
+    expect(bien.stdout).toContain('producción')
+    const mal = crearEntorno({
+      env: e,
+      respuestas: [json([CASA_BARISTA]), json({ ok: false, ambiente: '00', mensaje: 'Rechazado' })],
+    })
+    expect(await ejecutar(['plataforma', 'probar', 'cb-1'], mal.ent)).toBe(1)
+    expect(mal.llamadas[1]?.url.pathname).toContain('/credenciales/00/probar')
+    const invalido = crearEntorno({ env: e, respuestas: [json([CASA_BARISTA])] })
+    expect(await ejecutar(['plataforma', 'probar', 'cb-1', '--ambiente', '9'], invalido.ent)).toBe(
+      2,
+    )
+  })
+
   it('un nombre que no existe o se repite pide el id', async () => {
     const e = await conSesion()
     const nadie = crearEntorno({ env: e, respuestas: [json([CASA_BARISTA])] })
@@ -117,5 +140,75 @@ describe('plataforma', () => {
     })
     expect(await ejecutar(['plataforma', 'enlace', 'casa barista'], repetido.ent)).toBe(2)
     expect(repetido.stderr).toContain('cli_1, cli_2')
+  })
+  it('activar exige la versión de los términos y la fecha de aceptación, y confirma antes de enviar', async () => {
+    const e = await conSesion()
+    const sin = crearEntorno({ env: e, respuestas: [json([CASA_BARISTA])] })
+    expect(await ejecutar(['plataforma', 'activar', 'cb-1', '--yes'], sin.ent)).toBe(2)
+    expect(sin.stderr).toContain('--terminos-version')
+    const mala = crearEntorno({ env: e, respuestas: [json([CASA_BARISTA])] })
+    expect(
+      await ejecutar(
+        [
+          'plataforma',
+          'activar',
+          'cb-1',
+          '--terminos-version',
+          'v1',
+          '--aceptado',
+          'ayer',
+          '--yes',
+        ],
+        mala.ent,
+      ),
+    ).toBe(2)
+    const sinTerminal = crearEntorno({ env: e, respuestas: [json([CASA_BARISTA])] })
+    expect(
+      await ejecutar(
+        ['plataforma', 'activar', 'cb-1', '--terminos-version', 'v1', '--aceptado', '2026-11-16'],
+        sinTerminal.ent,
+      ),
+    ).toBe(2)
+    expect(sinTerminal.stderr).toContain('--yes')
+    expect(sinTerminal.llamadas).toHaveLength(1) // sólo la búsqueda del cliente
+
+    const bien = crearEntorno({
+      env: e,
+      respuestas: [json([CASA_BARISTA]), json({ ...CASA_BARISTA, estado: 'activo' })],
+    })
+    expect(
+      await ejecutar(
+        [
+          'plataforma',
+          'activar',
+          'cb-1',
+          '--terminos-version',
+          '2026-11-16',
+          '--aceptado',
+          '2026-11-16',
+          '--yes',
+        ],
+        bien.ent,
+      ),
+    ).toBe(0)
+    expect(bien.llamadas[1]?.url.pathname).toBe('/cloud/plataforma/clientes/cli_1/activar')
+    expect(bien.llamadas[1]?.cuerpo).toEqual({
+      modo: 'servicio',
+      aceptacion: { fecha: Date.parse('2026-11-16'), terminosVersion: '2026-11-16' },
+    })
+    expect(bien.stdout).toContain('modo servicio')
+  })
+
+  it('desactivar pide confirmación y llama al interruptor del cliente', async () => {
+    const e = await conSesion()
+    const sinTerminal = crearEntorno({ env: e, respuestas: [json([CASA_BARISTA])] })
+    expect(await ejecutar(['plataforma', 'desactivar', 'cb-1'], sinTerminal.ent)).toBe(2)
+    const t = crearEntorno({
+      env: e,
+      respuestas: [json([CASA_BARISTA]), json({ ...CASA_BARISTA, estado: 'desactivado' })],
+    })
+    expect(await ejecutar(['plataforma', 'desactivar', 'cb-1', '--yes'], t.ent)).toBe(0)
+    expect(t.llamadas[1]?.metodo).toBe('POST')
+    expect(t.llamadas[1]?.url.pathname).toBe('/cloud/plataforma/clientes/cli_1/desactivar')
   })
 })

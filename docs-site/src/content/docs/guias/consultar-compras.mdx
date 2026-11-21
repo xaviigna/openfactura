@@ -1,0 +1,60 @@
+---
+title: Verificar un DTE recibido
+description: Pregunta al MH si un documento de un proveedor (una compra) está registrado, sin guardarlo.
+---
+
+`POST /dte/consultar-mh` (`dte:read`) pregunta al MH, **con las credenciales y el ambiente de tu
+organización**, si un DTE recibido de un tercero está registrado. Sirve para validar una compra antes de
+aceptarla. **No guarda el documento** ni lo devuelve: responde un veredicto.
+
+## Petición
+
+```bash
+curl https://app.openfactura.co/api/v1/dte/consultar-mh \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nitEmisor": "06142907861023",
+    "tipoDte": "03",
+    "codigoGeneracion": "0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4",
+    "selloRecibido": "2026A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8"
+  }'
+```
+
+`nitEmisor` (14 dígitos, o 9 si es DUI), `tipoDte` y `codigoGeneracion` son lo que exige la consulta del
+MH. `selloRecibido` es opcional: si lo envías, la API compara el sello del documento que tienes en mano.
+
+## Respuesta
+
+```json
+{
+  "veredicto": "encontrado",
+  "estado": "procesado",
+  "selloCoincide": true,
+  "fechaProcesamiento": "17/11/2026 10:15:32",
+  "ambiente": "01",
+  "cache": false
+}
+```
+
+| `veredicto`     | Significado                                                                      |
+| --------------- | -------------------------------------------------------------------------------- |
+| `encontrado`    | El MH lo registra. `estado` es `procesado` o `invalidado`.                       |
+| `no_encontrado` | El MH no registra ese documento: no lo aceptes como válido.                      |
+| `discrepancia`  | El MH lo registra, pero el `selloRecibido` que enviaste no coincide.             |
+
+Un documento `invalidado` también es `encontrado`: revisa `estado` antes de aceptarlo. La API no
+devuelve el sello, el monto ni los datos del documento; sólo si el sello que enviaste coincide.
+
+## Topes y errores
+
+- 20 consultas por minuto por clave y 1000 por día por organización: `429 limite_excedido` con
+  `details.reintentarEn`. No es un buscador: está pensado para validar documentos que ya tienes.
+- Las respuestas se guardan unos minutos (5 si lo halló, 1 si no): `cache: true` indica que no se
+  consultó al MH. Sólo se conserva el veredicto y un hash del sello, nunca el documento.
+- Si el MH no responde se hacen 2 intentos y se responde `502 mh_no_disponible` (`details.reintentarEn`).
+- Una respuesta del MH que no es un veredicto da `502 mh_respuesta_inesperada`; credenciales rechazadas,
+  `502 mh_credenciales_rechazadas`; sin credenciales propias, `409 credenciales_incompletas`.
+- Ni el NIT ni el código de generación se escriben en logs.
+
+También está en el MCP (`dte_consultar_mh`) y en la CLI (`openfactura dte consultar-mh`).

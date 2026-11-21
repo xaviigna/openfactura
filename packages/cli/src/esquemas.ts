@@ -79,6 +79,20 @@ const persona = z.object({
   numDocumento: texto(20),
 })
 
+export const consultaDteTercero = z.object({
+  nitEmisor: z
+    .string()
+    .max(20)
+    .describe('NIT del emisor del DTE (14 dígitos; 9 si es DUI homologado)'),
+  tipoDte,
+  codigoGeneracion: z.string().max(40).describe('Código de generación (UUID) del documento'),
+  selloRecibido: z
+    .string()
+    .max(64)
+    .optional()
+    .describe('Sello de recepción del documento que se tiene en mano, para comprobar que coincide'),
+})
+
 export const invalidacion = z.object({
   tipoAnulacion: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   motivoAnulacion: opcional(250),

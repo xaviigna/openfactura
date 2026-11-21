@@ -73,6 +73,14 @@ export function hostsPropios(env: Pick<Bindings, 'APP_URL'>): string[] {
 }
 const permitirLocal = (env: Bindings) => env.WEBHOOKS_LOCAL === '1'
 
+/** `WEBHOOKS_HOSTS_PERMITIDOS`: hosts exactos (sin esquema ni ruta) separados por coma. */
+export function hostsPermitidos(env: Pick<Bindings, 'WEBHOOKS_HOSTS_PERMITIDOS'>): string[] {
+  return (env.WEBHOOKS_HOSTS_PERMITIDOS ?? '')
+    .split(',')
+    .map((h) => h.trim().toLowerCase())
+    .filter((h) => /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(h))
+}
+
 const vista = (w: FilaWebhook) => ({
   id: w.id,
   ambiente: w.ambiente,
@@ -116,6 +124,7 @@ function validarUrl(ctx: Ctx, url: string) {
   const problema = problemaUrlWebhook(url, {
     permitirLocal: permitirLocal(ctx.env),
     hostsPropios: hostsPropios(ctx.env),
+    hostsPermitidos: hostsPermitidos(ctx.env),
   })
   if (problema) throw invalido(problema, [{ ruta: 'url', mensaje: problema }])
 }

@@ -4,7 +4,7 @@ import { PERMISOS_CLAVE } from 'shared'
 import { type Actor, type Ctx, exigir } from '../contexto'
 import { claveApi, type Db } from '../db'
 import { aleatorioBase62, nuevoId, sha256Hex } from '../lib/crypto'
-import { noEncontrado } from '../lib/errors'
+import { conflicto, noEncontrado } from '../lib/errors'
 import { registrar } from './auditoria'
 
 /** of_test_… / of_live_…: el modo se reconoce a simple vista y por escáneres de secretos. */
@@ -72,6 +72,24 @@ export async function revocarClave(ctx: Ctx, id: string) {
     await registrar(ctx, 'clave.revocar', 'clave_api', id)
   }
   return { revocada: true }
+}
+
+/**
+ * Borra para siempre una clave revocada o expirada: sale de la lista y con ella sus registros de
+ * peticiones. Una clave activa primero se revoca (así ninguna integración pierde el acceso por un
+ * clic de más). La auditoría conserva que existió.
+ */
+export async function eliminarClave(ctx: Ctx, id: string) {
+  exigir(ctx, 'claves:manage')
+  const filtro = and(eq(claveApi.id, id), eq(claveApi.organizationId, ctx.actor.organizationId))
+  const [fila] = await ctx.db.select().from(claveApi).where(filtro)
+  if (!fila) throw noEncontrado('La clave')
+  if (publica(fila).estado === 'activa') {
+    throw conflicto('clave_activa', 'Revoca la clave antes de eliminarla')
+  }
+  await ctx.db.delete(claveApi).where(filtro)
+  await registrar(ctx, 'clave.eliminar', 'clave_api', id)
+  return { eliminada: true }
 }
 
 /**

@@ -54,7 +54,18 @@ await of.comoCliente(clave).dte.emitir({ tipoDte: '01', datos }) // en SU espaci
 
 Guarda la clave de cada cliente en tu base de datos: se muestra una sola vez.
 
-Tu [marca blanca](/cloud/plataforma/), sólo lectura (se cambia en el panel):
+Sin enlace, en modo servicio (garantizas la aceptación de los términos del negocio; sólo producción):
+
+```ts
+await of.plataforma.clientes.activar(cliente.id, {
+  modo: 'servicio',
+  aceptacion: { fecha: Date.parse('2026-11-16'), terminosVersion: '2026-11-16' },
+})
+await of.plataforma.clientes.desactivar(cliente.id) // interruptor de apagado
+await of.plataforma.clientes.probarCredenciales(cliente.id, '01') // ¿inician sesión en Hacienda? { ok, ambiente, mensaje }
+```
+
+Tu [white label](/cloud/plataforma/), sólo lectura (se cambia en el panel):
 
 ```ts
 const marca = await of.marcaBlanca.obtener() // activa, nombre, urlBase, dominios…

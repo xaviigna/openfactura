@@ -18,10 +18,12 @@ import {
   esquemaCliente,
   esquemaConsultaAuditoria,
   esquemaConsultaCatalogo,
+  esquemaConsultaDteTercero,
   esquemaConsultaEventos,
   esquemaConsultaRegistros,
   esquemaConsultaUso,
   esquemaCredenciales,
+  esquemaDocumentoMiembro,
   esquemaEmision,
   esquemaEmisor,
   esquemaEstablecimiento,
@@ -30,6 +32,7 @@ import {
   esquemaOperacionesEspeciales,
   esquemaProducto,
   esquemaPuntoVenta,
+  esquemaResponsableAnulaciones,
   esquemaRetorno,
   esquemaWebhook,
   esquemaWebhookCambios,
@@ -62,14 +65,17 @@ const libre: Esquema = { type: 'object', additionalProperties: true }
 /** Cuerpos de petición: esquemas zod de `shared`, publicados como componentes con nombre. */
 const ENTRADAS = {
   Emisor: esquemaEmisor,
+  DocumentoMiembro: esquemaDocumentoMiembro,
   Credenciales: esquemaCredenciales,
   Establecimiento: esquemaEstablecimiento,
   PuntoVenta: esquemaPuntoVenta,
+  ResponsableAnulaciones: esquemaResponsableAnulaciones,
   ClienteEntrada: esquemaCliente,
   ProductoEntrada: esquemaProducto,
   Emision: esquemaEmision,
   Invalidacion: esquemaInvalidacion,
   Retorno: esquemaRetorno,
+  ConsultaDteTercero: esquemaConsultaDteTercero,
   OperacionesEspeciales: esquemaOperacionesEspeciales,
   ClaveApiEntrada: esquemaClaveApi,
   WebhookEntrada: esquemaWebhook,
@@ -96,10 +102,10 @@ export const CODIGOS_ERROR: Record<string, number> = {
   ambiente_distinto: 409,
   retorno_excedido: 409,
   retorno_vigente: 409,
+  responsable_no_configurado: 409,
   idempotencia_distinta: 409,
   idempotencia_en_curso: 409,
   cliente_repetido: 409,
-  clientes_solo_produccion: 409,
   producto_repetido: 409,
   codigo_repetido: 409,
   sin_archivo: 409,
@@ -114,6 +120,7 @@ export const CODIGOS_ERROR: Record<string, number> = {
   error_interno: 500,
   mh_credenciales_rechazadas: 502,
   mh_no_disponible: 502,
+  mh_respuesta_inesperada: 502,
   emision_fallida: 502,
   emision_incierta: 502,
   evento_incierto: 502,
@@ -195,6 +202,40 @@ export const RUTAS: Ruta[] = [
   },
   {
     metodo: 'get',
+    ruta: '/yo/documento',
+    id: 'yo_documento_obtener',
+    etiqueta: 'Sesión',
+    resumen: 'Estado de mi documento de identidad',
+    descripcion:
+      'Si la persona con sesión ya registró su documento (tipo y número) en la organización. Nunca devuelve el número. Sirve de solicitante por defecto de las invalidaciones.',
+    respuestas: ok(
+      'Estado del documento.',
+      objeto({ documentoRegistrado: booleano, tipoDocumento: textoONulo }, [
+        'documentoRegistrado',
+        'tipoDocumento',
+      ]),
+    ),
+  },
+  {
+    metodo: 'put',
+    ruta: '/yo/documento',
+    id: 'yo_documento_guardar',
+    etiqueta: 'Sesión',
+    resumen: 'Registrar mi documento de identidad',
+    descripcion:
+      'Sólo con sesión de persona (una clave de API responde 403). Cada persona registra el suyo; queda en la bitácora sin el número. Con él, la primera vez que se configura el emisor se rellena solo el responsable de anulaciones, y es el solicitante por defecto al invalidar.',
+    cuerpo: 'DocumentoMiembro',
+    respuestas: ok(
+      'Documento registrado.',
+      objeto({ documentoRegistrado: booleano, tipoDocumento: texto }, [
+        'documentoRegistrado',
+        'tipoDocumento',
+      ]),
+    ),
+    errores: [403],
+  },
+  {
+    metodo: 'get',
     ruta: '/resumen',
     id: 'resumen_obtener',
     etiqueta: 'Sesión',
@@ -238,6 +279,19 @@ export const RUTAS: Ruta[] = [
     permiso: 'emisor:write',
     cuerpo: 'Emisor',
     respuestas: ok('Emisor guardado.', ref('EmisorVista')),
+    errores: [409],
+  },
+  {
+    metodo: 'put',
+    ruta: '/emisor/responsable',
+    id: 'emisor_responsable_guardar',
+    etiqueta: 'Emisor',
+    resumen: 'Configurar el responsable de anulaciones',
+    descripcion:
+      'Nombre, tipo de documento (`13` DUI por defecto; `36` NIT, `03` pasaporte, `02` carnet de residente) y número de quien firma las invalidaciones. `POST /dte/:codigo/invalidar` lo usa solo cuando la solicitud no trae `responsable`. El DUI se valida con su dígito verificador. El número se devuelve completo sólo a quien tiene `emisor:write` (los demás lo reciben enmascarado) y nunca va a la bitácora.',
+    permiso: 'emisor:write',
+    cuerpo: 'ResponsableAnulaciones',
+    respuestas: ok('Emisor con el responsable guardado.', ref('EmisorVista')),
     errores: [409],
   },
   {
@@ -339,11 +393,10 @@ export const RUTAS: Ruta[] = [
     etiqueta: 'Clientes',
     resumen: 'Buscar clientes',
     descripcion:
-      '`q` busca por nombre, nombre comercial o número de documento. Hasta 100 por defecto. Los clientes guardados sólo existen en producción: con una clave de pruebas o la organización en pruebas, todas las rutas de clientes responden `409 clientes_solo_produccion`.',
+      '`q` busca por nombre, nombre comercial o número de documento. Hasta 100 por defecto. Un solo directorio por organización, compartido por pruebas y producción.',
     permiso: 'clientes:read',
     consulta: esquemaBusqueda,
     respuestas: ok('Clientes.', lista('Cliente')),
-    errores: [409],
   },
   {
     metodo: 'post',
@@ -351,7 +404,6 @@ export const RUTAS: Ruta[] = [
     id: 'cliente_crear',
     etiqueta: 'Clientes',
     resumen: 'Crear un cliente',
-    descripcion: 'Sólo en producción; en pruebas responde `409 clientes_solo_produccion`.',
     permiso: 'clientes:write',
     cuerpo: 'ClienteEntrada',
     respuestas: { 201: { descripcion: 'Cliente creado.', esquema: ref('Cliente') } },
@@ -365,7 +417,7 @@ export const RUTAS: Ruta[] = [
     resumen: 'Obtener un cliente',
     permiso: 'clientes:read',
     respuestas: ok('Cliente.', ref('Cliente')),
-    errores: [404, 409],
+    errores: [404],
   },
   {
     metodo: 'put',
@@ -386,7 +438,7 @@ export const RUTAS: Ruta[] = [
     resumen: 'Eliminar un cliente',
     permiso: 'clientes:write',
     respuestas: ok('Eliminado.', objeto({ eliminado: { const: true } }, ['eliminado'])),
-    errores: [404, 409],
+    errores: [404],
   },
 
   // --- Productos ----------------------------------------------------------
@@ -465,7 +517,7 @@ export const RUTAS: Ruta[] = [
     etiqueta: 'DTE',
     resumen: 'Emitir un DTE',
     descripcion:
-      'Construye, valida, firma y transmite el documento al MH. `datos` es la entrada del constructor del SDK `@openfactura/dte` para ese tipo. En Factura (01) `precioUni` incluye IVA; en Crédito Fiscal, notas y remisión va sin IVA. Si se envía `clienteId` y falta `datos.receptor`, el receptor se toma del cliente guardado (sólo en producción; en pruebas responde `409 clientes_solo_produccion`). El Comprobante de Liquidación (08), el Documento Contable de Liquidación (09) y el Comprobante de Donación (15) no admiten contingencia: con el MH caído responden `mh_no_disponible`.',
+      'Construye, valida, firma y transmite el documento al MH. `datos` es la entrada del constructor del SDK `@openfactura/dte` para ese tipo. En Factura (01) `precioUni` incluye IVA; en Crédito Fiscal, notas y remisión va sin IVA. Si se envía `clienteId` y falta `datos.receptor`, el receptor se toma del cliente guardado. El Comprobante de Liquidación (08), el Documento Contable de Liquidación (09) y el Comprobante de Donación (15) no admiten contingencia: con el MH caído responden `mh_no_disponible`.',
     permiso: 'dte:emit',
     cuerpo: 'Emision',
     idempotente: true,
@@ -491,6 +543,19 @@ export const RUTAS: Ruta[] = [
     cuerpo: 'Emision',
     respuestas: ok('DTE construido, problemas y total.', ref('Validacion')),
     errores: [404, 409],
+  },
+  {
+    metodo: 'post',
+    ruta: '/dte/consultar-mh',
+    id: 'dte_consultar_mh',
+    etiqueta: 'DTE',
+    resumen: 'Consultar al MH un DTE de un tercero',
+    descripcion:
+      'Pregunta al MH, con las credenciales y el ambiente de quien consulta, si un DTE recibido (por ejemplo una compra) está registrado. No guarda el documento ni devuelve el sello: si envías `selloRecibido` responde `selloCoincide`. Tope por clave (20 por minuto) y por organización (1000 por día): `429 limite_excedido`. Si el MH no responde, 2 intentos y `502 mh_no_disponible`. Los resultados se cachean unos minutos (`cache: true`).',
+    permiso: 'dte:read',
+    cuerpo: 'ConsultaDteTercero',
+    respuestas: ok('Veredicto de la consulta.', ref('ConsultaDteTerceroResultado')),
+    errores: [400, 409, 429, 502],
   },
   {
     metodo: 'get',
@@ -528,13 +593,63 @@ export const RUTAS: Ruta[] = [
     errores: [404, 409],
   },
   {
+    metodo: 'get',
+    ruta: '/dte/:codigo/invalidacion',
+    id: 'dte_invalidacion_evaluar',
+    etiqueta: 'DTE',
+    resumen: 'Evaluar si un documento puede invalidarse',
+    descripcion:
+      'No transmite nada. Responde si el documento puede invalidarse (`bloqueos`: `estado_invalido`, `retorno_vigente`), el plazo (`limite`, `fueraDePlazo`), qué motivos piden documento de reemplazo y si hay responsable de anulaciones. El plazo se calcula desde la fecha de emisión y sin asuetos, así que `limiteAproximado` es siempre `true`: es informativo y no bloquea la invalidación, que valida el MH.',
+    permiso: 'dte:invalidate',
+    respuestas: ok(
+      'Evaluación.',
+      objeto(
+        {
+          codigoGeneracion: texto,
+          tipoDte: texto,
+          estado: texto,
+          puedeInvalidar: booleano,
+          bloqueos: { type: 'array', items: texto },
+          limite: texto,
+          fueraDePlazo: booleano,
+          limiteAproximado: booleano,
+          motivos: {
+            type: 'array',
+            items: objeto(
+              {
+                tipoAnulacion: entero,
+                requiereReemplazo: booleano,
+                requiereMotivo: booleano,
+              },
+              ['tipoAnulacion', 'requiereReemplazo', 'requiereMotivo'],
+            ),
+          },
+          responsableConfigurado: booleano,
+        },
+        [
+          'codigoGeneracion',
+          'tipoDte',
+          'estado',
+          'puedeInvalidar',
+          'bloqueos',
+          'limite',
+          'fueraDePlazo',
+          'limiteAproximado',
+          'motivos',
+          'responsableConfigurado',
+        ],
+      ),
+    ),
+    errores: [404],
+  },
+  {
     metodo: 'post',
     ruta: '/dte/:codigo/invalidar',
     id: 'dte_invalidar',
     etiqueta: 'DTE',
     resumen: 'Invalidar un documento o un evento',
     descripcion:
-      'Irreversible. `tipoAnulacion`: 1 error en la información (requiere `codigoGeneracionReemplazo`), 2 rescindir la operación, 3 otro (requiere motivo y reemplazo). `:codigo` también puede ser un evento de retorno u operaciones especiales: entonces responde `{ invalidado, tipo, codigoGeneracion }`. Un DTE con un retorno vigente responde `409 retorno_vigente`.',
+      'Irreversible. `tipoAnulacion`: 1 error en la información (requiere `codigoGeneracionReemplazo`), 2 rescindir la operación, 3 otro (requiere motivo y reemplazo). `:codigo` también puede ser un evento de retorno u operaciones especiales: entonces responde `{ invalidado, tipo, codigoGeneracion }`. Un DTE con un retorno vigente responde `409 retorno_vigente`. `responsable` (quien la realiza) es opcional: por defecto se usa el «Responsable de anulaciones» del emisor, y sin él responde `409 responsable_no_configurado` (configúralo con `PUT /emisor` y reintenta). `solicitante`, por defecto, es la persona con sesión que invalida si registró su documento (`PUT /yo/documento`) y, si no, el receptor del documento.',
     permiso: 'dte:invalidate',
     cuerpo: 'Invalidacion',
     respuestas: ok('Documento invalidado, o el evento invalidado.', {
@@ -708,6 +823,18 @@ export const RUTAS: Ruta[] = [
     permiso: 'claves:manage',
     respuestas: ok('Revocada de inmediato.', objeto({ revocada: { const: true } }, ['revocada'])),
     errores: [404],
+  },
+  {
+    metodo: 'delete',
+    ruta: '/claves/:id/definitivo',
+    id: 'clave_eliminar',
+    etiqueta: 'Claves de API',
+    resumen: 'Eliminar una clave revocada o expirada',
+    descripcion:
+      'La borra para siempre, junto con sus registros de peticiones; la auditoría conserva que existió. Una clave activa responde `409 clave_activa`: primero se revoca.',
+    permiso: 'claves:manage',
+    respuestas: ok('Eliminada.', objeto({ eliminada: { const: true } }, ['eliminada'])),
+    errores: [404, 409],
   },
   {
     metodo: 'get',
@@ -896,6 +1023,17 @@ const RESPUESTAS_ESQUEMAS: Record<string, Esquema> = {
     },
     ['items', 'total', 'pagina', 'porPagina', 'ambiente'],
   ),
+  ConsultaDteTerceroResultado: objeto(
+    {
+      veredicto: { type: 'string', enum: ['encontrado', 'no_encontrado', 'discrepancia'] },
+      estado: { type: ['string', 'null'], description: '`procesado`, `invalidado` u otro del MH.' },
+      selloCoincide: { type: ['boolean', 'null'] },
+      fechaProcesamiento: textoONulo,
+      ambiente,
+      cache: { type: 'boolean' },
+    },
+    ['veredicto', 'estado', 'selloCoincide', 'fechaProcesamiento', 'ambiente', 'cache'],
+  ),
   Validacion: objeto(
     {
       dte: libre,
@@ -1029,6 +1167,20 @@ const RESPUESTAS_ESQUEMAS: Record<string, Esquema> = {
     apiPassword: booleano,
     certificado: booleano,
     certificadoNit: textoONulo,
+    certificadoSerie: {
+      type: ['string', 'null'],
+      description:
+        'Id del certificado en el MH (`<_id>` del .crt; no es un secreto). Nulo si el archivo no lo trae o se cargó antes de guardarlo.',
+    },
+    certificadoVence: {
+      type: ['integer', 'null'],
+      description:
+        'Vencimiento del certificado, en milisegundos Unix (`notAfter` del .crt). Nulo si no viene o se cargó antes de guardarlo.',
+    },
+    certificadoHuella: {
+      type: ['string', 'null'],
+      description: 'SHA-256 (hex) del contenido completo del .crt. No permite reconstruirlo.',
+    },
     simuladas: {
       type: 'boolean',
       description: 'Generadas para el simulador del MH: los documentos no llegan a Hacienda.',

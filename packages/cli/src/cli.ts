@@ -113,6 +113,19 @@ const OPCIONES: Record<string, TipoOpcion> = {
     type: 'string',
     ayuda: 'Vigencia del enlace de alta en horas (1 a 168; por defecto 72)',
   },
+  aceptado: {
+    type: 'string',
+    ayuda:
+      'En Plataforma, cuándo aceptó el negocio los términos (AAAA-MM-DD o fecha y hora ISO 8601)',
+  },
+  'terminos-version': {
+    type: 'string',
+    ayuda: 'En Plataforma, versión de los términos que el negocio aceptó (p. ej. 2026-11-16)',
+  },
+  ambiente: {
+    type: 'string',
+    ayuda: 'En Plataforma, ambiente a probar: 00 (pruebas) o 01 (producción); por defecto 00',
+  },
   live: { type: 'boolean', ayuda: 'Clave de producción (of_live_); por defecto de pruebas' },
   yo: { type: 'boolean', ayuda: 'Vuelve a tu propia cuenta' },
   'tipo-venta': { type: 'string', ayuda: 'gravada | exenta | noSujeta (por defecto gravada)' },

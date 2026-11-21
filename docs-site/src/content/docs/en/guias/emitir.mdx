@@ -21,8 +21,8 @@ Every document is issued through the same route, `POST /dte`, and validated befo
 - `datos`: the input of the [`@openfactura/dte`](/en/herramientas/sdk/) SDK builder for that type
   (`FacturaInput`, `CreditoFiscalInput`, `NotaInput`…).
 - `clienteId` (optional): if you send it and `datos.receptor` is missing, the recipient is taken from
-  the saved customer. Production only: saved customers don't exist in test mode, where it responds
-  `409 clientes_solo_produccion` and the recipient goes in `datos.receptor`.
+  the saved customer. It works in both environments: saved customers are the same in test and
+  production.
 - `puntoVentaId` (optional): the point of sale that issues; defaults to the issuer's first one.
 
 <Aside type="tip">

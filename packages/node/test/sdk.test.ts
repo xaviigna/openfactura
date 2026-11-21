@@ -80,6 +80,27 @@ describe('cliente', () => {
     expect(llamadas[0]?.url.pathname).toBe('/cloud/plataforma/clientes')
   })
 
+  it('plataforma.clientes.emisor: rutas y cuerpo de credenciales por ambiente', async () => {
+    const { of, llamadas } = cliente([json({ ambiente: '01' }), json({})])
+    await of.plataforma.clientes.emisor.credenciales('cli_1', '01', { apiPassword: 'x' })
+    await of.plataforma.clientes.emisor.obtener('cli_1')
+    expect(llamadas[0]?.metodo).toBe('PUT')
+    expect(llamadas[0]?.url.pathname).toBe('/cloud/plataforma/clientes/cli_1/credenciales/01')
+    expect(llamadas[1]?.url.pathname).toBe('/cloud/plataforma/clientes/cli_1/emisor')
+  })
+
+  it('plataforma.clientes.activar y desactivar: rutas y cuerpo de la aceptación', async () => {
+    const { of, llamadas } = cliente([json({ estado: 'activo' }), json({ estado: 'desactivado' })])
+    await of.plataforma.clientes.activar('cli_1', {
+      modo: 'servicio',
+      aceptacion: { fecha: 1_700_000_000_000, terminosVersion: '2026-11-16' },
+    })
+    await of.plataforma.clientes.desactivar('cli_1')
+    expect(llamadas[0]?.metodo).toBe('POST')
+    expect(llamadas[0]?.url.pathname).toBe('/cloud/plataforma/clientes/cli_1/activar')
+    expect(llamadas[1]?.url.pathname).toBe('/cloud/plataforma/clientes/cli_1/desactivar')
+  })
+
   it('errores con su código; parámetros de ruta escapados; consulta en la URL', async () => {
     const { of, llamadas } = cliente([
       json(

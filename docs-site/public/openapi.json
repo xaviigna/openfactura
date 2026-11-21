@@ -150,6 +150,137 @@
         }
       }
     },
+    "/yo/documento": {
+      "get": {
+        "operationId": "yo_documento_obtener",
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Estado de mi documento de identidad",
+        "description": "Si la persona con sesión ya registró su documento (tipo y número) en la organización. Nunca devuelve el número. Sirve de solicitante por defecto de las invalidaciones.",
+        "responses": {
+          "200": {
+            "description": "Estado del documento.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "documentoRegistrado": {
+                      "type": "boolean"
+                    },
+                    "tipoDocumento": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "documentoRegistrado",
+                    "tipoDocumento"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      },
+      "put": {
+        "operationId": "yo_documento_guardar",
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Registrar mi documento de identidad",
+        "description": "Sólo con sesión de persona (una clave de API responde 403). Cada persona registra el suyo; queda en la bitácora sin el número. Con él, la primera vez que se configura el emisor se rellena solo el responsable de anulaciones, y es el solicitante por defecto al invalidar.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentoMiembro"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Documento registrado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "documentoRegistrado": {
+                      "type": "boolean"
+                    },
+                    "tipoDocumento": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "documentoRegistrado",
+                    "tipoDocumento"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
     "/resumen": {
       "get": {
         "operationId": "resumen_obtener",
@@ -337,6 +468,68 @@
         "responses": {
           "200": {
             "description": "Emisor guardado.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmisorVista"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/emisor/responsable": {
+      "put": {
+        "operationId": "emisor_responsable_guardar",
+        "tags": [
+          "Emisor"
+        ],
+        "summary": "Configurar el responsable de anulaciones",
+        "description": "Nombre, tipo de documento (`13` DUI por defecto; `36` NIT, `03` pasaporte, `02` carnet de residente) y número de quien firma las invalidaciones. `POST /dte/:codigo/invalidar` lo usa solo cuando la solicitud no trae `responsable`. El DUI se valida con su dígito verificador. El número se devuelve completo sólo a quien tiene `emisor:write` (los demás lo reciben enmascarado) y nunca va a la bitácora.\n\nPermiso: `emisor:write`.",
+        "x-permiso": "emisor:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponsableAnulaciones"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Emisor con el responsable guardado.",
             "headers": {
               "RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimit-Limit"
@@ -847,7 +1040,7 @@
           "Clientes"
         ],
         "summary": "Buscar clientes",
-        "description": "`q` busca por nombre, nombre comercial o número de documento. Hasta 100 por defecto. Los clientes guardados sólo existen en producción: con una clave de pruebas o la organización en pruebas, todas las rutas de clientes responden `409 clientes_solo_produccion`.\n\nPermiso: `clientes:read`.",
+        "description": "`q` busca por nombre, nombre comercial o número de documento. Hasta 100 por defecto. Un solo directorio por organización, compartido por pruebas y producción.\n\nPermiso: `clientes:read`.",
         "x-permiso": "clientes:read",
         "parameters": [
           {
@@ -907,9 +1100,6 @@
           "403": {
             "$ref": "#/components/responses/Error403"
           },
-          "409": {
-            "$ref": "#/components/responses/Error409"
-          },
           "429": {
             "$ref": "#/components/responses/Error429"
           }
@@ -921,7 +1111,7 @@
           "Clientes"
         ],
         "summary": "Crear un cliente",
-        "description": "Sólo en producción; en pruebas responde `409 clientes_solo_produccion`.\n\nPermiso: `clientes:write`.",
+        "description": "Permiso: `clientes:write`.",
         "x-permiso": "clientes:write",
         "requestBody": {
           "required": true,
@@ -1032,9 +1222,6 @@
           },
           "404": {
             "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -1178,9 +1365,6 @@
           },
           "404": {
             "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -1655,7 +1839,7 @@
           "DTE"
         ],
         "summary": "Emitir un DTE",
-        "description": "Construye, valida, firma y transmite el documento al MH. `datos` es la entrada del constructor del SDK `@openfactura/dte` para ese tipo. En Factura (01) `precioUni` incluye IVA; en Crédito Fiscal, notas y remisión va sin IVA. Si se envía `clienteId` y falta `datos.receptor`, el receptor se toma del cliente guardado (sólo en producción; en pruebas responde `409 clientes_solo_produccion`). El Comprobante de Liquidación (08), el Documento Contable de Liquidación (09) y el Comprobante de Donación (15) no admiten contingencia: con el MH caído responden `mh_no_disponible`.\n\nPermiso: `dte:emit`.",
+        "description": "Construye, valida, firma y transmite el documento al MH. `datos` es la entrada del constructor del SDK `@openfactura/dte` para ese tipo. En Factura (01) `precioUni` incluye IVA; en Crédito Fiscal, notas y remisión va sin IVA. Si se envía `clienteId` y falta `datos.receptor`, el receptor se toma del cliente guardado. El Comprobante de Liquidación (08), el Documento Contable de Liquidación (09) y el Comprobante de Donación (15) no admiten contingencia: con el MH caído responden `mh_no_disponible`.\n\nPermiso: `dte:emit`.",
         "x-permiso": "dte:emit",
         "parameters": [
           {
@@ -1812,6 +1996,71 @@
           },
           "429": {
             "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
+    "/dte/consultar-mh": {
+      "post": {
+        "operationId": "dte_consultar_mh",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Consultar al MH un DTE de un tercero",
+        "description": "Pregunta al MH, con las credenciales y el ambiente de quien consulta, si un DTE recibido (por ejemplo una compra) está registrado. No guarda el documento ni devuelve el sello: si envías `selloRecibido` responde `selloCoincide`. Tope por clave (20 por minuto) y por organización (1000 por día): `429 limite_excedido`. Si el MH no responde, 2 intentos y `502 mh_no_disponible`. Los resultados se cachean unos minutos (`cache: true`).\n\nPermiso: `dte:read`.",
+        "x-permiso": "dte:read",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsultaDteTercero"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Veredicto de la consulta.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsultaDteTerceroResultado"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "502": {
+            "$ref": "#/components/responses/Error502"
           }
         }
       }
@@ -2013,6 +2262,135 @@
         }
       }
     },
+    "/dte/{codigo}/invalidacion": {
+      "get": {
+        "operationId": "dte_invalidacion_evaluar",
+        "tags": [
+          "DTE"
+        ],
+        "summary": "Evaluar si un documento puede invalidarse",
+        "description": "No transmite nada. Responde si el documento puede invalidarse (`bloqueos`: `estado_invalido`, `retorno_vigente`), el plazo (`limite`, `fueraDePlazo`), qué motivos piden documento de reemplazo y si hay responsable de anulaciones. El plazo se calcula desde la fecha de emisión y sin asuetos, así que `limiteAproximado` es siempre `true`: es informativo y no bloquea la invalidación, que valida el MH.\n\nPermiso: `dte:invalidate`.",
+        "x-permiso": "dte:invalidate",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "description": "Código de generación (UUID) o id interno.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Evaluación.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "codigoGeneracion": {
+                      "type": "string"
+                    },
+                    "tipoDte": {
+                      "type": "string"
+                    },
+                    "estado": {
+                      "type": "string"
+                    },
+                    "puedeInvalidar": {
+                      "type": "boolean"
+                    },
+                    "bloqueos": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "limite": {
+                      "type": "string"
+                    },
+                    "fueraDePlazo": {
+                      "type": "boolean"
+                    },
+                    "limiteAproximado": {
+                      "type": "boolean"
+                    },
+                    "motivos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "tipoAnulacion": {
+                            "type": "integer"
+                          },
+                          "requiereReemplazo": {
+                            "type": "boolean"
+                          },
+                          "requiereMotivo": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "tipoAnulacion",
+                          "requiereReemplazo",
+                          "requiereMotivo"
+                        ]
+                      }
+                    },
+                    "responsableConfigurado": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "codigoGeneracion",
+                    "tipoDte",
+                    "estado",
+                    "puedeInvalidar",
+                    "bloqueos",
+                    "limite",
+                    "fueraDePlazo",
+                    "limiteAproximado",
+                    "motivos",
+                    "responsableConfigurado"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
     "/dte/{codigo}/invalidar": {
       "post": {
         "operationId": "dte_invalidar",
@@ -2020,7 +2398,7 @@
           "DTE"
         ],
         "summary": "Invalidar un documento o un evento",
-        "description": "Irreversible. `tipoAnulacion`: 1 error en la información (requiere `codigoGeneracionReemplazo`), 2 rescindir la operación, 3 otro (requiere motivo y reemplazo). `:codigo` también puede ser un evento de retorno u operaciones especiales: entonces responde `{ invalidado, tipo, codigoGeneracion }`. Un DTE con un retorno vigente responde `409 retorno_vigente`.\n\nPermiso: `dte:invalidate`.",
+        "description": "Irreversible. `tipoAnulacion`: 1 error en la información (requiere `codigoGeneracionReemplazo`), 2 rescindir la operación, 3 otro (requiere motivo y reemplazo). `:codigo` también puede ser un evento de retorno u operaciones especiales: entonces responde `{ invalidado, tipo, codigoGeneracion }`. Un DTE con un retorno vigente responde `409 retorno_vigente`. `responsable` (quien la realiza) es opcional: por defecto se usa el «Responsable de anulaciones» del emisor, y sin él responde `409 responsable_no_configurado` (configúralo con `PUT /emisor` y reintenta). `solicitante`, por defecto, es la persona con sesión que invalida si registró su documento (`PUT /yo/documento`) y, si no, el receptor del documento.\n\nPermiso: `dte:invalidate`.",
         "x-permiso": "dte:invalidate",
         "parameters": [
           {
@@ -2964,6 +3342,80 @@
         }
       }
     },
+    "/claves/{id}/definitivo": {
+      "delete": {
+        "operationId": "clave_eliminar",
+        "tags": [
+          "Claves de API"
+        ],
+        "summary": "Eliminar una clave revocada o expirada",
+        "description": "La borra para siempre, junto con sus registros de peticiones; la auditoría conserva que existió. Una clave activa responde `409 clave_activa`: primero se revoca.\n\nPermiso: `claves:manage`.",
+        "x-permiso": "claves:manage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminada.",
+            "headers": {
+              "RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimit-Limit"
+              },
+              "RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimit-Remaining"
+              },
+              "RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimit-Reset"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eliminada": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "eliminada"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          }
+        }
+      }
+    },
     "/webhooks": {
       "get": {
         "operationId": "webhooks_listar",
@@ -3793,7 +4245,7 @@
         }
       },
       "Error409": {
-        "description": "Falta configurar algo o hay un conflicto. Códigos: `sin_organizacion`, `sin_organizacion_activa`, `nit_bloqueado`, `emisor_no_configurado`, `credenciales_incompletas`, `sin_punto_venta`, `estado_invalido`, `ambiente_distinto`, `retorno_excedido`, `retorno_vigente`, `idempotencia_distinta`, `idempotencia_en_curso`, `cliente_repetido`, `clientes_solo_produccion`, `producto_repetido`, `codigo_repetido`, `sin_archivo`, `limite_webhooks`, `simulador_inactivo`.",
+        "description": "Falta configurar algo o hay un conflicto. Códigos: `sin_organizacion`, `sin_organizacion_activa`, `nit_bloqueado`, `emisor_no_configurado`, `credenciales_incompletas`, `sin_punto_venta`, `estado_invalido`, `ambiente_distinto`, `retorno_excedido`, `retorno_vigente`, `responsable_no_configurado`, `idempotencia_distinta`, `idempotencia_en_curso`, `cliente_repetido`, `producto_repetido`, `codigo_repetido`, `sin_archivo`, `limite_webhooks`, `simulador_inactivo`.",
         "content": {
           "application/json": {
             "schema": {
@@ -3838,7 +4290,7 @@
         }
       },
       "Error502": {
-        "description": "Problema hablando con el MH o al firmar. Con `emision_incierta` consulta `details.codigoGeneracion` antes de reintentar. Códigos: `mh_credenciales_rechazadas`, `mh_no_disponible`, `emision_fallida`, `emision_incierta`, `evento_incierto`.",
+        "description": "Problema hablando con el MH o al firmar. Con `emision_incierta` consulta `details.codigoGeneracion` antes de reintentar. Códigos: `mh_credenciales_rechazadas`, `mh_no_disponible`, `mh_respuesta_inesperada`, `emision_fallida`, `emision_incierta`, `evento_incierto`.",
         "content": {
           "application/json": {
             "schema": {
@@ -3968,6 +4420,29 @@
           "complemento",
           "telefono",
           "correo"
+        ]
+      },
+      "DocumentoMiembro": {
+        "type": "object",
+        "properties": {
+          "tipoDocumento": {
+            "type": "string",
+            "enum": [
+              "13",
+              "36",
+              "02",
+              "03"
+            ]
+          },
+          "numDocumento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "tipoDocumento",
+          "numDocumento"
         ]
       },
       "Credenciales": {
@@ -4116,6 +4591,35 @@
           "establecimientoId",
           "nombre",
           "codMh"
+        ]
+      },
+      "ResponsableAnulaciones": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "tipoDocumento": {
+            "default": "13",
+            "type": "string",
+            "enum": [
+              "13",
+              "36",
+              "02",
+              "03"
+            ]
+          },
+          "numDocumento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "nombre",
+          "numDocumento"
         ]
       },
       "ClienteEntrada": {
@@ -4555,6 +5059,44 @@
           "items"
         ]
       },
+      "ConsultaDteTercero": {
+        "type": "object",
+        "properties": {
+          "nitEmisor": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "tipoDte": {
+            "type": "string",
+            "enum": [
+              "11",
+              "14",
+              "15",
+              "01",
+              "03",
+              "04",
+              "05",
+              "06",
+              "07",
+              "08",
+              "09"
+            ]
+          },
+          "codigoGeneracion": {
+            "type": "string",
+            "pattern": "^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$"
+          },
+          "selloRecibido": {
+            "type": "string",
+            "pattern": "^[0-9A-Z]{20,64}$"
+          }
+        },
+        "required": [
+          "nitEmisor",
+          "tipoDte",
+          "codigoGeneracion"
+        ]
+      },
       "OperacionesEspeciales": {
         "type": "object",
         "properties": {
@@ -4821,10 +5363,10 @@
                   "ambiente_distinto",
                   "retorno_excedido",
                   "retorno_vigente",
+                  "responsable_no_configurado",
                   "idempotencia_distinta",
                   "idempotencia_en_curso",
                   "cliente_repetido",
-                  "clientes_solo_produccion",
                   "producto_repetido",
                   "codigo_repetido",
                   "sin_archivo",
@@ -4839,6 +5381,7 @@
                   "error_interno",
                   "mh_credenciales_rechazadas",
                   "mh_no_disponible",
+                  "mh_respuesta_inesperada",
                   "emision_fallida",
                   "emision_incierta",
                   "evento_incierto"
@@ -5040,6 +5583,56 @@
           "pagina",
           "porPagina",
           "ambiente"
+        ]
+      },
+      "ConsultaDteTerceroResultado": {
+        "type": "object",
+        "properties": {
+          "veredicto": {
+            "type": "string",
+            "enum": [
+              "encontrado",
+              "no_encontrado",
+              "discrepancia"
+            ]
+          },
+          "estado": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`procesado`, `invalidado` u otro del MH."
+          },
+          "selloCoincide": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "fechaProcesamiento": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ambiente": {
+            "type": "string",
+            "enum": [
+              "00",
+              "01"
+            ]
+          },
+          "cache": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "veredicto",
+          "estado",
+          "selloCoincide",
+          "fechaProcesamiento",
+          "ambiente",
+          "cache"
         ]
       },
       "Validacion": {
@@ -5507,6 +6100,27 @@
               "string",
               "null"
             ]
+          },
+          "certificadoSerie": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id del certificado en el MH (`<_id>` del .crt; no es un secreto). Nulo si el archivo no lo trae o se cargó antes de guardarlo."
+          },
+          "certificadoVence": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Vencimiento del certificado, en milisegundos Unix (`notAfter` del .crt). Nulo si no viene o se cargó antes de guardarlo."
+          },
+          "certificadoHuella": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SHA-256 (hex) del contenido completo del .crt. No permite reconstruirlo."
           },
           "simuladas": {
             "type": "boolean",

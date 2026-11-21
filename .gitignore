@@ -40,3 +40,6 @@ server/wrangler.deploy.jsonc
 
 # Planes y notas de trabajo locales (no se publican)
 tasks/
+
+# caché de bun si se ejecuta con HOME aquí
+Library/

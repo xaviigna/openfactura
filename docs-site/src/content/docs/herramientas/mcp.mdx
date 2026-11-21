@@ -82,14 +82,16 @@ Si ya ejecutaste `openfactura login` en ese equipo puedes omitir `env`.
 | --------------------------------- | ----------------------------------------------- | ---------------- |
 | `emisor_obtener`                  | Emisor, ambiente activo, puntos de venta        | `emisor:read`    |
 | `catalogo_buscar`                 | Busca en catálogos del MH (CAT-xxx)             | —                |
-| `clientes_buscar`                 | Busca clientes guardados (sólo en producción)   | `clientes:read`  |
-| `cliente_crear`                   | Guarda un cliente (sólo en producción)          | `clientes:write` |
+| `clientes_buscar`                 | Busca clientes guardados                        | `clientes:read`  |
+| `cliente_crear`                   | Guarda un cliente                               | `clientes:write` |
 | `productos_buscar`                | Busca productos del ambiente de la clave        | `productos:read` |
 | `producto_crear`                  | Guarda un producto (precio sin IVA)             | `productos:write` |
 | `dte_validar`                     | Valida sin emitir; devuelve problemas y total   | `dte:emit`       |
+| `dte_consultar_mh`                | Consulta al MH un DTE de un tercero (compra)    | `dte:read`       |
 | `dte_emitir`                      | Emite (requiere `idempotencyKey`)               | `dte:emit`       |
 | `dte_listar`                      | Lista documentos del ambiente activo            | `dte:read`       |
 | `dte_obtener`                     | Estado, sello, respuesta del MH y eventos       | `dte:read`       |
+| `dte_invalidacion_evaluar`        | Dice si un documento se puede invalidar y hasta cuándo | `dte:invalidate` |
 | `dte_invalidar`                   | Invalida un documento o un evento               | `dte:invalidate` |
 | `dte_retorno`                     | Evento de retorno (requiere `idempotencyKey`)   | `dte:emit`       |
 | `operaciones_especiales_informar` | Evento 17 (requiere `idempotencyKey`)           | `dte:emit`       |
@@ -113,10 +115,13 @@ Si ya ejecutaste `openfactura login` en ese equipo puedes omitir `env`.
 | `plataforma_cliente_crear`        | Agrega un cliente (con datos prellenados)       | Clave habilitada para Plataforma |
 | `plataforma_cliente_enlace`       | Su enlace de alta                               | Clave habilitada para Plataforma |
 | `plataforma_cliente_clave_crear`  | Una clave de API en el espacio del cliente      | Clave habilitada para Plataforma |
-| `marca_blanca_obtener`            | Tu marca blanca: nombre, dirección y dominios (sólo lectura) | `emisor:read`, plan Platform |
-| `marca_dominios_listar`           | Tus dominios propios y su estado (sólo lectura) | `emisor:read`, plan Platform |
+| `plataforma_cliente_activar`      | Lo activa en modo servicio, sin persona dueña   | Clave de producción habilitada para Plataforma |
+| `plataforma_cliente_desactivar`   | Interruptor de apagado de un cliente activo     | Clave habilitada para Plataforma |
+| `plataforma_cliente_credenciales_probar` | Comprueba que las credenciales de un ambiente del cliente inician sesión en Hacienda (sólo lee) | Clave habilitada para Plataforma con `plataforma:emisor` |
+| `marca_blanca_obtener`            | Tu white label: nombre, dirección y dominios (sólo lectura) | `emisor:read`, plan Pro o Platform |
+| `marca_dominios_listar`           | Tus dominios propios y su estado (sólo lectura) | `emisor:read`, plan Pro o Platform |
 
-La marca blanca se cambia en el panel (*Marca*), no con una clave de API.
+El white label se cambia en el panel (*Marca*), no con una clave de API.
 
 ## Cómo debe trabajar el asistente
 

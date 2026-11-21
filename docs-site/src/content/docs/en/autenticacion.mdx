@@ -16,8 +16,8 @@ The whole API (`/api/v1/*`) and the MCP server (`/mcp`) require authentication. 
 The remote MCP server only accepts API keys, never the dashboard cookie.
 
 A key's environment also separates data: it only sees the products and
-[webhooks](/en/guias/webhooks/) of its environment, and saved customers only exist in production
-(with a test key they respond `409 clientes_solo_produccion`).
+[webhooks](/en/guias/webhooks/) of its environment. Saved customers are one directory per
+organization, seen by keys of both environments.
 
 ```bash
 curl https://app.openfactura.co/api/v1/yo -H "Authorization: Bearer $OPENFACTURA_API_KEY"
@@ -39,8 +39,13 @@ In the dashboard: **API keys → New key**. Choose a name, a mode (test or produ
 and optionally an expiry in days. The full key is shown **only once**; the server stores only its
 SHA-256 and from then on shows just its prefix.
 
-Keys can also be managed through the API (`GET|POST /claves`, `DELETE /claves/:id`), but only from a
-dashboard session with the `claves:manage` permission: an API key can never create other keys.
+In the dashboard, a revoked key moves to the **Revoked** tab; from there (or from an expired one) you
+can delete it forever, along with its request logs.
+
+Keys can also be managed through the API (`GET|POST /claves`, `DELETE /claves/:id` to revoke,
+`DELETE /claves/:id/definitivo` to delete a revoked or expired key; an active one returns
+`409 clave_activa`), but only from a dashboard session with the `claves:manage` permission: an API key
+can never create other keys.
 
 Revoking a key takes effect immediately. A revoked or expired key gets `401 no_autenticado`.
 

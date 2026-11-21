@@ -85,6 +85,20 @@
       "when": 1794810142079,
       "tag": "0011_ventana_limite_segundos",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794936690981,
+      "tag": "0012_credencial_cert_metadatos",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1794969551147,
+      "tag": "0013_miembro_documento",
+      "breakpoints": true
     }
   ]
 }

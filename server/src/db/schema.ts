@@ -55,6 +55,27 @@ export const emisor = sqliteTable(
   (t) => [uniqueIndex('emisor_org_uq').on(t.organizationId)],
 )
 
+/**
+ * Documento de identidad de un propietario o administrador de la organización. `user` sólo guarda
+ * nombre y correo; el MH exige tipo y número de documento de quien firma una invalidación, así que
+ * se capturan aquí (por organización: la misma persona puede estar en varias). Nunca se devuelve en
+ * errores ni en la bitácora.
+ */
+export const miembroDocumento = sqliteTable(
+  'miembro_documento',
+  {
+    organizationId: org(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    /** CAT-022 */
+    tipoDocumento: text('tipo_documento').notNull(),
+    numDocumento: text('num_documento').notNull(),
+    actualizado: integer('actualizado', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.organizationId, t.userId] })],
+)
+
 export const establecimiento = sqliteTable(
   'establecimiento',
   {
@@ -108,6 +129,11 @@ export const credencialMh = sqliteTable(
     certificadoEnc: text('certificado_enc'),
     certPasswordEnc: text('cert_password_enc'),
     certNit: text('cert_nit'),
+    /** Metadatos NO secretos del certificado vigente (ADR-019 d): id en el MH, vencimiento y huella. */
+    certSerie: text('cert_serie'),
+    certVence: integer('cert_vence', { mode: 'timestamp_ms' }),
+    /** SHA-256 (hex) del contenido completo del .crt: no permite reconstruirlo. */
+    certHuella: text('cert_huella'),
     tokenEnc: text('token_enc'),
     tokenExpira: integer('token_expira', { mode: 'timestamp_ms' }),
     /** Generadas por el servidor para el simulador del MH. Las que sube el usuario van a Hacienda. */

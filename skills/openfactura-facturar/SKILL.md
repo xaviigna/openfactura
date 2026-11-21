@@ -27,8 +27,8 @@ un número de control. Sólo se deshace con una invalidación, que tiene plazos.
    usuario que vas a emitir **en producción**.
 2. **Receptor:** `clientes_buscar` por nombre o documento. Si no existe y el documento lo requiere,
    pide los datos y guárdalo con `cliente_crear` (después de confirmar).
-   Los clientes guardados sólo existen en producción: en pruebas (`00`) pide los datos y envíalos en
-   `datos.receptor`, sin `clienteId`.
+   Los clientes guardados son los mismos en pruebas (`00`) y en producción (`01`): un cliente que
+   guardas al probar también está en producción.
 3. **Ítems:** `productos_buscar` para reutilizar código y precio. Atención al IVA (ver abajo).
 4. `dte_validar` con `{ tipoDte, datos, clienteId? }`.
 5. Resumen y confirmación del usuario.
@@ -77,7 +77,7 @@ Factura de consumidor final, sin receptor:
 }
 ```
 
-Crédito Fiscal para un cliente guardado (sólo en producción; el receptor sale del cliente):
+Crédito Fiscal para un cliente guardado (el receptor sale del cliente):
 
 ```json
 {

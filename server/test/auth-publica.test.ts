@@ -246,6 +246,28 @@ describe('organizaciones: cupo por persona y topes de los campos', () => {
   })
 })
 
+describe('registro con un correo que ya tiene cuenta', () => {
+  // Sin extensión de correo responde Better Auth (USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL); con ella,
+  // el gancho (USER_ALREADY_EXISTS, probado en la nube). El panel muestra lo mismo en ambos.
+  it('rechaza el alta (422) y no crea nada', async () => {
+    const o = await nuevaOrganizacion()
+    const antes = await env.DB.prepare('SELECT COUNT(*) AS n FROM user WHERE email = ?1')
+      .bind(o.correo)
+      .first<{ n: number }>()
+    const alta = await new Cliente().json('POST', '/api/auth/sign-up/email', {
+      name: 'Otra persona',
+      email: o.correo.toUpperCase(),
+      password: CLAVE,
+    })
+    expect(alta.status).toBe(422)
+    expect(alta.cuerpo.code).toMatch(/^USER_ALREADY_EXISTS/)
+    const despues = await env.DB.prepare('SELECT COUNT(*) AS n FROM user WHERE email = ?1')
+      .bind(o.correo)
+      .first<{ n: number }>()
+    expect(despues?.n).toBe(antes?.n)
+  })
+})
+
 describe('limpieza de las ventanas del límite', () => {
   it('sólo borra una ventana cuando terminó, sea de un minuto o de un día', async () => {
     const ahora = Math.floor(Date.now() / 1000)

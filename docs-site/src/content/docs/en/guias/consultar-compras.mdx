@@ -1,0 +1,62 @@
+---
+title: Verify a received DTE
+description: Ask the MH whether a supplier's document (a purchase) is registered, without storing it.
+---
+
+`POST /dte/consultar-mh` (`dte:read`) asks the MH, **with your organization's credentials and
+environment**, whether a DTE received from a third party is registered. Use it to validate a purchase
+before accepting it. It **doesn't store the document** or return it: it answers a verdict.
+
+## Request
+
+```bash
+curl https://app.openfactura.co/api/v1/dte/consultar-mh \
+  -H "Authorization: Bearer $OPENFACTURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nitEmisor": "06142907861023",
+    "tipoDte": "03",
+    "codigoGeneracion": "0862382B-0BB8-42A0-BB6B-B42DCCDF1EA4",
+    "selloRecibido": "2026A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8"
+  }'
+```
+
+`nitEmisor` (14 digits, or 9 for a DUI), `tipoDte` and `codigoGeneracion` are what the MH lookup
+requires. `selloRecibido` is optional: if you send it, the API compares it with the stamp of the
+document you hold.
+
+## Response
+
+```json
+{
+  "veredicto": "encontrado",
+  "estado": "procesado",
+  "selloCoincide": true,
+  "fechaProcesamiento": "17/11/2026 10:15:32",
+  "ambiente": "01",
+  "cache": false
+}
+```
+
+| `veredicto`     | Meaning                                                                      |
+| --------------- | ---------------------------------------------------------------------------- |
+| `encontrado`    | The MH has it. `estado` is `procesado` or `invalidado`.                      |
+| `no_encontrado` | The MH has no such document: don't accept it as valid.                       |
+| `discrepancia`  | The MH has it, but the `selloRecibido` you sent doesn't match.               |
+
+An `invalidado` document is also `encontrado`: check `estado` before accepting it. The API never
+returns the stamp, the amounts or the document data; only whether the stamp you sent matches.
+
+## Limits and errors
+
+- 20 lookups per minute per key and 1000 per day per organization: `429 limite_excedido` with
+  `details.reintentarEn`. It isn't a search engine: it's meant for documents you already hold.
+- Results are cached for a few minutes (5 if found, 1 if not): `cache: true` means the MH wasn't
+  queried. Only the verdict and a hash of the stamp are kept, never the document.
+- If the MH doesn't answer, 2 attempts are made and the API replies `502 mh_no_disponible`
+  (`details.reintentarEn`).
+- An MH answer that isn't a verdict gives `502 mh_respuesta_inesperada`; rejected credentials,
+  `502 mh_credenciales_rechazadas`; no credentials of your own, `409 credenciales_incompletas`.
+- Neither the NIT nor the generation code is written to logs.
+
+Also available in MCP (`dte_consultar_mh`) and the CLI (`openfactura dte consultar-mh`).
